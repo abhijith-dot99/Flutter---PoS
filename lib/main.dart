@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/home.dart';
+import 'package:flutter_pos_app/login_page.dart';
+import 'package:flutter_pos_app/shop_config.dart';
+
+import 'customer_list_page.dart';
+import 'sales_report.dart'; // Import the login page
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,9 +21,45 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MainPage(),
+      home: const AppInitializer(), // Use a widget to initialize the app state
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({Key? key}) : super(key: key);
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  bool _isLoggedIn = false; // Change this based on actual login state
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    // Simulate a delay for checking login status
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Here you would typically check the actual login status from storage
+    setState(() {
+      _isLoggedIn = false; // Set to true if user is logged in
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoggedIn) {
+      return const MainPage(); // Show the main page if logged in
+    } else {
+      return const LoginPage(); // Show the login page if not logged in
+    }
   }
 }
 
@@ -43,7 +85,6 @@ class _MainPageState extends State<MainPage> {
         return Container();
       case 'Settings':
         return Container();
-
       default:
         return const HomePage();
     }
@@ -56,6 +97,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   @override
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff1f2029),
@@ -95,22 +137,27 @@ class _MainPageState extends State<MainPage> {
             _itemMenu(
               menu: 'Home',
               icon: Icons.rocket_sharp,
+              onTap: () {  },
             ),
             _itemMenu(
               menu: 'Menu',
               icon: Icons.format_list_bulleted_rounded,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ShopConfigPage())),
             ),
             _itemMenu(
               menu: 'History',
-              icon: Icons.history_toggle_off_rounded,
+              icon: Icons.history_toggle_off_rounded, onTap: () {  },
             ),
             _itemMenu(
               menu: 'Promos',
               icon: Icons.discount_outlined,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const CustomerListPage()),
+              ),
             ),
             _itemMenu(
               menu: 'Settings',
-              icon: Icons.sports_soccer_outlined,
+              icon: Icons.sports_soccer_outlined, onTap: () {  },
             ),
           ],
         ),
@@ -146,38 +193,82 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget _itemMenu({required String menu, required IconData icon}) {
+  // Widget _itemMenu({required String menu, required IconData icon}) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 9),
+  //     child: GestureDetector(
+  //       onTap: () => _setPage(menu),
+  //       child: MouseRegion(
+  //           cursor: SystemMouseCursors.click,
+  //           child: AnimatedContainer(
+  //             padding: const EdgeInsets.symmetric(vertical: 12),
+  //             decoration: BoxDecoration(
+  //               borderRadius: BorderRadius.circular(8),
+  //               color: pageActive == menu
+  //                   ? Colors.deepOrangeAccent
+  //                   : Colors.transparent,
+  //             ),
+  //             duration: const Duration(milliseconds: 300),
+  //             curve: Curves.slowMiddle,
+  //             child: Column(
+  //               children: [
+  //                 Icon(
+  //                   icon,
+  //                   color: Colors.white,
+  //                 ),
+  //                 const SizedBox(height: 5),
+  //                 Text(
+  //                   menu,
+  //                   style: const TextStyle(color: Colors.white, fontSize: 10),
+  //                 ),
+  //               ],
+  //             ),
+  //           )),
+  //     ),
+  //   );
+  // }
+
+
+
+  Widget _itemMenu({
+    required String menu,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 9),
       child: GestureDetector(
-        onTap: () => _setPage(menu),
+        onTap: onTap, // Use the onTap parameter
         child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: AnimatedContainer(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: pageActive == menu
-                    ? Colors.deepOrangeAccent
-                    : Colors.transparent,
-              ),
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.slowMiddle,
-              child: Column(
-                children: [
-                  Icon(
-                    icon,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    menu,
-                    style: const TextStyle(color: Colors.white, fontSize: 10),
-                  ),
-                ],
-              ),
-            )),
+          cursor: SystemMouseCursors.click,
+          child: AnimatedContainer(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: pageActive == menu
+                  ? Colors.deepOrangeAccent
+                  : Colors.transparent,
+            ),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.slowMiddle,
+            child: Column(
+              children: [
+                Icon(
+                  icon,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  menu,
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
+
 }
+
