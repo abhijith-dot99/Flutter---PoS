@@ -20,9 +20,6 @@ class _HomePageState extends State<HomePage> {
   List<Item> searchResults = [];
   List<Item> orderedItems = []; // Track ordered items
 
-
-
-
   String? _selectedCustomer;
   List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
   late List<String> _filteredCustomers;
@@ -32,86 +29,87 @@ class _HomePageState extends State<HomePage> {
         image: 'assets/items/1.png',
         title: 'Original Burger',
         price: '\$5.99',
-        itemCount: '11 item',
+        tax: 'tax',
+        itemCount: '1 item',
         category: 'Burger'),
     Item(
         image: 'assets/items/2.png',
         title: 'Double Burger',
         price: '\$10.99',
-        itemCount: '10 item',
+        tax: 'tax',
+        itemCount: '1 item',
         category: 'Burger'),
 
     Item(
       image: 'assets/items/3.png',
       title: 'Cheese Burger',
       price: '\$6.99',
-      itemCount: '7 item',
+      tax: '1.50',
+      itemCount: '1 Item',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/4.png',
       title: 'Double Cheese Burger',
       price: '\$12.99',
-      itemCount: '20 item',
+      tax: 'tax',
+      itemCount: '1 item',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/5.png',
       title: 'Spicy Burger',
       price: '\$7.39',
-      itemCount: '12 item',
+      tax: '100',
+      itemCount: '1 item',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/6.png',
       title: 'Special Black Burger',
       price: '\$7.39',
-      itemCount: '39 item',
+      tax: 'tax',
+      itemCount: '1 item',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/7.png',
       title: 'Special Cheese Burger',
       price: '\$8.00',
-      itemCount: '2 item',
+      tax: 'tax',
+      itemCount: '1 item',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/8.png',
       title: 'Jumbo Cheese Burger',
       price: '\$15.99',
-      itemCount: '2 item',
+      tax: 'tax',
+      itemCount: '1 item',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/9.png',
       title: 'Noodles',
       price: '\$8.99',
-      itemCount: '15 item',
+      tax: 'tax',
+      itemCount: '1 item',
       category: 'Noodles',
     ),
     Item(
       image: 'assets/items/10.png',
       title: 'Drinks',
       price: '\$3.99',
-      itemCount: '25 item',
+        tax: 'tax',
+      itemCount: '1 item',
       category: 'Drinks',
     ),
-    Item(
-      image: 'assets/items/11.png',
-      title: 'Desserts',
-      price: '\$5.99',
-      itemCount: '10 item',
-      category: 'Desserts',
-    ),
-    // Add other items here...
   ];
 
   @override
   void initState() {
     super.initState();
     searchResults = items;
-
 
     _filteredCustomers = _customers; //newchange
   }
@@ -125,13 +123,13 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-
   //newchange
 
   void _filterCustomers(String query) {
     setState(() {
       _filteredCustomers = _customers
-          .where((customer) => customer.toLowerCase().contains(query.toLowerCase()))
+          .where((customer) =>
+              customer.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -213,8 +211,9 @@ class _HomePageState extends State<HomePage> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     int crossAxisCount = constraints.maxWidth < 600 ? 3 : 4;
-                    double childAspectRatio =
-                        constraints.maxWidth < 600 ? 1 / 0.8 : 1 / 0.79; //new changes
+                    double childAspectRatio = constraints.maxWidth < 600
+                        ? 1 / 0.8
+                        : 1 / 0.79; //new changes
 
                     return GridView.count(
                       crossAxisCount: crossAxisCount,
@@ -246,46 +245,47 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey[900], // Set the background color here,
-                    borderRadius: BorderRadius.circular(12), // Apply border radius
+                    color:
+                        Colors.blueGrey[900], // Set the background color here,
+                    borderRadius:
+                        BorderRadius.circular(12), // Apply border radius
                   ),
                   child: orderedItems.isEmpty
                       ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.shopping_cart_outlined, // Use an icon related to selection
-                          size: 50,
-                          color: Colors.white70,
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          'Selected items will appear here',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons
+                                    .shopping_cart_outlined, // Use an icon related to selection
+                                size: 50,
+                                color: Colors.white70,
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                'Selected items will appear here',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  )
+                        )
                       : ListView.builder(
-                    itemCount: orderedItems.length,
-                    itemBuilder: (context, index) {
-                      final item = orderedItems[index];
-                      return _itemOrder(
-                        image: item.image,
-                        title: item.title,
-                        // qty: '1', // Hardcoded quantity; adjust as needed
-                        price: item.price,
-                        // itemCount: item.itemCount,
-                        itemCount: '1',
-
-                        index: index,
-                      );
-                    },
-                  ),
+                          itemCount: orderedItems.length,
+                          itemBuilder: (context, index) {
+                            final item = orderedItems[index];
+                            return _itemOrder(
+                              image: item.image,
+                              title: item.title,
+                              // qty: '1', // Hardcoded quantity; adjust as needed
+                              price: item.price,
+                              itemCount: item.itemCount,
+                              index: index,
+                            );
+                          },
+                        ),
                 ),
               ),
 
@@ -293,8 +293,8 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 1),
               // Expanded(
-                Flexible(
-                  fit: FlexFit.loose,
+              Flexible(
+                fit: FlexFit.loose,
                 child: Container(
                   padding: const EdgeInsets.all(15),
                   margin: const EdgeInsets.symmetric(vertical: 1),
@@ -304,29 +304,30 @@ class _HomePageState extends State<HomePage> {
                   ),
                   child: Column(
                     children: [
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Sub Total',
+                          const Text('Sub Total',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
-                          Text('\$40.32',
-                              style: TextStyle(
+                          Text('\$${calculateTotal().toStringAsFixed(2)}',
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
                         ],
                       ),
                       const SizedBox(height: 0),
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Tax',
+                          const Text('Tax',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
-                          Text('\$4.32',
-                              style: TextStyle(
+                          Text(
+                              '\$${(calculateTotal() * 0.1).toStringAsFixed(2)}', // Assume 10% tax
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
                         ],
@@ -337,15 +338,17 @@ class _HomePageState extends State<HomePage> {
                         width: double.infinity,
                         color: Colors.white,
                       ),
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total',
+                          const Text('Total',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
-                          Text('\$44.64',
-                              style: TextStyle(
+
+                          Text(
+                              '\$${(calculateTotal() * 1.1).toStringAsFixed(2)}', // Subtotal + Tax
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
                         ],
@@ -404,6 +407,7 @@ class _HomePageState extends State<HomePage> {
           border: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(15.0))),
         ),
+        style: const TextStyle(color: Colors.white),
         onChanged: (query) {
           setState(() {
             searchResults = items
@@ -476,15 +480,13 @@ class _HomePageState extends State<HomePage> {
   //   );
   // }
 
-
-
   Widget _topMenu({
     required String title,
     // required String subTitle,
     required Widget action,
   }) {
-
-    final String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
+    final String currentDate =
+        DateFormat('dd MMMM yyyy').format(DateTime.now());
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 4),
@@ -494,8 +496,6 @@ class _HomePageState extends State<HomePage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-
               // Text(
               //   title,
               //   style: const TextStyle(
@@ -511,7 +511,6 @@ class _HomePageState extends State<HomePage> {
               //     color: Colors.white,
               //   ),
               // ),
-
 
               Row(
                 children: [
@@ -538,7 +537,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
 
   Widget _item(
       {String? image,
@@ -570,8 +568,10 @@ class _HomePageState extends State<HomePage> {
                   fit: BoxFit.cover, height: 30, width: double.infinity),
             const SizedBox(height: 8),
             Text(title,
-                style:
-                    const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(price,
                 style: const TextStyle(fontSize: 14, color: Colors.grey)),
@@ -584,67 +584,142 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _itemOrder(
-      {String? image,
-      required String title,
-        required String itemCount, // Change to itemCount
-      required String price,
-  required int index, // Add index to identify the item in the list
-   })
-   {
-    print("new chnag");
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: const Color(0xff1f2029),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.grey.withOpacity(0.3)),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (image != null)
+  // Widget _itemOrder({
+  //   String? image,
+  //   required String title,
+  //   required String itemCount, // Change to itemCount
+  //   required String price,
+  //   required int index, // Add index to identify the item in the list
+  // }) {
+  //   print("new chnag");
+  //   print("orderitems $orderedItems");
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+  //     padding: const EdgeInsets.all(8),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xff1f2029),
+  //       borderRadius: BorderRadius.circular(12),
+  //       boxShadow: [
+  //         BoxShadow(color: Colors.grey.withOpacity(0.3)),
+  //       ],
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         if (image != null)
+  //           // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
+  //           const SizedBox(width: 12),
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text(title,
+  //                   style: const TextStyle(
+  //                       fontSize: 16,
+  //                       color: Colors.white,
+  //                       fontWeight: FontWeight.bold)),
+  //               const SizedBox(height: 4),
+  //               Text('Total: $itemCount',
+  //                   style: TextStyle(fontSize: 14, color: Colors.grey)),
+  //               Text('Price: $price',
+  //                   style: const TextStyle(fontSize: 14, color: Colors.grey)),
+  //             ],
+  //           ),
+  //         ),
+  //         IconButton(
+  //           icon: Icon(Icons.edit, color: Colors.white),
+  //           onPressed: () {
+  //             _showEditDialog(context, index);
+  //           },
+  //         ),
+  //         IconButton(
+  //           icon: Icon(Icons.delete, color: Colors.red),
+  //           onPressed: () {
+  //             _removeItem(index);
+  //           },
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+
+
+  Widget _itemOrder({
+    String? image,
+    required String title,
+    required String itemCount, // Change to itemCount
+    required String price,
+    required int index, // Add index to identify the item in the list
+  }) {
+    return GestureDetector(
+      onTap: () {
+        _showEditDialog(context, index);
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xff1f2029),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(color: Colors.grey.withOpacity(0.3)),
+          ],
+        ),
+        child: Row(
+          children: [
+            if (image != null)
             // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(
-                    // 'Qty: $qty',
-                    'Item Count: 1',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                Text('Price: $price',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
-              ],
+              const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('Total: $itemCount',
+                      style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  Text('Price: $price',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.edit, color: Colors.white),
-            onPressed: () {
-              // _showEditDialog(context, qty, price);
-              _showEditDialog(context, index);
-            },
-          ),
-        ],
+            IconButton(
+              icon: Icon(Icons.edit, color: Colors.white),
+              onPressed: () {
+                _showEditDialog(context, index);
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              onPressed: () {
+                _removeItem(index);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
-
-
+  void _removeItem(int index) {
+    setState(() {
+      orderedItems.removeAt(index); // Remove the item from the list
+    });
+    print(orderedItems);
+  }
 
   void _showEditDialog(BuildContext context, int index) {
     final item = orderedItems[index];
-    TextEditingController quantityController = TextEditingController(text: item.itemCount);
-    TextEditingController priceController = TextEditingController(text: item.price);
+
+    TextEditingController quantityController =
+        TextEditingController(text: item.itemCount);
+    TextEditingController priceController =
+        TextEditingController(text: item.price);
 
     showDialog(
       context: context,
@@ -654,50 +729,50 @@ class _HomePageState extends State<HomePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text('Edit Item',
-            style: TextStyle(color: Colors.white54),),
-
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: quantityController,
-                  style: TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Enter Valid Quantity',
-                    hintStyle: TextStyle(color: Colors.white54),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Color(0xff1f2029),
+          title: const Text(
+            'Edit Item',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: quantityController,
+                style: TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Enter Valid Quantity',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  filled: true,
+                  fillColor: Color(0xff1f2029),
                 ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: priceController,
-                  style: TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Enter Valid Price',
-                    hintStyle: TextStyle(color: Colors.white54),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Color(0xff1f2029),
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: priceController,
+                style: TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Enter Valid Price',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  filled: true,
+                  fillColor: Color(0xff1f2029),
                 ),
-              ],
-            ),
-
+              ),
+            ],
+          ),
           actions: <Widget>[
             TextButton(
               child: Text('Cancel'),
@@ -713,6 +788,7 @@ class _HomePageState extends State<HomePage> {
                     image: item.image,
                     title: item.title,
                     price: priceController.text,
+                    tax:item.tax,
                     itemCount: quantityController.text,
                     category: item.category,
                   );
@@ -726,6 +802,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  double calculateTotal() {
+    double total = 0.0;
+    for (var item in orderedItems) {
+      double price = double.parse(item.price.replaceAll('\$', ''));
+      int quantity = int.parse(item.itemCount.split(' ')[0]);
+      total += price * quantity;
+    }
+    return total;
+  }
 
   Widget _viewCustomerList(BuildContext context) {
     return ElevatedButton(
@@ -741,31 +826,37 @@ class _HomePageState extends State<HomePage> {
               children: [
                 // Add a BackdropFilter to blur the background
                 BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
+                  filter: ImageFilter.blur(
+                      sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
                   child: Container(
-                    color: Colors.black.withOpacity(0), // Just to make the BackdropFilter visible
+                    color: Colors.black.withOpacity(
+                        0), // Just to make the BackdropFilter visible
                   ),
                 ),
                 AlertDialog(
-                  backgroundColor: Color(0xff1f2029), // Set background color here
+                  backgroundColor:
+                      Color(0xff1f2029), // Set background color here
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  title: Text(
+                  title: const Text(
                     'Customer',
                     style: TextStyle(color: Colors.white54), // Title color
                   ),
                   content: Container(
-                    width: MediaQuery.of(context).size.width * 0.8, // Adjust the width as needed
+                    width: MediaQuery.of(context).size.width *
+                        0.8, // Adjust the width as needed
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextField(
                           onChanged: _filterCustomers,
-                          style: TextStyle(color: Colors.white), // Text field text color
+                          style: TextStyle(
+                              color: Colors.white), // Text field text color
                           decoration: InputDecoration(
                             hintText: 'Search',
-                            hintStyle: TextStyle(color: Colors.white), // Hint text color
+                            hintStyle: TextStyle(
+                                color: Colors.white), // Hint text color
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -780,16 +871,20 @@ class _HomePageState extends State<HomePage> {
                           value: _selectedCustomer,
                           hint: const Text(
                             'Select a customer',
-                            style: TextStyle(color: Colors.white), // Hint text color for dropdown
+                            style: TextStyle(
+                                color: Colors
+                                    .white), // Hint text color for dropdown
                           ),
                           isExpanded: true,
-                            dropdownColor: Color(0xff1f2029),
+                          dropdownColor: Color(0xff1f2029),
                           items: _filteredCustomers.map((String customer) {
                             return DropdownMenuItem<String>(
                               value: customer,
                               child: Text(
                                 customer,
-                                style: TextStyle(color: Colors.white54), // Dropdown item text color
+                                style: const TextStyle(
+                                    color: Colors
+                                        .white54), // Dropdown item text color
                               ),
                             );
                           }).toList(),
@@ -804,12 +899,15 @@ class _HomePageState extends State<HomePage> {
                   ),
                   actions: <Widget>[
                     Row(
-                      mainAxisSize: MainAxisSize.min, // Use min size for the row to wrap its children
+                      mainAxisSize: MainAxisSize
+                          .min, // Use min size for the row to wrap its children
                       children: [
                         TextButton(
                           child: const Text(
                             'Close',
-                            style: TextStyle(color: Colors.redAccent), // Close button text color
+                            style: TextStyle(
+                                color: Colors
+                                    .redAccent), // Close button text color
                           ),
                           onPressed: () {
                             Navigator.of(context).pop();
@@ -820,8 +918,6 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ],
-
-
                 ),
               ],
             );
@@ -831,11 +927,15 @@ class _HomePageState extends State<HomePage> {
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person, color: Colors.white, size: 16), // Add list icon here
+          Icon(Icons.person,
+              color: Colors.white, size: 16), // Add list icon here
           SizedBox(width: 8), // Space between icon and text
           FittedBox(
-            child: Text('Customer',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+            child: Text(
+              'Customer',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

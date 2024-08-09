@@ -51,7 +51,7 @@ class PrintService {
             pw.SizedBox(height: 16),
             pw.Table.fromTextArray(
               headers: ['Item', 'Quantity', 'Price'],
-              data: items.map((item) => [item.title, '1', item.price]).toList(),
+              data: items.map((item) => [item.title, item.itemCount, item.price]).toList(),
             ),
           ],
         ),

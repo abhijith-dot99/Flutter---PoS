@@ -5,6 +5,7 @@ class Item {
   final String image;
   final String title;
   final String price;
+  final String tax;
   final String itemCount;
   final String category;
 
@@ -13,6 +14,7 @@ class Item {
     required this.image,
     required this.title,
     required this.price,
+    required this.tax,
     required this.itemCount,
     required this.category,
   });
