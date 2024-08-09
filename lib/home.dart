@@ -1,86 +1,152 @@
-import 'package:flutter/foundation.dart';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'sales_report.dart';
-import 'model/item.dart';
 import 'package:flutter/services.dart';
+import 'model/item.dart';
+import 'package:intl/intl.dart';
+import 'print_service.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  final bool showImages; // Add this parameter
+
+  const HomePage({Key? key, required this.showImages}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  String query = '';
+  String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
+  List<Item> orderedItems = []; // Track ordered items
 
-  // Initialize items
+
+
+
+  String? _selectedCustomer;
+  List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
+  late List<String> _filteredCustomers;
+
   final List<Item> items = [
     Item(
-      image: 'assets/items/1.png',
-      title: 'Original Burger',
-      price: '\$5.99',
-      itemCount: '11 item',
-    ),
+        image: 'assets/items/1.png',
+        title: 'Original Burger',
+        price: '\$5.99',
+        itemCount: '11 item',
+        category: 'Burger'),
     Item(
-      image: 'assets/items/2.png',
-      title: 'Double Burger',
-      price: '\$10.99',
-      itemCount: '10 item',
-    ),
+        image: 'assets/items/2.png',
+        title: 'Double Burger',
+        price: '\$10.99',
+        itemCount: '10 item',
+        category: 'Burger'),
+
     Item(
       image: 'assets/items/3.png',
       title: 'Cheese Burger',
       price: '\$6.99',
       itemCount: '7 item',
+      category: 'Burger',
     ),
     Item(
       image: 'assets/items/4.png',
       title: 'Double Cheese Burger',
       price: '\$12.99',
       itemCount: '20 item',
+      category: 'Burger',
     ),
     Item(
       image: 'assets/items/5.png',
       title: 'Spicy Burger',
       price: '\$7.39',
       itemCount: '12 item',
+      category: 'Burger',
     ),
     Item(
       image: 'assets/items/6.png',
       title: 'Special Black Burger',
       price: '\$7.39',
       itemCount: '39 item',
+      category: 'Burger',
     ),
     Item(
       image: 'assets/items/7.png',
       title: 'Special Cheese Burger',
       price: '\$8.00',
       itemCount: '2 item',
+      category: 'Burger',
     ),
     Item(
       image: 'assets/items/8.png',
       title: 'Jumbo Cheese Burger',
       price: '\$15.99',
       itemCount: '2 item',
+      category: 'Burger',
     ),
+    Item(
+      image: 'assets/items/9.png',
+      title: 'Noodles',
+      price: '\$8.99',
+      itemCount: '15 item',
+      category: 'Noodles',
+    ),
+    Item(
+      image: 'assets/items/10.png',
+      title: 'Drinks',
+      price: '\$3.99',
+      itemCount: '25 item',
+      category: 'Drinks',
+    ),
+    Item(
+      image: 'assets/items/11.png',
+      title: 'Desserts',
+      price: '\$5.99',
+      itemCount: '10 item',
+      category: 'Desserts',
+    ),
+    // Add other items here...
   ];
 
   @override
   void initState() {
     super.initState();
-    // Initialize searchResults with all items
     searchResults = items;
+
+
+    _filteredCustomers = _customers; //newchange
+  }
+
+  void filterItems(String category) {
+    setState(() {
+      selectedCategory = category;
+      searchResults = category == 'All'
+          ? items
+          : items.where((item) => item.category == category).toList();
+    });
+  }
+
+
+  //newchange
+
+  void _filterCustomers(String query) {
+    setState(() {
+      _filteredCustomers = _customers
+          .where((customer) => customer.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void addItemToOrder(Item item) {
+    setState(() {
+      orderedItems.add(item); // Add item to the order
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen width
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Set orientation to landscape if width is less than 730
-    if (screenWidth < 1105) {
+    if (screenWidth < 1405) {
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeRight,
         DeviceOrientation.landscapeLeft,
@@ -90,9 +156,6 @@ class _HomePageState extends State<HomePage> {
         DeviceOrientation.portraitUp,
       ]);
     }
-
-    print("Items: $items");
-    print("Search results: $searchResults");
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -104,50 +167,70 @@ class _HomePageState extends State<HomePage> {
             children: [
               _topMenu(
                 title: 'Lorem Restaurant',
-                subTitle: '20 October 2022',
+                // subTitle: '20 October 2022',
                 action: _search(),
               ),
               Container(
-                height: 100,
-                padding: const EdgeInsets.symmetric(vertical: 24),
+                height: 70,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                margin: const EdgeInsets.only(),
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
                     _itemTab(
-                      icon: 'assets/icons/icon-burger.png',
-                      title: 'Burger',
-                      isActive: true,
-                    ),
+                        icon: 'assets/samplepic.jpg',
+                        title: 'All',
+                        isActive: selectedCategory == 'All',
+                        onTap: () => filterItems('All')),
+                    _itemTab(
+                        icon: 'assets/icons/icon-burger.png',
+                        title: 'Burger',
+                        isActive: selectedCategory == 'Burger',
+                        onTap: () => filterItems('Burger')),
                     _itemTab(
                       icon: 'assets/icons/icon-noodles.png',
                       title: 'Noodles',
-                      isActive: false,
+                      isActive: selectedCategory == 'Noodles',
+                      onTap: () => filterItems('Noodles'),
                     ),
                     _itemTab(
                       icon: 'assets/icons/icon-drinks.png',
                       title: 'Drinks',
-                      isActive: false,
+                      isActive: selectedCategory == 'Drinks',
+                      onTap: () => filterItems('Drinks'),
                     ),
                     _itemTab(
                       icon: 'assets/icons/icon-desserts.png',
                       title: 'Desserts',
-                      isActive: false,
-                    )
+                      isActive: selectedCategory == 'Desserts',
+                      onTap: () => filterItems('Desserts'),
+                    ),
+                    // Add other tabs here...
                   ],
                 ),
               ),
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 3,
-                  childAspectRatio: (1 / 1.3),
-                  children: items.map((item) {
-                    return _item(
-                      image: item.image,
-                      title: item.title,
-                      price: item.price,
-                      item: item.itemCount,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount = constraints.maxWidth < 600 ? 3 : 4;
+                    double childAspectRatio =
+                        constraints.maxWidth < 600 ? 1 / 0.8 : 1 / 0.79; //new changes
+
+                    return GridView.count(
+                      crossAxisCount: crossAxisCount,
+                      childAspectRatio: childAspectRatio,
+                      children: searchResults.map((item) {
+                        return _item(
+                          image: widget.showImages ? item.image : null,
+                          title: item.title,
+                          price: item.price,
+                          item: item.itemCount,
+                          onTap: () =>
+                              addItemToOrder(item), // Add item to order on tap
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
+                  },
                 ),
               ),
             ],
@@ -155,37 +238,66 @@ class _HomePageState extends State<HomePage> {
         ),
         Expanded(flex: 1, child: Container()),
         Expanded(
-          // flex: 5,
-          flex: 6,
+          flex: 7,
           child: Column(
             children: [
-              _viewItemListButton(context),
+              _viewCustomerList(context),
               const SizedBox(height: 10),
-              // const SizedBox(height: 20),
-              Expanded(
-                child: ListView(
-                  children: [
-                    _itemOrder(
-                      image: 'assets/items/1.png',
-                      title: 'Original Burger',
-                      qty: '2',
-                      price: '\$5.99',
-                    ),
-                    _itemOrder(
-                      image: 'assets/items/2.png',
-                      title: 'Double Burger',
-                      qty: '3',
-                      price: '\$10.99',
-                    ),
-                  ],
-                ),
-              ),
               Expanded(
                 child: Container(
-                  // padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey[900], // Set the background color here,
+                    borderRadius: BorderRadius.circular(12), // Apply border radius
+                  ),
+                  child: orderedItems.isEmpty
+                      ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.shopping_cart_outlined, // Use an icon related to selection
+                          size: 50,
+                          color: Colors.white70,
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Selected items will appear here',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                      : ListView.builder(
+                    itemCount: orderedItems.length,
+                    itemBuilder: (context, index) {
+                      final item = orderedItems[index];
+                      return _itemOrder(
+                        image: item.image,
+                        title: item.title,
+                        // qty: '1', // Hardcoded quantity; adjust as needed
+                        price: item.price,
+                        // itemCount: item.itemCount,
+                        itemCount: '1',
+
+                        index: index,
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+// Spacer(),
+
+              const SizedBox(height: 1),
+              // Expanded(
+                Flexible(
+                  fit: FlexFit.loose,
+                child: Container(
                   padding: const EdgeInsets.all(15),
-                  // margin: const EdgeInsets.symmetric(vertical: 10),
-                  margin: const EdgeInsets.symmetric(vertical: 0),
+                  margin: const EdgeInsets.symmetric(vertical: 1),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     color: const Color(0xff1f2029),
@@ -195,81 +307,78 @@ class _HomePageState extends State<HomePage> {
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Sub Total',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                          Text(
-                            '\$40.32',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
+                          Text('Sub Total',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                          Text('\$40.32',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                         ],
                       ),
                       const SizedBox(height: 0),
-                      // const SizedBox(height: 20),
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Tax',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                          Text(
-                            '\$4.32',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
+                          Text('Tax',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                          Text('\$4.32',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                         ],
                       ),
                       Container(
                         margin: const EdgeInsets.symmetric(vertical: 10),
-                        height: 0, //2
+                        height: 2, //2
                         width: double.infinity,
                         color: Colors.white,
                       ),
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Total',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                          Text(
-                            '\$44.64',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
+                          Text('Total',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                          Text('\$44.64',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                         ],
                       ),
-                      // const SizedBox(height: 30),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: Colors.deepOrange,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                              borderRadius: BorderRadius.circular(14)),
                         ),
-                        onPressed: () {  },
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.print, size: 16),
-                            SizedBox(width: 6),
-                            Text('Print Bills')
-                          ],
+                        onPressed: () async {
+                          print(orderedItems);
+                          try {
+                            final printService = PrintService();
+                            await printService.printBill(orderedItems);
+                            print("Print job started.");
+                          } catch (e) {
+                            print("Error occurred while printing: $e");
+                          }
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.all(12),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.print, size: 13),
+                              SizedBox(width: 6),
+                              Text('Print Bills')
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -283,270 +392,450 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _itemOrder({
-    required String image,
+  Widget _search() {
+    return Expanded(
+      child: TextField(
+        decoration: const InputDecoration(
+          filled: true,
+          fillColor: Color(0xff1f2029),
+          hintText: 'Search item...',
+          hintStyle: TextStyle(color: Colors.white54),
+          prefixIcon: Icon(Icons.search, color: Colors.white54),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(15.0))),
+        ),
+        onChanged: (query) {
+          setState(() {
+            searchResults = items
+                .where((item) =>
+                    item.title.toLowerCase().contains(query.toLowerCase()))
+                .toList();
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _itemTab(
+      {required String icon,
+      required String title,
+      required bool isActive,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        // width: 150,
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: isActive ? const Color(0xfffd8f27) : const Color(0xff1f2029),
+          border: Border.all(
+            color: isActive ? Colors.deepOrangeAccent : const Color(0xff1f2029),
+            width: 3,
+          ),
+        ),
+        child: Row(
+          children: [
+            Image.asset(icon,
+                width: 25,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.error, color: Colors.red)),
+            const SizedBox(width: 8),
+            Text(title,
+                style: TextStyle(
+                    fontSize: 13,
+                    color: isActive ? Colors.white : Colors.white,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget _topMenu(
+  //     {required String title,
+  //     required String subTitle,
+  //     required Widget action}) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //       children: [
+  //         Text(title,
+  //             style: const TextStyle(
+  //                 fontSize: 28,
+  //                 fontWeight: FontWeight.bold,
+  //                 color: Colors.white)),
+  //
+  //         Text(subTitle,
+  //             style: const TextStyle(fontSize: 14, color: Colors.white)),
+  //         action,
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+
+  Widget _topMenu({
     required String title,
-    required String qty,
-    required String price,
+    // required String subTitle,
+    required Widget action,
   }) {
+
+    final String currentDate = DateFormat('dd MMMM yyyy').format(DateTime.now());
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+
+              // Text(
+              //   title,
+              //   style: const TextStyle(
+              //     fontSize: 20,
+              //     fontWeight: FontWeight.bold,
+              //     color: Colors.white,
+              //   ),
+              // ),
+              // Text(
+              //   subTitle,
+              //   style: const TextStyle(
+              //     fontSize: 12,
+              //     color: Colors.white,
+              //   ),
+              // ),
+
+
+              Row(
+                children: [
+                  const Icon(
+                    Icons.date_range,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 8), // Space between icon and date
+                  Text(
+                    currentDate,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                ],
+              ),
+            ],
+          ),
+          action,
+        ],
+      ),
+    );
+  }
+
+
+  Widget _item(
+      {String? image,
+      required String title,
+      required String price,
+      required String item,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xff1f2029),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.grey.withOpacity(0.3),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (image != null)
+              Image.asset(image,
+                  fit: BoxFit.cover, height: 30, width: double.infinity),
+            const SizedBox(height: 8),
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(price,
+                style: const TextStyle(fontSize: 14, color: Colors.grey)),
+            const SizedBox(height: 4),
+            Text(item,
+                style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _itemOrder(
+      {String? image,
+      required String title,
+        required String itemCount, // Change to itemCount
+      required String price,
+  required int index, // Add index to identify the item in the list
+   })
+   {
+    print("new chnag");
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
         color: const Color(0xff1f2029),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.withOpacity(0.3)),
+        ],
       ),
       child: Row(
         children: [
-          Container(
-            height: 60,
-            width: 60,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: AssetImage(image),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
+          if (image != null)
+            // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
                 Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                )
+                    // 'Qty: $qty',
+                    'Item Count: 1',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                Text('Price: $price',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
               ],
             ),
           ),
-          Text(
-            '$qty x',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _item({
-    required String image,
-    required String title,
-    required String price,
-    required String item,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(right: 20, bottom: 20),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xff1f2029),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(11),
-              image: DecorationImage(
-                image: AssetImage(image),
-                fit: BoxFit.cover,
-                onError: (error, stackTrace) {
-                  if (kDebugMode) {
-                    print('Error loading image: $error');
-                  }
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                price,
-                style: const TextStyle(
-                  color: Colors.deepOrange,
-                  fontSize: 20,
-                ),
-              ),
-              Text(
-                item,
-                style: const TextStyle(
-                  color: Colors.white60,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _itemTab({
-    required String icon,
-    required String title,
-    required bool isActive,
-  }) {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 26),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: const Color(0xff1f2029),
-        border: isActive
-            ? Border.all(color: Colors.deepOrangeAccent, width: 3)
-            : Border.all(color: const Color(0xff1f2029), width: 3),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            icon,
-            // width: 38,
-            width: 25,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.error, color: Colors.red);
+          IconButton(
+            icon: Icon(Icons.edit, color: Colors.white),
+            onPressed: () {
+              // _showEditDialog(context, qty, price);
+              _showEditDialog(context, index);
             },
           ),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              // fontSize: 14,
-              fontSize: 10,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          )
         ],
       ),
     );
   }
 
-  Widget _topMenu({
-    required String title,
-    required String subTitle,
-    required Widget action,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-              ),
+
+
+
+  void _showEditDialog(BuildContext context, int index) {
+    final item = orderedItems[index];
+    TextEditingController quantityController = TextEditingController(text: item.itemCount);
+    TextEditingController priceController = TextEditingController(text: item.price);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Color(0xff1f2029),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text('Edit Item',
+            style: TextStyle(color: Colors.white54),),
+
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: quantityController,
+                  style: TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Enter Valid Quantity',
+                    hintStyle: TextStyle(color: Colors.white54),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Color(0xff1f2029),
+                  ),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: priceController,
+                  style: TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Enter Valid Price',
+                    hintStyle: TextStyle(color: Colors.white54),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Color(0xff1f2029),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              subTitle,
-              style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 10,
-              ),
+
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: Text('Save'),
+              onPressed: () {
+                setState(() {
+                  orderedItems[index] = Item(
+                    image: item.image,
+                    title: item.title,
+                    price: priceController.text,
+                    itemCount: quantityController.text,
+                    category: item.category,
+                  );
+                });
+                Navigator.of(context).pop();
+              },
             ),
           ],
-        ),
-        Expanded(flex: 1, child: Container(width: double.infinity)),
-        Expanded(flex: 5, child: action),
-      ],
+        );
+      },
     );
   }
 
-  Widget _search() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      height: 40,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: const Color(0xff1f2029),
-      ),
-      child: TextField(
-        onChanged: (String searchQuery) {
-          // Update the search results based on the search query
-          setState(() {
-            searchResults = items
-                .where((item) =>
-                item.title.toLowerCase().contains(searchQuery.toLowerCase()))
-                .toList();
-          });
-        },
-        style: const TextStyle(color: Colors.white54, fontSize: 11),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          icon: Icon(
-            Icons.search,
-            color: Colors.white54,
-          ),
-          hintText: 'Search menu here...',
-          hintStyle: TextStyle(color: Colors.white54),
-        ),
-      ),
-    );
-  }
 
-  Widget _viewItemListButton(BuildContext context) {
+  Widget _viewCustomerList(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
         backgroundColor: Colors.deepOrange,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 55),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SalesReport(items: items),
-          ),
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return Stack(
+              children: [
+                // Add a BackdropFilter to blur the background
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
+                  child: Container(
+                    color: Colors.black.withOpacity(0), // Just to make the BackdropFilter visible
+                  ),
+                ),
+                AlertDialog(
+                  backgroundColor: Color(0xff1f2029), // Set background color here
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  title: Text(
+                    'Customer',
+                    style: TextStyle(color: Colors.white54), // Title color
+                  ),
+                  content: Container(
+                    width: MediaQuery.of(context).size.width * 0.8, // Adjust the width as needed
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          onChanged: _filterCustomers,
+                          style: TextStyle(color: Colors.white), // Text field text color
+                          decoration: InputDecoration(
+                            hintText: 'Search',
+                            hintStyle: TextStyle(color: Colors.white), // Hint text color
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Colors.white, // Icon color
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        DropdownButton<String>(
+                          value: _selectedCustomer,
+                          hint: const Text(
+                            'Select a customer',
+                            style: TextStyle(color: Colors.white), // Hint text color for dropdown
+                          ),
+                          isExpanded: true,
+                            dropdownColor: Color(0xff1f2029),
+                          items: _filteredCustomers.map((String customer) {
+                            return DropdownMenuItem<String>(
+                              value: customer,
+                              child: Text(
+                                customer,
+                                style: TextStyle(color: Colors.white54), // Dropdown item text color
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _selectedCustomer = newValue;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.min, // Use min size for the row to wrap its children
+                      children: [
+                        TextButton(
+                          child: const Text(
+                            'Close',
+                            style: TextStyle(color: Colors.redAccent), // Close button text color
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        // const SizedBox(width: 8), // Adjust the width as needed to control spacing
+                        // const Icon(Icons.close, color: Colors.redAccent, size: 16),
+                      ],
+                    ),
+                  ],
+
+
+                ),
+              ],
+            );
+          },
         );
       },
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.assignment, color: Colors.white, size: 16), // Add list icon here
+          Icon(Icons.person, color: Colors.white, size: 16), // Add list icon here
           SizedBox(width: 8), // Space between icon and text
           FittedBox(
-            child: Text('Sales report'),
+            child: Text('Customer',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
           ),
         ],
       ),

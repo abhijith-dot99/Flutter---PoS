@@ -235,9 +235,9 @@ class _SalesReportState extends State<SalesReport> {
       rows: widget.items.map((item) {
         return DataRow(
           cells: [
-            DataCell(
+            const DataCell(
               Center(
-                child: Image.asset(item.image, height: 30, width: 30),
+                // child: Image.asset(item.image, height: 30, width: 30),
               ),
             ),
             DataCell(

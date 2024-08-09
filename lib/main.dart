@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/home.dart';
 import 'package:flutter_pos_app/login_page.dart';
+import 'package:flutter_pos_app/sales_report.dart';
 import 'package:flutter_pos_app/shop_config.dart';
 
 import 'customer_list_page.dart';
-import 'sales_report.dart'; // Import the login page
-import 'package:flutter/services.dart';
+import 'model/item.dart';
+import 'settings.dart';
 
 void main() {
   runApp(const MyApp());
@@ -72,11 +73,30 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   String pageActive = 'Home';
+  bool showImages = false;
+
+
+
+  final List<Item> items = [
+  Item(
+  image: 'assets/items/1.png',
+  title: 'Original Burger',
+  price: '\$5.99',
+  itemCount: '11 item',
+  category: 'Burger'),
+  Item(
+  image: 'assets/items/2.png',
+  title: 'Double Burger',
+  price: '\$10.99',
+  itemCount: '10 item',
+  category: 'Burger'),
+
+  ];
 
   _pageView() {
     switch (pageActive) {
       case 'Home':
-        return const HomePage();
+        return HomePage(showImages: showImages);
       case 'Menu':
         return Container();
       case 'History':
@@ -86,7 +106,7 @@ class _MainPageState extends State<MainPage> {
       case 'Settings':
         return Container();
       default:
-        return const HomePage();
+        return HomePage(showImages :showImages);
     }
   }
 
@@ -127,17 +147,33 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+
   Widget _sideMenu() {
     return Column(children: [
       _logo(),
-      const SizedBox(height: 20),
+      // const SizedBox(height: 5),
       Expanded(
         child: ListView(
           children: [
             _itemMenu(
               menu: 'Home',
               icon: Icons.rocket_sharp,
-              onTap: () {  },
+              onTap: () {
+                _setPage('Home');
+              },
+            ),
+            _itemMenu(
+              menu: 'Sales',
+              icon: Icons.assignment,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => SalesReport(
+                        items: items,
+                      )),
+                );
+              },
             ),
             _itemMenu(
               menu: 'Menu',
@@ -145,25 +181,33 @@ class _MainPageState extends State<MainPage> {
               onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ShopConfigPage())),
             ),
             _itemMenu(
-              menu: 'History',
-              icon: Icons.history_toggle_off_rounded, onTap: () {  },
-            ),
-            _itemMenu(
-              menu: 'Promos',
-              icon: Icons.discount_outlined,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const CustomerListPage()),
-              ),
-            ),
-            _itemMenu(
               menu: 'Settings',
-              icon: Icons.sports_soccer_outlined, onTap: () {  },
+              icon: Icons.settings,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => SettingsPage(
+                      showImages: showImages,
+                      onShowImagesChanged: (value) {
+                        setState(() {
+                          showImages = value;
+                        });
+                      },
+                    ),
+                  ),
+                ).then((_) {
+                  // Refresh the page to reflect updated settings
+                  setState(() {});
+                });
+              },
             ),
           ],
         ),
       ),
     ]);
   }
+
+
 
   Widget _logo() {
     return Column(
