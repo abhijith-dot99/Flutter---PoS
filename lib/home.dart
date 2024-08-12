@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'holding_bill.dart';
 import 'model/item.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
@@ -24,6 +25,36 @@ class _HomePageState extends State<HomePage> {
   List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
   late List<String> _filteredCustomers;
 
+
+  // Stored ordered items before clearing
+  List<Item> storedOrderedItems = [];
+
+  void _storeOrderedItems() {
+    setState(() {
+      storedOrderedItems = List.from(orderedItems);
+    });
+  }
+
+  void _clearOrderedItems() {
+    setState(() {
+      orderedItems.clear();
+    });
+  }
+
+  void _fetchStoredOrderedItems() {
+    setState(() {
+      orderedItems = List.from(storedOrderedItems);
+    });
+  }
+
+  List<Map<String, dynamic>> heldBills = [];
+
+
+  HeldBill sampleBill = HeldBill(
+    number: 1,
+    items: [Item(title: 'Sample Item', price: '\$10.00', image: '', itemCount: '1 item', category: 'Sample', tax: '')],
+  );
+
   final List<Item> items = [
     Item(
         image: 'assets/items/1.png',
@@ -39,7 +70,6 @@ class _HomePageState extends State<HomePage> {
         tax: 'tax',
         itemCount: '1 item',
         category: 'Burger'),
-
     Item(
       image: 'assets/items/3.png',
       title: 'Cheese Burger',
@@ -73,36 +103,12 @@ class _HomePageState extends State<HomePage> {
       category: 'Burger',
     ),
     Item(
-      image: 'assets/items/7.png',
-      title: 'Special Cheese Burger',
-      price: '\$8.00',
-      tax: 'tax',
-      itemCount: '1 item',
-      category: 'Burger',
-    ),
-    Item(
-      image: 'assets/items/8.png',
-      title: 'Jumbo Cheese Burger',
-      price: '\$15.99',
-      tax: 'tax',
-      itemCount: '1 item',
-      category: 'Burger',
-    ),
-    Item(
       image: 'assets/items/9.png',
       title: 'Noodles',
       price: '\$8.99',
       tax: 'tax',
       itemCount: '1 item',
       category: 'Noodles',
-    ),
-    Item(
-      image: 'assets/items/10.png',
-      title: 'Drinks',
-      price: '\$3.99',
-        tax: 'tax',
-      itemCount: '1 item',
-      category: 'Drinks',
     ),
   ];
 
@@ -129,7 +135,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _filteredCustomers = _customers
           .where((customer) =>
-              customer.toLowerCase().contains(query.toLowerCase()))
+          customer.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -138,6 +144,52 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       orderedItems.add(item); // Add item to the order
     });
+  }
+
+  void _showHoldBillWindow() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Color(0xff1f2029),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Hold the Bill',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Do you want to clear the current order and hold the bill?',
+            style: TextStyle(color: Colors.white54),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child:
+              const Text('Cancel', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Hold Bill',
+                  style: TextStyle(color: Colors.black)),
+              onPressed: () {
+                // Clear ordered items and billing details
+                setState(() {
+                  orderedItems.clear();
+                });
+                print("ordered items $orderedItems");
+
+                // Optionally, you can clear billing details here
+                Navigator.of(context).pop();
+                // Optionally, navigate to the new window or screen showing held bills
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -155,243 +207,284 @@ class _HomePageState extends State<HomePage> {
       ]);
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 14,
-          child: Column(
-            children: [
-              _topMenu(
-                title: 'Lorem Restaurant',
-                // subTitle: '20 October 2022',
-                action: _search(),
-              ),
-              Container(
-                height: 70,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                margin: const EdgeInsets.only(),
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _itemTab(
-                        icon: 'assets/samplepic.jpg',
-                        title: 'All',
-                        isActive: selectedCategory == 'All',
-                        onTap: () => filterItems('All')),
-                    _itemTab(
-                        icon: 'assets/icons/icon-burger.png',
-                        title: 'Burger',
-                        isActive: selectedCategory == 'Burger',
-                        onTap: () => filterItems('Burger')),
-                    _itemTab(
-                      icon: 'assets/icons/icon-noodles.png',
-                      title: 'Noodles',
-                      isActive: selectedCategory == 'Noodles',
-                      onTap: () => filterItems('Noodles'),
-                    ),
-                    _itemTab(
-                      icon: 'assets/icons/icon-drinks.png',
-                      title: 'Drinks',
-                      isActive: selectedCategory == 'Drinks',
-                      onTap: () => filterItems('Drinks'),
-                    ),
-                    _itemTab(
-                      icon: 'assets/icons/icon-desserts.png',
-                      title: 'Desserts',
-                      isActive: selectedCategory == 'Desserts',
-                      onTap: () => filterItems('Desserts'),
-                    ),
-                    // Add other tabs here...
-                  ],
-                ),
-              ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    int crossAxisCount = constraints.maxWidth < 600 ? 3 : 4;
-                    double childAspectRatio = constraints.maxWidth < 600
-                        ? 1 / 0.8
-                        : 1 / 0.79; //new changes
+    // return Row
 
-                    return GridView.count(
-                      crossAxisCount: crossAxisCount,
-                      childAspectRatio: childAspectRatio,
-                      children: searchResults.map((item) {
-                        return _item(
-                          image: widget.showImages ? item.image : null,
-                          title: item.title,
-                          price: item.price,
-                          item: item.itemCount,
-                          onTap: () =>
-                              addItemToOrder(item), // Add item to order on tap
-                        );
-                      }).toList(),
-                    );
-                  },
+    return Scaffold(
+      backgroundColor: Color(0xff1f2021),
+      body: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 14,
+            child: Column(
+              children: [
+                _topMenu(
+                  title: 'Lorem Restaurant',
+                  // subTitle: '20 October 2022',
+                  action: _search(),
                 ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(flex: 1, child: Container()),
-        Expanded(
-          flex: 7,
-          child: Column(
-            children: [
-              _viewCustomerList(context),
-              const SizedBox(height: 10),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color:
-                        Colors.blueGrey[900], // Set the background color here,
-                    borderRadius:
-                        BorderRadius.circular(12), // Apply border radius
-                  ),
-                  child: orderedItems.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons
-                                    .shopping_cart_outlined, // Use an icon related to selection
-                                size: 50,
-                                color: Colors.white70,
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'Selected items will appear here',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: orderedItems.length,
-                          itemBuilder: (context, index) {
-                            final item = orderedItems[index];
-                            return _itemOrder(
-                              image: item.image,
-                              title: item.title,
-                              // qty: '1', // Hardcoded quantity; adjust as needed
-                              price: item.price,
-                              itemCount: item.itemCount,
-                              index: index,
-                            );
-                          },
-                        ),
-                ),
-              ),
-
-// Spacer(),
-
-              const SizedBox(height: 1),
-              // Expanded(
-              Flexible(
-                fit: FlexFit.loose,
-                child: Container(
-                  padding: const EdgeInsets.all(15),
-                  margin: const EdgeInsets.symmetric(vertical: 1),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    color: const Color(0xff1f2029),
-                  ),
-                  child: Column(
+                Container(
+                  height: 70,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  margin: const EdgeInsets.only(),
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Sub Total',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          Text('\$${calculateTotal().toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                        ],
+                      _itemTab(
+                          icon: 'assets/samplepic.jpg',
+                          title: 'All',
+                          isActive: selectedCategory == 'All',
+                          onTap: () => filterItems('All')),
+                      _itemTab(
+                          icon: 'assets/icons/icon-burger.png',
+                          title: 'Burger',
+                          isActive: selectedCategory == 'Burger',
+                          onTap: () => filterItems('Burger')),
+                      _itemTab(
+                        icon: 'assets/icons/icon-noodles.png',
+                        title: 'Noodles',
+                        isActive: selectedCategory == 'Noodles',
+                        onTap: () => filterItems('Noodles'),
                       ),
-                      const SizedBox(height: 0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Tax',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          Text(
-                              '\$${(calculateTotal() * 0.1).toStringAsFixed(2)}', // Assume 10% tax
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                        ],
+                      _itemTab(
+                        icon: 'assets/icons/icon-drinks.png',
+                        title: 'Drinks',
+                        isActive: selectedCategory == 'Drinks',
+                        onTap: () => filterItems('Drinks'),
                       ),
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 10),
-                        height: 2, //2
-                        width: double.infinity,
-                        color: Colors.white,
+                      _itemTab(
+                        icon: 'assets/icons/icon-desserts.png',
+                        title: 'Desserts',
+                        isActive: selectedCategory == 'Desserts',
+                        onTap: () => filterItems('Desserts'),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Total',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-
-                          Text(
-                              '\$${(calculateTotal() * 1.1).toStringAsFixed(2)}', // Subtotal + Tax
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.deepOrange,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                        ),
-                        onPressed: () async {
-                          print(orderedItems);
-                          try {
-                            final printService = PrintService();
-                            await printService.printBill(orderedItems);
-                            print("Print job started.");
-                          } catch (e) {
-                            print("Error occurred while printing: $e");
-                          }
-                        },
-                        child: Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.all(12),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.print, size: 13),
-                              SizedBox(width: 6),
-                              Text('Print Bills')
-                            ],
-                          ),
-                        ),
-                      ),
+                      // Add other tabs here...
                     ],
                   ),
                 ),
-              ),
-            ],
+
+                //newchnage
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      int crossAxisCount = constraints.maxWidth < 600 ? 3 : 5;
+                      // int crossAxisCount = constraints.maxWidth < 600 ? 3 : 5; new changes
+                      double childAspectRatio = constraints.maxWidth < 600
+                          ? 1 / 0.8
+                          : 1 / 0.85; //new changes
+
+                      return GridView.count(
+                        crossAxisCount: crossAxisCount,
+                        childAspectRatio: childAspectRatio,
+                        children: searchResults.map((item) {
+                          return _item(
+                            image: widget.showImages ? item.image : null,
+                            title: item.title,
+                            price: item.price,
+                            item: item.itemCount,
+                            onTap: () => addItemToOrder(
+                                item), // Add item to order on tap
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Expanded(flex: 1, child: Container()),
+          Expanded(
+            flex: 4,
+            child: Column(
+              children: [
+                _viewCustomerList(context),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors
+                          .blueGrey[900], // Set the background color here,
+                      borderRadius:
+                      BorderRadius.circular(12), // Apply border radius
+                    ),
+                    child: orderedItems.isEmpty
+                        ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons
+                                .shopping_cart_outlined, // Use an icon related to selection
+                            size: 50,
+                            color: Colors.white70,
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Selected items will appear here',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        : ListView.builder(
+                      itemCount: orderedItems.length,
+                      itemBuilder: (context, index) {
+                        final item = orderedItems[index];
+                        return _itemOrder(
+                          image: item.image,
+                          title: item.title,
+                          // qty: '1', // Hardcoded quantity; adjust as needed
+                          price: item.price,
+                          itemCount: item.itemCount,
+                          index: index,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+// Spacer(),
+
+                const SizedBox(height: 1),
+                // Expanded(
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Container(
+                    padding: const EdgeInsets.all(15),
+                    margin: const EdgeInsets.symmetric(vertical: 1),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: const Color(0xff1f2029),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Sub Total',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                            // Text('\$${calculateTotal().toStringAsFixed(2)}',
+                            //     style: const TextStyle(
+                            //         fontWeight: FontWeight.bold,
+                            //         color: Colors.white)),
+
+                            Text('\$${calculateSubtotal().toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                          ],
+                        ),
+                        const SizedBox(height: 0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Tax',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                            // Text(
+                            //     '\$${(calculateTotal() * 0.1).toStringAsFixed(2)}', // Assume 10% tax
+                            //     style: const TextStyle(
+                            //         fontWeight: FontWeight.bold,
+                            //         color: Colors.white)),
+
+                            Text('\$${calculateTax().toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                          ],
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 10),
+                          height: 2, //2
+                          width: double.infinity,
+                          color: Colors.white,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                            Text(
+                                '\$${(calculateTotal() * 1.1).toStringAsFixed(2)}', // Subtotal + Tax
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.deepOrange,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
+                          ),
+                          onPressed: () async {
+                            print(orderedItems);
+                            try {
+                              final printService = PrintService();
+                              await printService.printBill(orderedItems);
+                              print("Print job started.");
+                            } catch (e) {
+                              print("Error occurred while printing: $e");
+                            }
+                          },
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.all(12),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.print, size: 13),
+                                SizedBox(width: 6),
+                                Text('Print Bills')
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+
+
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HoldingBillPage(
+                // holdingBillItems: storedOrderedItems,
+                heldBills: [sampleBill],
+                storeOrderedItems: _storeOrderedItems,
+                clearOrderedItems: _clearOrderedItems,
+                fetchStoredItems: _fetchStoredOrderedItems,
+              ),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+        backgroundColor: Colors.deepOrangeAccent,
+      ),
+
+
+
     );
   }
 
@@ -457,29 +550,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Widget _topMenu(
-  //     {required String title,
-  //     required String subTitle,
-  //     required Widget action}) {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-  //     child: Row(
-  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //       children: [
-  //         Text(title,
-  //             style: const TextStyle(
-  //                 fontSize: 28,
-  //                 fontWeight: FontWeight.bold,
-  //                 color: Colors.white)),
-  //
-  //         Text(subTitle,
-  //             style: const TextStyle(fontSize: 14, color: Colors.white)),
-  //         action,
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _topMenu({
     required String title,
     // required String subTitle,
@@ -496,22 +566,6 @@ class _HomePageState extends State<HomePage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Text(
-              //   title,
-              //   style: const TextStyle(
-              //     fontSize: 20,
-              //     fontWeight: FontWeight.bold,
-              //     color: Colors.white,
-              //   ),
-              // ),
-              // Text(
-              //   subTitle,
-              //   style: const TextStyle(
-              //     fontSize: 12,
-              //     color: Colors.white,
-              //   ),
-              // ),
-
               Row(
                 children: [
                   const Icon(
@@ -584,67 +638,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Widget _itemOrder({
-  //   String? image,
-  //   required String title,
-  //   required String itemCount, // Change to itemCount
-  //   required String price,
-  //   required int index, // Add index to identify the item in the list
-  // }) {
-  //   print("new chnag");
-  //   print("orderitems $orderedItems");
-  //   return Container(
-  //     margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-  //     padding: const EdgeInsets.all(8),
-  //     decoration: BoxDecoration(
-  //       color: const Color(0xff1f2029),
-  //       borderRadius: BorderRadius.circular(12),
-  //       boxShadow: [
-  //         BoxShadow(color: Colors.grey.withOpacity(0.3)),
-  //       ],
-  //     ),
-  //     child: Row(
-  //       children: [
-  //         if (image != null)
-  //           // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
-  //           const SizedBox(width: 12),
-  //         Expanded(
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Text(title,
-  //                   style: const TextStyle(
-  //                       fontSize: 16,
-  //                       color: Colors.white,
-  //                       fontWeight: FontWeight.bold)),
-  //               const SizedBox(height: 4),
-  //               Text('Total: $itemCount',
-  //                   style: TextStyle(fontSize: 14, color: Colors.grey)),
-  //               Text('Price: $price',
-  //                   style: const TextStyle(fontSize: 14, color: Colors.grey)),
-  //             ],
-  //           ),
-  //         ),
-  //         IconButton(
-  //           icon: Icon(Icons.edit, color: Colors.white),
-  //           onPressed: () {
-  //             _showEditDialog(context, index);
-  //           },
-  //         ),
-  //         IconButton(
-  //           icon: Icon(Icons.delete, color: Colors.red),
-  //           onPressed: () {
-  //             _removeItem(index);
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-
-
-
   Widget _itemOrder({
     String? image,
     required String title,
@@ -669,7 +662,7 @@ class _HomePageState extends State<HomePage> {
         child: Row(
           children: [
             if (image != null)
-            // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
+              // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
               const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -788,7 +781,7 @@ class _HomePageState extends State<HomePage> {
                     image: item.image,
                     title: item.title,
                     price: priceController.text,
-                    tax:item.tax,
+                    tax: item.tax,
                     itemCount: quantityController.text,
                     category: item.category,
                   );
@@ -802,14 +795,43 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  double calculateTotal() {
-    double total = 0.0;
+  // Calculate the subtotal of the order
+  double calculateSubtotal() {
+    double subtotal = 0.0;
     for (var item in orderedItems) {
       double price = double.parse(item.price.replaceAll('\$', ''));
       int quantity = int.parse(item.itemCount.split(' ')[0]);
-      total += price * quantity;
+      subtotal += price * quantity;
     }
-    return total;
+    return subtotal;
+  }
+
+  // Calculate the total tax based on tax type
+  double calculateTax() {
+    double totalTax = 0.0;
+    for (var item in orderedItems) {
+      double price = double.parse(item.price.replaceAll('\$', ''));
+      int quantity = int.parse(item.itemCount.split(' ')[0]);
+      double itemTotal = price * quantity;
+
+      if (item.tax.toLowerCase() == 'tax') {
+        totalTax += itemTotal * 0.10; // 10% tax
+      } else {
+        try {
+          // Parse GST amount as double
+          double gstAmount = double.parse(item.tax);
+          totalTax += gstAmount * quantity;
+        } catch (e) {
+          print("Invalid GST amount: ${item.tax}");
+        }
+      }
+    }
+    return totalTax;
+  }
+
+  // Calculate the total amount including tax
+  double calculateTotal() {
+    return calculateSubtotal() + calculateTax();
   }
 
   Widget _viewCustomerList(BuildContext context) {

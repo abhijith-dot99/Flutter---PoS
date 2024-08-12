@@ -3,8 +3,6 @@ import 'package:flutter_pos_app/home.dart';
 import 'package:flutter_pos_app/login_page.dart';
 import 'package:flutter_pos_app/sales_report.dart';
 import 'package:flutter_pos_app/shop_config.dart';
-
-import 'customer_list_page.dart';
 import 'model/item.dart';
 import 'settings.dart';
 
@@ -77,21 +75,22 @@ class _MainPageState extends State<MainPage> {
 
 
 
-  // final List<Item> items = [
-  // Item(
-  // image: 'assets/items/1.png',
-  // title: 'Original Burger',
-  // price: '\$5.99',
-  // itemCount: '11 item',
-  // category: 'Burger'),
-  // Item(
-  // image: 'assets/items/2.png',
-  // title: 'Double Burger',
-  // price: '\$10.99',
-  // itemCount: '10 item',
-  // category: 'Burger'),
-  //
-  // ];
+  final List<Item> items = [
+  Item(
+  image: 'assets/items/1.png',
+  title: 'Original Burger',
+  price: '\$5.99',
+  itemCount: '11 item',
+  category: 'Burger', tax: ''),
+  Item(
+  image: 'assets/items/2.png',
+  title: 'Double Burger',
+  price: '\$10.99',
+  itemCount: '10 item',
+  category: 'Burger', tax: ''),
+  ];
+
+
 
   _pageView() {
     switch (pageActive) {
@@ -144,6 +143,8 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
+
+
     );
   }
 
@@ -166,13 +167,13 @@ class _MainPageState extends State<MainPage> {
               menu: 'Sales',
               icon: Icons.assignment,
               onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //       builder: (context) => SalesReport(
-                //         items: items,
-                //       )),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => SalesReport(
+                        items: items,
+                      )),
+                );
               },
             ),
             _itemMenu(

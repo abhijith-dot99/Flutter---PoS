@@ -23,6 +23,13 @@ class Item {
   String toString() {
     return 'Title: $title, Price: $price, Quantity: $itemCount';
   }
-
-
 }
+
+
+class HeldBill {
+  final int number;
+  final List<Item> items;
+
+  HeldBill({required this.number, required this.items});
+}
+
