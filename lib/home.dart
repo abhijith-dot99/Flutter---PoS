@@ -1,11 +1,15 @@
+import 'dart:convert';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'holding_bill.dart';
 import 'model/item.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
+
+// import 'dart:js' as js;
+// import 'package:window_manager/window_manager.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 
 class HomePage extends StatefulWidget {
   final bool showImages; // Add this parameter
@@ -16,7 +20,12 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
+  late TabController _tabController;
+  List<Bill> _bills = [];
+
+
+
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
   List<Item> orderedItems = []; // Track ordered items
@@ -26,34 +35,12 @@ class _HomePageState extends State<HomePage> {
   late List<String> _filteredCustomers;
 
 
-  // Stored ordered items before clearing
-  List<Item> storedOrderedItems = [];
-
-  void _storeOrderedItems() {
-    setState(() {
-      storedOrderedItems = List.from(orderedItems);
-    });
-  }
-
-  void _clearOrderedItems() {
-    setState(() {
-      orderedItems.clear();
-    });
-  }
-
-  void _fetchStoredOrderedItems() {
-    setState(() {
-      orderedItems = List.from(storedOrderedItems);
-    });
-  }
-
-  List<Map<String, dynamic>> heldBills = [];
 
 
-  HeldBill sampleBill = HeldBill(
-    number: 1,
-    items: [Item(title: 'Sample Item', price: '\$10.00', image: '', itemCount: '1 item', category: 'Sample', tax: '')],
-  );
+
+
+
+
 
   final List<Item> items = [
     Item(
@@ -116,9 +103,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     searchResults = items;
-
     _filteredCustomers = _customers; //newchange
+
+    _tabController = TabController(length: 1, vsync: this);
+    _bills.add(Bill(items: [])); // Start with one bill by defau
   }
+
 
   void filterItems(String category) {
     setState(() {
@@ -370,10 +360,6 @@ class _HomePageState extends State<HomePage> {
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white)),
-                            // Text('\$${calculateTotal().toStringAsFixed(2)}',
-                            //     style: const TextStyle(
-                            //         fontWeight: FontWeight.bold,
-                            //         color: Colors.white)),
 
                             Text('\$${calculateSubtotal().toStringAsFixed(2)}',
                                 style: const TextStyle(
@@ -389,11 +375,6 @@ class _HomePageState extends State<HomePage> {
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white)),
-                            // Text(
-                            //     '\$${(calculateTotal() * 0.1).toStringAsFixed(2)}', // Assume 10% tax
-                            //     style: const TextStyle(
-                            //         fontWeight: FontWeight.bold,
-                            //         color: Colors.white)),
 
                             Text('\$${calculateTax().toStringAsFixed(2)}',
                                 style: const TextStyle(
@@ -463,21 +444,30 @@ class _HomePageState extends State<HomePage> {
       ),
 
 
-
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HoldingBillPage(
-                // holdingBillItems: storedOrderedItems,
-                heldBills: [sampleBill],
-                storeOrderedItems: _storeOrderedItems,
-                clearOrderedItems: _clearOrderedItems,
-                fetchStoredItems: _fetchStoredOrderedItems,
-              ),
-            ),
+        onPressed: () async{
+          // js.context.callMethod('open', ['#']);
+
+          final windowController = await DesktopMultiWindow.createWindow(
+            jsonEncode({
+              'args1': 'Sub window',
+            }),
           );
+
+          windowController
+            ..setTitle('New Window')  // Set the title
+            ..setFrame(const Offset(0, 0) & const Size(800, 600))  // Set the size and position
+            ..center()  // Center the window
+            ..show();  // Show the window
+
+
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => HomePage(showImages :false)),
+          // );
+
+
+
         },
         child: const Icon(Icons.add),
         backgroundColor: Colors.deepOrangeAccent,
@@ -505,7 +495,7 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             searchResults = items
                 .where((item) =>
-                    item.title.toLowerCase().contains(query.toLowerCase()))
+                item.title.toLowerCase().contains(query.toLowerCase()))
                 .toList();
           });
         },
@@ -515,9 +505,9 @@ class _HomePageState extends State<HomePage> {
 
   Widget _itemTab(
       {required String icon,
-      required String title,
-      required bool isActive,
-      required VoidCallback onTap}) {
+        required String title,
+        required bool isActive,
+        required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -537,7 +527,7 @@ class _HomePageState extends State<HomePage> {
             Image.asset(icon,
                 width: 25,
                 errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.error, color: Colors.red)),
+                const Icon(Icons.error, color: Colors.red)),
             const SizedBox(width: 8),
             Text(title,
                 style: TextStyle(
@@ -556,7 +546,7 @@ class _HomePageState extends State<HomePage> {
     required Widget action,
   }) {
     final String currentDate =
-        DateFormat('dd MMMM yyyy').format(DateTime.now());
+    DateFormat('dd MMMM yyyy').format(DateTime.now());
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 4),
@@ -594,10 +584,10 @@ class _HomePageState extends State<HomePage> {
 
   Widget _item(
       {String? image,
-      required String title,
-      required String price,
-      required String item,
-      required VoidCallback onTap}) {
+        required String title,
+        required String price,
+        required String item,
+        required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -662,7 +652,7 @@ class _HomePageState extends State<HomePage> {
         child: Row(
           children: [
             if (image != null)
-              // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
+            // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
               const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -710,9 +700,9 @@ class _HomePageState extends State<HomePage> {
     final item = orderedItems[index];
 
     TextEditingController quantityController =
-        TextEditingController(text: item.itemCount);
+    TextEditingController(text: item.itemCount);
     TextEditingController priceController =
-        TextEditingController(text: item.price);
+    TextEditingController(text: item.price);
 
     showDialog(
       context: context,
@@ -857,7 +847,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 AlertDialog(
                   backgroundColor:
-                      Color(0xff1f2029), // Set background color here
+                  Color(0xff1f2029), // Set background color here
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -956,7 +946,7 @@ class _HomePageState extends State<HomePage> {
             child: Text(
               'Customer',
               style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],

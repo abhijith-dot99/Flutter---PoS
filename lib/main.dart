@@ -6,9 +6,17 @@ import 'package:flutter_pos_app/shop_config.dart';
 import 'model/item.dart';
 import 'settings.dart';
 
+import 'package:window_manager/window_manager.dart';
+
 void main() {
   runApp(const MyApp());
 }
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   await windowManager.ensureInitialized();
+//   runApp(MyApp());
+// }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -41,6 +49,7 @@ class _AppInitializerState extends State<AppInitializer> {
     super.initState();
     _checkLoginStatus();
   }
+
 
   Future<void> _checkLoginStatus() async {
     // Simulate a delay for checking login status

@@ -33,3 +33,9 @@ class HeldBill {
   HeldBill({required this.number, required this.items});
 }
 
+
+class Bill {
+  List<Item> items;
+
+  Bill({required this.items});
+}
