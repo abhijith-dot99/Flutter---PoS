@@ -42,12 +42,12 @@ class AppInitializer extends StatefulWidget {
 }
 
 class _AppInitializerState extends State<AppInitializer> {
-  bool _isLoggedIn = false; // Change this based on actual login state
+  bool _isLoggedIn = true; // Change this based on actual login state
 
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
+    // _checkLoginStatus();
   }
 
 
@@ -57,17 +57,17 @@ class _AppInitializerState extends State<AppInitializer> {
 
     // Here you would typically check the actual login status from storage
     setState(() {
-      _isLoggedIn = false; // Set to true if user is logged in
+      _isLoggedIn = true; // Set to true if user is logged in
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoggedIn) {
+    // if (_isLoggedIn) {
       return const MainPage(); // Show the main page if logged in
-    } else {
-      return const LoginPage(); // Show the login page if not logged in
-    }
+    // } else {
+      // return const LoginPage(); // Show the login page if not logged in
+    // }
   }
 }
 

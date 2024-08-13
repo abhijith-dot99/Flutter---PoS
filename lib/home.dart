@@ -2,14 +2,11 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'holding_bill.dart';
 import 'model/item.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
-
-// import 'dart:js' as js;
-// import 'package:window_manager/window_manager.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+
 
 class HomePage extends StatefulWidget {
   final bool showImages; // Add this parameter
@@ -25,7 +22,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
   List<Bill> _bills = [];
 
 
-
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
   List<Item> orderedItems = []; // Track ordered items
@@ -34,12 +30,19 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
   List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
   late List<String> _filteredCustomers;
 
+  int _selectedPage = 1;
 
+  void _openPage(int page) async {
+    setState(() {
+      _selectedPage = page;
+    });
 
-
-
-
-
+    final window = await DesktopMultiWindow.createWindow(
+      jsonEncode(<String, dynamic>{'page': 'Menu'}),
+    );
+    window.setTitle('Home $page');
+    window.show();
+  }
 
 
   final List<Item> items = [
@@ -136,52 +139,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     });
   }
 
-  void _showHoldBillWindow() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Color(0xff1f2029),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Hold the Bill',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: const Text(
-            'Do you want to clear the current order and hold the bill?',
-            style: TextStyle(color: Colors.white54),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child:
-              const Text('Cancel', style: TextStyle(color: Colors.white)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Hold Bill',
-                  style: TextStyle(color: Colors.black)),
-              onPressed: () {
-                // Clear ordered items and billing details
-                setState(() {
-                  orderedItems.clear();
-                });
-                print("ordered items $orderedItems");
-
-                // Optionally, you can clear billing details here
-                Navigator.of(context).pop();
-                // Optionally, navigate to the new window or screen showing held bills
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -197,8 +154,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
       ]);
     }
 
-    // return Row
-
     return Scaffold(
       backgroundColor: Color(0xff1f2021),
       body: Row(
@@ -211,270 +166,115 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
               children: [
                 _topMenu(
                   title: 'Lorem Restaurant',
-                  // subTitle: '20 October 2022',
                   action: _search(),
                 ),
                 Container(
                   height: 70,
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  margin: const EdgeInsets.only(),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
                       _itemTab(
-                          icon: 'assets/samplepic.jpg',
-                          title: 'All',
-                          isActive: selectedCategory == 'All',
-                          onTap: () => filterItems('All')),
-                      _itemTab(
-                          icon: 'assets/icons/icon-burger.png',
-                          title: 'Burger',
-                          isActive: selectedCategory == 'Burger',
-                          onTap: () => filterItems('Burger')),
-                      _itemTab(
-                        icon: 'assets/icons/icon-noodles.png',
-                        title: 'Noodles',
-                        isActive: selectedCategory == 'Noodles',
-                        onTap: () => filterItems('Noodles'),
+                        icon: 'assets/samplepic.jpg',
+                        title: 'All',
+                        isActive: selectedCategory == 'All',
+                        onTap: () => filterItems('All'),
                       ),
                       _itemTab(
-                        icon: 'assets/icons/icon-drinks.png',
-                        title: 'Drinks',
-                        isActive: selectedCategory == 'Drinks',
-                        onTap: () => filterItems('Drinks'),
+                        icon: 'assets/items/1.png',
+                        title: 'Burger',
+                        isActive: selectedCategory == 'burger',
+                        onTap: () => filterItems('burger'),
                       ),
-                      _itemTab(
-                        icon: 'assets/icons/icon-desserts.png',
-                        title: 'Desserts',
-                        isActive: selectedCategory == 'Desserts',
-                        onTap: () => filterItems('Desserts'),
-                      ),
-                      // Add other tabs here...
+                      // Add more item tabs here
                     ],
                   ),
                 ),
 
-                //newchnage
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       int crossAxisCount = constraints.maxWidth < 600 ? 3 : 5;
-                      // int crossAxisCount = constraints.maxWidth < 600 ? 3 : 5; new changes
                       double childAspectRatio = constraints.maxWidth < 600
                           ? 1 / 0.8
-                          : 1 / 0.85; //new changes
+                          : 1 / 0.85;
 
-                      return GridView.count(
-                        crossAxisCount: crossAxisCount,
-                        childAspectRatio: childAspectRatio,
-                        children: searchResults.map((item) {
+                      return GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: childAspectRatio,
+                        ),
+                        itemCount: searchResults.length,
+                        itemBuilder: (context, index) {
+                          final item = searchResults[index];
                           return _item(
                             image: widget.showImages ? item.image : null,
                             title: item.title,
                             price: item.price,
                             item: item.itemCount,
-                            onTap: () => addItemToOrder(
-                                item), // Add item to order on tap
+                            onTap: () => addItemToOrder(item),
                           );
-                        }).toList(),
+                        },
                       );
+
+
+
                     },
                   ),
                 ),
+
               ],
             ),
           ),
+
           Expanded(flex: 1, child: Container()),
+
           Expanded(
             flex: 4,
+
             child: Column(
               children: [
                 _viewCustomerList(context),
                 const SizedBox(height: 10),
+
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors
-                          .blueGrey[900], // Set the background color here,
-                      borderRadius:
-                      BorderRadius.circular(12), // Apply border radius
-                    ),
-                    child: orderedItems.isEmpty
-                        ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons
-                                .shopping_cart_outlined, // Use an icon related to selection
-                            size: 50,
-                            color: Colors.white70,
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Selected items will appear here',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                        : ListView.builder(
-                      itemCount: orderedItems.length,
-                      itemBuilder: (context, index) {
-                        final item = orderedItems[index];
-                        return _itemOrder(
-                          image: item.image,
-                          title: item.title,
-                          // qty: '1', // Hardcoded quantity; adjust as needed
-                          price: item.price,
-                          itemCount: item.itemCount,
-                          index: index,
-                        );
-                      },
-                    ),
-                  ),
+                  child: _buildOrderedItemsSection(),
                 ),
 
-// Spacer(),
-
-                const SizedBox(height: 1),
-                // Expanded(
-                Flexible(
-                  fit: FlexFit.loose,
-                  child: Container(
-                    padding: const EdgeInsets.all(15),
-                    margin: const EdgeInsets.symmetric(vertical: 1),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      color: const Color(0xff1f2029),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Sub Total',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-
-                            Text('\$${calculateSubtotal().toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-                          ],
-                        ),
-                        const SizedBox(height: 0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Tax',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-
-                            Text('\$${calculateTax().toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-                          ],
-                        ),
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: 10),
-                          height: 2, //2
-                          width: double.infinity,
-                          color: Colors.white,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-                            Text(
-                                '\$${(calculateTotal() * 1.1).toStringAsFixed(2)}', // Subtotal + Tax
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.deepOrange,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: () async {
-                            print(orderedItems);
-                            try {
-                              final printService = PrintService();
-                              await printService.printBill(orderedItems);
-                              print("Print job started.");
-                            } catch (e) {
-                              print("Error occurred while printing: $e");
-                            }
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            padding: const EdgeInsets.all(12),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.print, size: 13),
-                                SizedBox(width: 6),
-                                Text('Print Bills')
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 2),
+                _calculateAndPrintSection()
               ],
             ),
           ),
+
         ],
       ),
-
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async{
-          // js.context.callMethod('open', ['#']);
-
-          final windowController = await DesktopMultiWindow.createWindow(
-            jsonEncode({
-              'args1': 'Sub window',
-            }),
-          );
-
-          windowController
-            ..setTitle('New Window')  // Set the title
-            ..setFrame(const Offset(0, 0) & const Size(800, 600))  // Set the size and position
-            ..center()  // Center the window
-            ..show();  // Show the window
-
-
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(builder: (context) => HomePage(showImages :false)),
-          // );
-
-
-
-        },
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.deepOrangeAccent,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildNavButton(1),
+            SizedBox(width: 10),
+            _buildNavButton(2),
+            SizedBox(width: 10),
+            _buildNavButton(3),
+          ],
+        ),
       ),
+    );
+  }
 
-
-
+  ElevatedButton _buildNavButton(int page) {
+    return ElevatedButton(
+      onPressed: () => _openPage(page),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _selectedPage == page
+            ? Colors.deepOrangeAccent
+            : Colors.white70,
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+      ),
+      child: Text('$page'),
     );
   }
 
@@ -824,6 +624,155 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     return calculateSubtotal() + calculateTax();
   }
 
+
+
+  Widget _calculateAndPrintSection() {
+    double subtotal = calculateSubtotal();
+    double tax = calculateTax();
+    double total = calculateTotal();
+
+    return Flexible(
+      fit: FlexFit.loose,
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        margin: const EdgeInsets.symmetric(vertical: 1),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xff1f2029),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Sub Total',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+                Text('\$${subtotal.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+              ],
+            ),
+            const SizedBox(height: 0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Tax',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+                Text('\$${tax.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+              ],
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              height: 2,
+              width: double.infinity,
+              color: Colors.white,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Total',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+                Text(
+                    '\$${(total * 1.1).toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.deepOrange,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () async {
+                print(orderedItems);
+                try {
+                  final printService = PrintService();
+                  await printService.printBill(orderedItems);
+                  print("Print job started.");
+                } catch (e) {
+                  print("Error occurred while printing: $e");
+                }
+              },
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.all(12),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.print, size: 13),
+                    SizedBox(width: 6),
+                    Text('Print Bills')
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+  Widget _buildOrderedItemsSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blueGrey[900],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: orderedItems.isEmpty
+          ? const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.shopping_cart_outlined,
+              size: 50,
+              color: Colors.white70,
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Selected items will appear here',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      )
+          : ListView.builder(
+        itemCount: orderedItems.length,
+        itemBuilder: (context, index) {
+          final item = orderedItems[index];
+          return _itemOrder(
+            image: item.image,
+            title: item.title,
+            price: item.price,
+            itemCount: item.itemCount,
+            index: index,
+          );
+        },
+      ),
+    );
+  }
+
+
+
   Widget _viewCustomerList(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -954,3 +903,4 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     );
   }
 }
+
