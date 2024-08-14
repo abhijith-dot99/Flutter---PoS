@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'model/item.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -18,9 +16,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
-  late TabController _tabController;
-  List<Bill> _bills = [];
-
 
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
@@ -30,18 +25,35 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
   List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
   late List<String> _filteredCustomers;
 
-  int _selectedPage = 1;
+  late PageController _pageController; // Add a PageController
+  int _selectedPage = 0; // Track the selected page
+  Map<int, List<Item>> pageOrderedItems = {};
+  int currentPageIndex = 0;
+  int pageIndex = 0;
 
-  void _openPage(int page) async {
-    setState(() {
-      _selectedPage = page;
-    });
 
-    final window = await DesktopMultiWindow.createWindow(
-      jsonEncode(<String, dynamic>{'page': 'Menu'}),
-    );
-    window.setTitle('Home $page');
-    window.show();
+  void _openPage(int pageIndex) {
+    print("insdide open page");
+
+    pageOrderedItems[currentPageIndex] = orderedItems;
+
+    // Clear the current ordered items list
+    orderedItems = [];
+
+    // Switch to the new page
+    currentPageIndex = pageIndex;
+    print("current page index $currentPageIndex");
+
+    // Load the ordered items for the new page if available
+    if (pageOrderedItems.containsKey(currentPageIndex)) {
+      orderedItems = pageOrderedItems[currentPageIndex]!;
+    } else {
+      orderedItems = [];
+    }
+    _selectedPage = pageIndex;
+
+    // Update the UI
+    setState(() {});
   }
 
 
@@ -108,8 +120,7 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     searchResults = items;
     _filteredCustomers = _customers; //newchange
 
-    _tabController = TabController(length: 1, vsync: this);
-    _bills.add(Bill(items: [])); // Start with one bill by defau
+    _pageController = PageController(initialPage: _selectedPage); // Initialize the PageController
   }
 
 
@@ -121,8 +132,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
           : items.where((item) => item.category == category).toList();
     });
   }
-
-  //newchange
 
   void _filterCustomers(String query) {
     setState(() {
@@ -156,123 +165,130 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
 
     return Scaffold(
       backgroundColor: Color(0xff1f2021),
-      body: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 14,
-            child: Column(
-              children: [
-                _topMenu(
-                  title: 'Lorem Restaurant',
-                  action: _search(),
-                ),
-                Container(
-                  height: 70,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _itemTab(
-                        icon: 'assets/samplepic.jpg',
-                        title: 'All',
-                        isActive: selectedCategory == 'All',
-                        onTap: () => filterItems('All'),
+      body: PageView.builder(
+        controller: _pageController, // Connect the PageController
+        itemCount: 3, // Number of pages
+        itemBuilder: (context, pageIndex) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 14,
+                child: Column(
+                  children: [
+                    _topMenu(
+                      title: 'Lorem Restaurant',
+                      action: _search(),
+                    ),
+                    Container(
+                      height: 70,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _itemTab(
+                            icon: 'assets/samplepic.jpg',
+                            title: 'All',
+                            isActive: selectedCategory == 'All',
+                            onTap: () => filterItems('All'),
+                          ),
+                          _itemTab(
+                            icon: 'assets/items/1.png',
+                            title: 'Burger',
+                            isActive: selectedCategory == 'burger',
+                            onTap: () => filterItems('Burger'),
+                          ),
+                          _itemTab(
+                            icon: 'assets/icons/icon-noodles.png',
+                            title: 'Noodles',
+                            isActive: selectedCategory == 'burger',
+                            onTap: () => filterItems('Noodles'),
+                          ),
+                          // Add more item tabs here
+                        ],
                       ),
-                      _itemTab(
-                        icon: 'assets/items/1.png',
-                        title: 'Burger',
-                        isActive: selectedCategory == 'burger',
-                        onTap: () => filterItems('burger'),
-                      ),
-                      // Add more item tabs here
-                    ],
-                  ),
-                ),
+                    ),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount = constraints.maxWidth < 600 ? 3 : 5;
+                          double childAspectRatio = constraints.maxWidth < 600
+                              ? 1 / 0.8
+                              : 1 / 0.85;
 
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      int crossAxisCount = constraints.maxWidth < 600 ? 3 : 5;
-                      double childAspectRatio = constraints.maxWidth < 600
-                          ? 1 / 0.8
-                          : 1 / 0.85;
-
-                      return GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: childAspectRatio,
-                        ),
-                        itemCount: searchResults.length,
-                        itemBuilder: (context, index) {
-                          final item = searchResults[index];
-                          return _item(
-                            image: widget.showImages ? item.image : null,
-                            title: item.title,
-                            price: item.price,
-                            item: item.itemCount,
-                            onTap: () => addItemToOrder(item),
+                          return GridView.builder(
+                            gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              childAspectRatio: childAspectRatio,
+                            ),
+                            itemCount: searchResults.length,
+                            itemBuilder: (context, index) {
+                              final item = searchResults[index];
+                              return _item(
+                                image: widget.showImages ? item.image : null,
+                                title: item.title,
+                                price: item.price,
+                                item: item.itemCount,
+                                onTap: () => addItemToOrder(item),
+                              );
+                            },
                           );
                         },
-                      );
-
-
-
-                    },
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-
-              ],
-            ),
-          ),
-
-          Expanded(flex: 1, child: Container()),
-
-          Expanded(
-            flex: 4,
-
-            child: Column(
-              children: [
-                _viewCustomerList(context),
-                const SizedBox(height: 10),
-
-                Expanded(
-                  child: _buildOrderedItemsSection(),
+              ),
+              Expanded(flex: 1, child: Container()),
+              Expanded(
+                flex: 4,
+                child: Column(
+                  children: [
+                    _viewCustomerList(context),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: _buildOrderedItemsSection(),
+                    ),
+                    const SizedBox(height: 2),
+                    _calculateAndPrintSection()
+                  ],
                 ),
-
-                const SizedBox(height: 2),
-                _calculateAndPrintSection()
-              ],
-            ),
-          ),
-
-        ],
+              ),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            _buildNavButton(0),
+            SizedBox(width: 10),
             _buildNavButton(1),
             SizedBox(width: 10),
             _buildNavButton(2),
-            SizedBox(width: 10),
-            _buildNavButton(3),
           ],
         ),
       ),
     );
+
   }
+
 
   ElevatedButton _buildNavButton(int page) {
     return ElevatedButton(
       onPressed: () => _openPage(page),
       style: ElevatedButton.styleFrom(
+        shape: const CircleBorder(),
         backgroundColor: _selectedPage == page
-            ? Colors.deepOrangeAccent
-            : Colors.white70,
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+            ? Colors.white
+            : Colors.lightGreen,
+        // padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+        padding: const EdgeInsets.all(20),
+        foregroundColor: Colors.redAccent,
       ),
       child: Text('$page'),
     );
@@ -727,8 +743,8 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
   }
 
 
-
   Widget _buildOrderedItemsSection() {
+    print("called ");
     return Container(
       decoration: BoxDecoration(
         color: Colors.blueGrey[900],
@@ -770,7 +786,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
       ),
     );
   }
-
 
 
   Widget _viewCustomerList(BuildContext context) {
@@ -902,5 +917,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
       ),
     );
   }
+
 }
 
