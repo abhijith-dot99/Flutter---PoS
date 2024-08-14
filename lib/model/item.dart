@@ -7,6 +7,7 @@ class Item {
   final String price;
   final String tax;
   final String itemCount;
+  // int itemCount;
   final String category;
 
   Item({
@@ -16,6 +17,7 @@ class Item {
     required this.price,
     required this.tax,
     required this.itemCount,
+    // this.itemCount = 1, // Default item count is 1
     required this.category,
   });
 

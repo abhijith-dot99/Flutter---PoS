@@ -26,10 +26,13 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
   late List<String> _filteredCustomers;
 
   late PageController _pageController; // Add a PageController
-  int _selectedPage = 0; // Track the selected page
+
+  TextEditingController _discountController = TextEditingController();
+
+  int _selectedPage = 1; // Track the selected page
   Map<int, List<Item>> pageOrderedItems = {};
-  int currentPageIndex = 0;
-  int pageIndex = 0;
+  int currentPageIndex = 1;
+  int pageIndex = 1;
 
 
   void _openPage(int pageIndex) {
@@ -51,7 +54,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
       orderedItems = [];
     }
     _selectedPage = pageIndex;
-
     // Update the UI
     setState(() {});
   }
@@ -61,55 +63,55 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     Item(
         image: 'assets/items/1.png',
         title: 'Original Burger',
-        price: '\$5.99',
+        price: ' 5.99',
         tax: 'tax',
-        itemCount: '1 item',
+        itemCount:  '1',
         category: 'Burger'),
     Item(
         image: 'assets/items/2.png',
         title: 'Double Burger',
-        price: '\$10.99',
+        price: ' 10.99',
         tax: 'tax',
-        itemCount: '1 item',
+        itemCount:  '1',
         category: 'Burger'),
     Item(
       image: 'assets/items/3.png',
       title: 'Cheese Burger',
-      price: '\$6.99',
+      price: ' 6.99',
       tax: '1.50',
-      itemCount: '1 Item',
+      itemCount:  '1',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/4.png',
       title: 'Double Cheese Burger',
-      price: '\$12.99',
+      price: ' 12.99',
       tax: 'tax',
-      itemCount: '1 item',
+      itemCount:  '1',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/5.png',
       title: 'Spicy Burger',
-      price: '\$7.39',
+      price: ' 7.39',
       tax: '100',
-      itemCount: '1 item',
+      itemCount:  '1',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/6.png',
       title: 'Special Black Burger',
-      price: '\$7.39',
+      price: '7.39',
       tax: 'tax',
-      itemCount: '1 item',
+      itemCount:  '1',
       category: 'Burger',
     ),
     Item(
       image: 'assets/items/9.png',
       title: 'Noodles',
-      price: '\$8.99',
+      price: ' 8.99',
       tax: 'tax',
-      itemCount: '1 item',
+      itemCount:  '1',
       category: 'Noodles',
     ),
   ];
@@ -121,6 +123,12 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     _filteredCustomers = _customers; //newchange
 
     _pageController = PageController(initialPage: _selectedPage); // Initialize the PageController
+  }
+
+  @override
+  void dispose() {
+    _discountController.dispose();
+    super.dispose();
   }
 
 
@@ -196,13 +204,13 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
                           _itemTab(
                             icon: 'assets/items/1.png',
                             title: 'Burger',
-                            isActive: selectedCategory == 'burger',
+                            isActive: selectedCategory == 'Burger',
                             onTap: () => filterItems('Burger'),
                           ),
                           _itemTab(
                             icon: 'assets/icons/icon-noodles.png',
                             title: 'Noodles',
-                            isActive: selectedCategory == 'burger',
+                            isActive: selectedCategory == 'Noodles',
                             onTap: () => filterItems('Noodles'),
                           ),
                           // Add more item tabs here
@@ -216,7 +224,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
                           double childAspectRatio = constraints.maxWidth < 600
                               ? 1 / 0.8
                               : 1 / 0.85;
-
                           return GridView.builder(
                             gridDelegate:
                             SliverGridDelegateWithFixedCrossAxisCount(
@@ -265,11 +272,13 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildNavButton(0),
-            SizedBox(width: 10),
             _buildNavButton(1),
-            SizedBox(width: 10),
+            // SizedBox(width: 10),
+            Icon(Icons.more_horiz, color: Colors.white54), // Dots icon
             _buildNavButton(2),
+            // SizedBox(width: 10),
+            Icon(Icons.more_horiz, color: Colors.white54), // Dots icon
+            _buildNavButton(3),
           ],
         ),
       ),
@@ -285,10 +294,13 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
         shape: const CircleBorder(),
         backgroundColor: _selectedPage == page
             ? Colors.white
-            : Colors.lightGreen,
+            : Colors.deepOrangeAccent,
         // padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
-        padding: const EdgeInsets.all(20),
-        foregroundColor: Colors.redAccent,
+        padding: const EdgeInsets.all(15),
+        // foregroundColor: Colors.redAccent,
+        foregroundColor: _selectedPage == page
+            ? Colors.black // Text color for selected page
+            : Colors.white, // Text color for non-selected pages
       ),
       child: Text('$page'),
     );
@@ -451,57 +463,95 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     required String price,
     required int index, // Add index to identify the item in the list
   }) {
+    double itemPrice = double.parse(price.replaceAll(' ', ''));
+    int quantity = int.parse(itemCount.split(' ')[0]);
+    double total = itemPrice * quantity;
+
     return GestureDetector(
       onTap: () {
         _showEditDialog(context, index);
       },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xff1f2029),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(color: Colors.grey.withOpacity(0.3)),
-          ],
-        ),
-        child: Row(
-          children: [
-            if (image != null)
-            // Image.asset(image, width: 60, height: 60, fit: BoxFit.cover),
-              const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text('Total: $itemCount',
-                      style: TextStyle(fontSize: 14, color: Colors.grey)),
-                  Text('Price: $price',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: Icon(Icons.edit, color: Colors.white),
-              onPressed: () {
-                _showEditDialog(context, index);
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
-              onPressed: () {
-                _removeItem(index);
-              },
-            ),
-          ],
-        ),
-      ),
+       child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xff1f2029),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(color: Colors.grey.withOpacity(0.3)),
+            ],
+          ),
+
+           child: Column(
+             crossAxisAlignment: CrossAxisAlignment.start,
+             children: [
+               // Row for Title and Delete icon
+               Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                 children: [
+                   // Title taking full width
+                   Expanded(
+                     child: SingleChildScrollView(
+                       scrollDirection: Axis.horizontal,
+                       child: Text(
+                         title,
+                         style: const TextStyle(
+                           fontSize: 15,
+                           color: Colors.white,
+                           fontWeight: FontWeight.bold,
+                         ),
+                       ),
+                     ),
+                   ),
+                   // Delete icon
+                   IconButton(
+                     icon: const Icon(Icons.close, size: 15, color: Colors.red),
+                     onPressed: () {
+                       _removeItem(index);
+                     },
+                   ),
+                 ],
+               ),
+               const SizedBox(height: 4), // Spacing between the two vertical pieces
+               // Item count, price, and edit icon
+               Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                 children: [
+                   // Item count and price taking 50% width
+                   Expanded(
+                     child: Row(
+                       children: [
+                         Text(
+                           itemCount,
+                           style: const TextStyle(fontSize: 14, color: Colors.grey),
+                         ),
+                         const SizedBox(width: 4),
+                         const Icon(Icons.close, size: 14, color: Colors.grey), // Star icon
+                         const SizedBox(width: 4), // Spacing between itemCount and price
+                         Text(
+                           price,
+                           style: const TextStyle(fontSize: 14, color: Colors.grey),
+                         ),
+                         const SizedBox(width: 4),
+                         const Text(
+                           '=',
+                           style: TextStyle(fontSize: 14, color: Colors.grey),
+                         ),
+                         const SizedBox(width: 4),
+                         Text(
+                           total.toStringAsFixed(2),
+                           style: const TextStyle(fontSize: 14, color: Colors.grey),
+                         ),
+                       ],
+                     ),
+                   ),
+                   // Edit icon taking 50% width
+                 ],
+               ),
+             ],
+           )
+
+       ),
     );
   }
 
@@ -509,7 +559,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
     setState(() {
       orderedItems.removeAt(index); // Remove the item from the list
     });
-    print(orderedItems);
   }
 
   void _showEditDialog(BuildContext context, int index) {
@@ -605,7 +654,7 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
   double calculateSubtotal() {
     double subtotal = 0.0;
     for (var item in orderedItems) {
-      double price = double.parse(item.price.replaceAll('\$', ''));
+      double price = double.parse(item.price.replaceAll(' ', ''));
       int quantity = int.parse(item.itemCount.split(' ')[0]);
       subtotal += price * quantity;
     }
@@ -616,7 +665,7 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
   double calculateTax() {
     double totalTax = 0.0;
     for (var item in orderedItems) {
-      double price = double.parse(item.price.replaceAll('\$', ''));
+      double price = double.parse(item.price.replaceAll(' ', ''));
       int quantity = int.parse(item.itemCount.split(' ')[0]);
       double itemTotal = price * quantity;
 
@@ -637,9 +686,23 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
 
   // Calculate the total amount including tax
   double calculateTotal() {
-    return calculateSubtotal() + calculateTax();
-  }
+    double total = calculateSubtotal() + calculateTax();
+    double discount = 0.0;
 
+    // Check if discount is not empty and parse it
+    if (_discountController.text.isNotEmpty) {
+      discount = double.parse(_discountController.text);
+    }
+
+    // Subtract the discount from the total
+    total = total - discount;
+
+    if (total < 0) {
+      total = 0;
+    }
+
+    return total;
+  }
 
 
   Widget _calculateAndPrintSection() {
@@ -657,7 +720,9 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
           color: const Color(0xff1f2029),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -665,13 +730,13 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
-                Text('\$${subtotal.toStringAsFixed(2)}',
+                Text(' ${subtotal.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
               ],
             ),
-            const SizedBox(height: 0),
+            const SizedBox(height: 2),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -679,12 +744,54 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
-                Text('\$${tax.toStringAsFixed(2)}',
+                Text(' ${tax.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
               ],
             ),
+            const SizedBox(height: 5),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Discount',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+                SizedBox(
+                  width: 50, // Adjust the width as needed
+                  child: TextField(
+                    controller: _discountController, // Replace with your TextEditingController
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.white),
+                    textAlign: TextAlign.end,
+                    decoration: const InputDecoration(
+                      // border: InputBorder.none, // Remove the underline
+                      contentPadding: EdgeInsets.all(0), // Adjust padding as needed
+                      hintText: '0.00', // Hint text
+                      hintStyle: TextStyle(
+                        color: Colors.grey, // Light grey color for the hint text
+                        fontWeight: FontWeight.normal, // You can adjust the font weight
+                      ),
+                    ),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      // FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
+                    ],
+                    onChanged: (value) {
+                      // Handle the input change if needed
+                      setState(() {
+                        total = calculateTotal();
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            // const SizedBox(height: 5),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 10),
               height: 2,
@@ -699,7 +806,7 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
                 Text(
-                    '\$${(total * 1.1).toStringAsFixed(2)}',
+                    '${(total * 1.1).toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
@@ -744,7 +851,6 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
 
 
   Widget _buildOrderedItemsSection() {
-    print("called ");
     return Container(
       decoration: BoxDecoration(
         color: Colors.blueGrey[900],
@@ -762,7 +868,7 @@ class _HomePageState extends State<HomePage>  with TickerProviderStateMixin {
             ),
             SizedBox(height: 10),
             Text(
-              'Selected items will appear here',
+              'Cart',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 16,

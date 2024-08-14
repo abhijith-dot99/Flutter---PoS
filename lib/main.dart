@@ -6,8 +6,6 @@ import 'package:flutter_pos_app/shop_config.dart';
 import 'model/item.dart';
 import 'settings.dart';
 
-import 'package:window_manager/window_manager.dart';
-
 void main() {
   runApp(const MyApp());
 }
@@ -83,13 +81,13 @@ class _MainPageState extends State<MainPage> {
   image: 'assets/items/1.png',
   title: 'Original Burger',
   price: '\$5.99',
-  itemCount: '11 item',
+  itemCount: '1',
   category: 'Burger', tax: ''),
   Item(
   image: 'assets/items/2.png',
   title: 'Double Burger',
   price: '\$10.99',
-  itemCount: '10 item',
+  itemCount: '1',
   category: 'Burger', tax: ''),
   ];
 
