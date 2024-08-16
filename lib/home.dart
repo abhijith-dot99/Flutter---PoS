@@ -27,9 +27,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   TextEditingController _discountController = TextEditingController();
 
-  final TextEditingController _controller = TextEditingController();
-
-
   int _selectedPage = 1; // Track the selected page
   Map<int, List<Item>> pageOrderedItems = {};
   int currentPageIndex = 1;
@@ -37,7 +34,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   double itemWidth = 180;
   double itemHeight = 150;
-
 
   String input = '';
   int selectedItemIndex = -1;
@@ -125,6 +121,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ),
   ];
 
+  //
+  // void _updateItemCount(String value) {
+  //   print("Inside updateItemCount, value: $value");
+  //
+  //   if (editingItemIndex != null && editingItemIndex! < orderedItems.length) {
+  //     setState(() {
+  //       // Replace the initial count if it's 1 and this is the first input (i.e., isEditing is false)
+  //       if (!isEditing || orderedItems[editingItemIndex!].itemCount == 1) {
+  //         // Set the count to the new input value and mark as editing
+  //
+  //         print("inside firstif $isEditing");
+  //         print(orderedItems[editingItemIndex!].itemCount);
+  //         orderedItems[editingItemIndex!].itemCount = int.parse(value);
+  //         isEditing = true; // Mark that we're now editing the count
+  //       } else {
+  //         print("inside else $isEditing");
+  //         // If already editing, append the new value
+  //         String currentCount = orderedItems[editingItemIndex!].itemCount.toString();
+  //         print("currentcount $currentCount");
+  //         orderedItems[editingItemIndex!].itemCount = int.parse(currentCount + value);
+  //       }
+  //       // print("Updated item count for item at index $editingItemIndex to ${orderedItems[editingItemIndex!].itemCount}");
+  //     });
+  //   } else {
+  //     print("Editing index is null or out of bounds");
+  //   }
+  //   // print("Ordered items: $orderedItems");
+  // }
+
+
 
   void _updateItemCount(String value) {
     print("Inside updateItemCount, value: $value");
@@ -132,24 +158,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (editingItemIndex != null && editingItemIndex! < orderedItems.length) {
       setState(() {
         // Replace the initial count if it's 1 and this is the first input (i.e., isEditing is false)
-        if (!isEditing || orderedItems[editingItemIndex!].itemCount == 1) {
+        if (isEditing && orderedItems[editingItemIndex!].itemCount == 1 ) {
           // Set the count to the new input value and mark as editing
-          orderedItems[editingItemIndex!].itemCount = int.parse(value);
-          isEditing = true; // Mark that we're now editing the count
-        } else {
-          // If already editing, append the new value
-          String currentCount = orderedItems[editingItemIndex!].itemCount.toString();
-          orderedItems[editingItemIndex!].itemCount = int.parse(currentCount + value);
+          print("inside first if $isEditing");
+
+          print(orderedItems[editingItemIndex!].itemCount);
+
+          String currentCount =
+          orderedItems[editingItemIndex!].itemCount.toString();
+          orderedItems[editingItemIndex!].itemCount = int.parse(currentCount +value);
+          isEditing = false; // Mark that we're now editing the count
         }
-        print("Updated item count for item at index $editingItemIndex to ${orderedItems[editingItemIndex!].itemCount}");
+        else if(!isEditing  && orderedItems[editingItemIndex!].itemCount == 1) {
+          print("isediting $isEditing");
+          print("inside elseif");
+          print(orderedItems[editingItemIndex!].itemCount);
+          orderedItems[editingItemIndex!].itemCount = int.parse(value);
+          isEditing = true;
+        }
+
+        else {
+          print("inside else $isEditing");
+          // If already editing, append the new value
+          String currentCount =
+              orderedItems[editingItemIndex!].itemCount.toString();
+          print("currentcount $currentCount");
+          orderedItems[editingItemIndex!].itemCount =
+              int.parse(currentCount + value);
+        }
+        // print("Updated item count for item at index $editingItemIndex to ${orderedItems[editingItemIndex!].itemCount}");
       });
     } else {
       print("Editing index is null or out of bounds");
     }
-    print("Ordered items: $orderedItems");
+    // print("Ordered items: $orderedItems");
   }
-
-
 
   @override
   void initState() {
@@ -184,7 +227,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           .toList();
     });
   }
-
 
   void addItemToOrder(Item item) {
     setState(() {
@@ -265,23 +307,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ],
                           ),
                         ),
-
                         Expanded(
                           child: LayoutBuilder(
                             key: ValueKey('$itemWidth-$itemHeight'),
                             builder: (context, constraints) {
                               return GridView.builder(
-                                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: itemWidth, // Use the updated width
-                                  childAspectRatio: itemWidth / itemHeight, // Use the updated height and width
+                                gridDelegate:
+                                    SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent:
+                                      itemWidth, // Use the updated width
+                                  childAspectRatio: itemWidth /
+                                      itemHeight, // Use the updated height and width
                                   mainAxisSpacing: 10, // Spacing between rows
-                                  crossAxisSpacing: 10, // Spacing between columns
+                                  crossAxisSpacing:
+                                      10, // Spacing between columns
                                 ),
                                 itemCount: searchResults.length,
                                 itemBuilder: (context, index) {
                                   final item = searchResults[index];
                                   return _item(
-                                    image: widget.showImages ? item.image : null,
+                                    image:
+                                        widget.showImages ? item.image : null,
                                     title: item.title,
                                     price: item.price,
                                     itemCount: item.itemCount,
@@ -292,7 +338,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             },
                           ),
                         )
-
                       ],
                     ),
                   ),
@@ -308,7 +353,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                         const SizedBox(height: 2),
                         Flexible(
-                          flex: 1, // Adjust this value for shorter print section
+                          flex:
+                              1, // Adjust this value for shorter print section
                           child: _calculateAndPrintSection(),
                         ),
                       ],
@@ -323,7 +369,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+                    mainAxisAlignment:
+                        MainAxisAlignment.center, // Center the buttons
                     // children: [
                     //   _buildNavButton(1),
                     //   Icon(Icons.more_horiz, color: Colors.white54), // Dots icon
@@ -334,7 +381,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-
               Positioned(
                 left: 0,
                 bottom: 10,
@@ -346,21 +392,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         child: ElevatedButton(
                           onPressed: () {
                             setState(() {
-                              if (!isEditing) {
-                                input = index.toString(); // Start fresh if not editing
+                              if (isEditing) {
+                                input = index
+                                    .toString(); // Start fresh if not editing
                                 isEditing = true; // Mark as editing
                               } else {
-                                input += index.toString(); // Append if already editing
+                                input += index
+                                    .toString(); // Append if already editing
                               }
                             });
                             _updateItemCount(input);
-                            print("from buttons $input");
+                            // print("from buttons $input");
                           },
                           style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                      // Choose your desired color here
-                      Colors.lightGreenAccent.shade100, // Example: blue
-                      ),
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                              // Choose your desired color here
+                              Colors.lightGreenAccent.shade100, // Example: blue
+                            ),
                           ),
                           child: Text(
                             index.toString(),
@@ -372,19 +420,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ],
                 ),
               ),
-
-
             ],
           );
         },
       ),
     );
-
-
-
-
-
-
   }
 
   ElevatedButton _buildNavButton(int page) {
@@ -403,8 +443,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Text('$page'),
     );
   }
-
-
 
   Widget _search() {
     return Expanded(
@@ -573,14 +611,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     double total = itemPrice * quantity;
     editingItemIndex = index; // Set the index of the item being edited
     input = ''; //initialized the input
-    print("Item tapped. Editing item at index: $editingItemIndex");
+    // print("Item tapped. Editing item at index: $editingItemIndex");
 
     return GestureDetector(
-
       onTap: () {
         _showEditDialog(context, index);
       },
-
       child: Container(
           margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
           padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
@@ -953,7 +989,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-
   Widget _buildOrderedItemsSection() {
     return Container(
       decoration: BoxDecoration(
@@ -998,7 +1033,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
     );
   }
-
 
   Widget _viewCustomerList(BuildContext context) {
     return ElevatedButton(
