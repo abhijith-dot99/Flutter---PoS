@@ -73,7 +73,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   String pageActive = 'Home';
   bool showImages = false;
-
+  double itemHeight = 150; // Default height
+  double itemWidth = 120;
 
 
   final List<Item> items = [
@@ -81,13 +82,13 @@ class _MainPageState extends State<MainPage> {
   image: 'assets/items/1.png',
   title: 'Original Burger',
   price: '\$5.99',
-  itemCount: '1',
+  itemCount: 1,
   category: 'Burger', tax: ''),
   Item(
   image: 'assets/items/2.png',
   title: 'Double Burger',
   price: '\$10.99',
-  itemCount: '1',
+  itemCount: 1,
   category: 'Burger', tax: ''),
   ];
 

@@ -2,7 +2,7 @@
 class ItemOrder {
   final String image;
   final String title;
-  final String qty;
+  final int qty;
   final String price;
   ItemOrder({
     required this.image,
