@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Item> orderedItems = []; // Track ordered items
 
   String? _selectedCustomer;
-  List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
+  final List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
   late List<String> _filteredCustomers;
 
   late PageController _pageController; // Add a PageController
@@ -121,63 +121,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ),
   ];
 
-  //
-  // void _updateItemCount(String value) {
-  //   print("Inside updateItemCount, value: $value");
-  //
-  //   if (editingItemIndex != null && editingItemIndex! < orderedItems.length) {
-  //     setState(() {
-  //       // Replace the initial count if it's 1 and this is the first input (i.e., isEditing is false)
-  //       if (!isEditing || orderedItems[editingItemIndex!].itemCount == 1) {
-  //         // Set the count to the new input value and mark as editing
-  //
-  //         print("inside firstif $isEditing");
-  //         print(orderedItems[editingItemIndex!].itemCount);
-  //         orderedItems[editingItemIndex!].itemCount = int.parse(value);
-  //         isEditing = true; // Mark that we're now editing the count
-  //       } else {
-  //         print("inside else $isEditing");
-  //         // If already editing, append the new value
-  //         String currentCount = orderedItems[editingItemIndex!].itemCount.toString();
-  //         print("currentcount $currentCount");
-  //         orderedItems[editingItemIndex!].itemCount = int.parse(currentCount + value);
-  //       }
-  //       // print("Updated item count for item at index $editingItemIndex to ${orderedItems[editingItemIndex!].itemCount}");
-  //     });
-  //   } else {
-  //     print("Editing index is null or out of bounds");
-  //   }
-  //   // print("Ordered items: $orderedItems");
-  // }
-
-
-
   void _updateItemCount(String value) {
     print("Inside updateItemCount, value: $value");
 
     if (editingItemIndex != null && editingItemIndex! < orderedItems.length) {
       setState(() {
         // Replace the initial count if it's 1 and this is the first input (i.e., isEditing is false)
-        if (isEditing && orderedItems[editingItemIndex!].itemCount == 1 ) {
+        if (isEditing && orderedItems[editingItemIndex!].itemCount == 1) {
           // Set the count to the new input value and mark as editing
           print("inside first if $isEditing");
 
           print(orderedItems[editingItemIndex!].itemCount);
 
           String currentCount =
-          orderedItems[editingItemIndex!].itemCount.toString();
-          orderedItems[editingItemIndex!].itemCount = int.parse(currentCount +value);
+              orderedItems[editingItemIndex!].itemCount.toString();
+          orderedItems[editingItemIndex!].itemCount =
+              int.parse(currentCount + value);
           isEditing = false; // Mark that we're now editing the count
-        }
-        else if(!isEditing  && orderedItems[editingItemIndex!].itemCount == 1) {
+        } else if (!isEditing &&
+            orderedItems[editingItemIndex!].itemCount == 1) {
           print("isediting $isEditing");
           print("inside elseif");
           print(orderedItems[editingItemIndex!].itemCount);
           orderedItems[editingItemIndex!].itemCount = int.parse(value);
           isEditing = true;
-        }
-
-        else {
+        } else {
           print("inside else $isEditing");
           // If already editing, append the new value
           String currentCount =
@@ -363,21 +331,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               Positioned(
-                bottom: 0, // Position the buttons at the bottom
+                bottom: 45, // Position the buttons at the bottom
                 left: 0, // Align them to the left
-                right: 0, // Align them to the right
+                right: -280, // Align them to the right
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Row(
                     mainAxisAlignment:
                         MainAxisAlignment.center, // Center the buttons
-                    // children: [
-                    //   _buildNavButton(1),
-                    //   Icon(Icons.more_horiz, color: Colors.white54), // Dots icon
-                    //   _buildNavButton(2),
-                    //   Icon(Icons.more_horiz, color: Colors.white54), // Dots icon
-                    //   _buildNavButton(3),
-                    // ],
+                    children: [
+                      _buildNavButton(1),
+                      const Icon(Icons.more_horiz,
+                          color: Colors.white54), // Dots icon
+                      _buildNavButton(2),
+                      const Icon(Icons.more_horiz,
+                          color: Colors.white54), // Dots icon
+                      _buildNavButton(3),
+                    ],
                   ),
                 ),
               ),
@@ -405,14 +375,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             // print("from buttons $input");
                           },
                           style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
+                            backgroundColor: WidgetStateProperty.all<Color>(
                               // Choose your desired color here
-                              Colors.lightGreenAccent.shade100, // Example: blue
+                              Colors.deepOrangeAccent, // Example: blue
+                            ),
+                            foregroundColor: WidgetStateProperty.all<Color>(
+                              Colors.black, // Text color
                             ),
                           ),
                           child: Text(
                             index.toString(),
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(fontSize: 15),
                           ),
                         ),
                       );
@@ -435,7 +408,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         backgroundColor:
             _selectedPage == page ? Colors.white : Colors.deepOrangeAccent,
         padding: const EdgeInsets.all(15),
-        // foregroundColor: Colors.redAccent,
         foregroundColor: _selectedPage == page
             ? Colors.black // Text color for selected page
             : Colors.white, // Text color for non-selected pages
@@ -588,9 +560,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Text(price,
                 style: const TextStyle(fontSize: 14, color: Colors.grey)),
             const SizedBox(height: 4),
-
-            // Text(itemCount.toString(),
-            //     style: const TextStyle(fontSize: 14, color: Colors.grey)),
           ],
         ),
       ),
@@ -1082,7 +1051,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            prefixIcon: Icon(
+                            prefixIcon: const Icon(
                               Icons.search,
                               color: Colors.white, // Icon color
                             ),

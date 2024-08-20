@@ -69,12 +69,13 @@ class _LoginPageState extends State<LoginPage> {
                               value: selectedRole,
                               items: ['Staff', 'Manager', 'Admin']
                                   .map((role) => DropdownMenuItem<String>(
-                                value: role,
-                                child: Text(
-                                  role,
-                                  style: const TextStyle(color: Colors.black),
-                                ),
-                              ))
+                                        value: role,
+                                        child: Text(
+                                          role,
+                                          style: const TextStyle(
+                                              color: Colors.black),
+                                        ),
+                                      ))
                                   .toList(),
                               onChanged: (value) {
                                 setState(() {
@@ -87,7 +88,8 @@ class _LoginPageState extends State<LoginPage> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 15),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -120,7 +122,8 @@ class _LoginPageState extends State<LoginPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepOrange,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 20, horizontal: 20),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -128,10 +131,12 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: () {
                                 // Validate login and navigate to MainPage
                                 Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(builder: (context) => const MainPage()),
+                                  MaterialPageRoute(
+                                      builder: (context) => const MainPage()),
                                 );
                               },
-                              child: const Text('Login', style: TextStyle(fontSize: 18)),
+                              child: const Text('Login',
+                                  style: TextStyle(fontSize: 18)),
                             ),
                           ],
                         ),
@@ -147,4 +152,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

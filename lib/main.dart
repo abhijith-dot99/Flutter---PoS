@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_pos_app/Mode_selector.dart';
 import 'package:flutter_pos_app/home.dart';
 import 'package:flutter_pos_app/login_page.dart';
 import 'package:flutter_pos_app/sales_report.dart';
 import 'package:flutter_pos_app/shop_config.dart';
 import 'model/item.dart';
 import 'settings.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,14 +36,15 @@ class AppInitializer extends StatefulWidget {
 }
 
 class _AppInitializerState extends State<AppInitializer> {
-  bool _isLoggedIn = true; // Change this based on actual login state
+  bool _isLoggedIn = false; // Change this based on actual login state
+
+  bool _isOnline = true; // To track the online/offline status
 
   @override
   void initState() {
     super.initState();
-    // _checkLoginStatus();
+    _checkLoginStatus();
   }
-
 
   Future<void> _checkLoginStatus() async {
     // Simulate a delay for checking login status
@@ -49,17 +52,17 @@ class _AppInitializerState extends State<AppInitializer> {
 
     // Here you would typically check the actual login status from storage
     setState(() {
-      _isLoggedIn = true; // Set to true if user is logged in
+      _isLoggedIn = false; // Set to true if user is logged in
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // if (_isLoggedIn) {
+    if (_isLoggedIn) {
       return const MainPage(); // Show the main page if logged in
-    // } else {
-      // return const LoginPage(); // Show the login page if not logged in
-    // }
+    } else {
+      return SoftwareModePage(); // Show the login page if not logged in
+    }
   }
 }
 
@@ -73,26 +76,25 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   String pageActive = 'Home';
   bool showImages = false;
-  double itemHeight = 150; // Default height
+  double itemHeight = 250; // Default height
   double itemWidth = 120;
 
-
   final List<Item> items = [
-  Item(
-  image: 'assets/items/1.png',
-  title: 'Original Burger',
-  price: '\$5.99',
-  itemCount: 1,
-  category: 'Burger', tax: ''),
-  Item(
-  image: 'assets/items/2.png',
-  title: 'Double Burger',
-  price: '\$10.99',
-  itemCount: 1,
-  category: 'Burger', tax: ''),
+    Item(
+        image: 'assets/items/1.png',
+        title: 'Original Burger',
+        price: '\$5.99',
+        itemCount: 1,
+        category: 'Burger',
+        tax: ''),
+    Item(
+        image: 'assets/items/2.png',
+        title: 'Double Burger',
+        price: '\$10.99',
+        itemCount: 1,
+        category: 'Burger',
+        tax: ''),
   ];
-
-
 
   _pageView() {
     switch (pageActive) {
@@ -107,7 +109,7 @@ class _MainPageState extends State<MainPage> {
       case 'Settings':
         return Container();
       default:
-        return HomePage(showImages :showImages);
+        return HomePage(showImages: showImages);
     }
   }
 
@@ -118,7 +120,6 @@ class _MainPageState extends State<MainPage> {
   }
 
   @override
-
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff1f2029),
@@ -145,11 +146,8 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
-
-
     );
   }
-
 
   Widget _sideMenu() {
     return Column(children: [
@@ -173,21 +171,23 @@ class _MainPageState extends State<MainPage> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => SalesReport(
-                        items: items,
-                      )),
+                            items: items,
+                          )),
                 );
               },
             ),
             _itemMenu(
               menu: 'Menu',
               icon: Icons.format_list_bulleted_rounded,
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ShopConfigPage())),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const ShopConfigPage())),
             ),
             _itemMenu(
               menu: 'Settings',
               icon: Icons.settings,
               onTap: () {
-                Navigator.of(context).push(
+                Navigator.of(context)
+                    .push(
                   MaterialPageRoute(
                     builder: (context) => SettingsPage(
                       showImages: showImages,
@@ -198,7 +198,8 @@ class _MainPageState extends State<MainPage> {
                       },
                     ),
                   ),
-                ).then((_) {
+                )
+                    .then((_) {
                   // Refresh the page to reflect updated settings
                   setState(() {});
                 });
@@ -209,8 +210,6 @@ class _MainPageState extends State<MainPage> {
       ),
     ]);
   }
-
-
 
   Widget _logo() {
     return Column(
@@ -239,7 +238,6 @@ class _MainPageState extends State<MainPage> {
       ],
     );
   }
-
 
   Widget _itemMenu({
     required String menu,
@@ -280,6 +278,4 @@ class _MainPageState extends State<MainPage> {
       ),
     );
   }
-
 }
-
