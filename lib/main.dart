@@ -6,7 +6,6 @@ import 'package:flutter_pos_app/sales_report.dart';
 import 'package:flutter_pos_app/shop_config.dart';
 import 'model/item.dart';
 import 'settings.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,8 +37,6 @@ class AppInitializer extends StatefulWidget {
 class _AppInitializerState extends State<AppInitializer> {
   bool _isLoggedIn = false; // Change this based on actual login state
 
-  bool _isOnline = true; // To track the online/offline status
-
   @override
   void initState() {
     super.initState();
@@ -61,7 +58,7 @@ class _AppInitializerState extends State<AppInitializer> {
     if (_isLoggedIn) {
       return const MainPage(); // Show the main page if logged in
     } else {
-      return SoftwareModePage(); // Show the login page if not logged in
+      return const SoftwareModePage(); // Show the login page if not logged in
     }
   }
 }

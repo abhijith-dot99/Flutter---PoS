@@ -7,6 +7,7 @@ class SalesReport extends StatefulWidget {
   const SalesReport({Key? key, required this.items}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _SalesReportState createState() => _SalesReportState();
 }
 
@@ -237,8 +238,8 @@ class _SalesReportState extends State<SalesReport> {
           cells: [
             const DataCell(
               Center(
-                // child: Image.asset(item.image, height: 30, width: 30),
-              ),
+                  // child: Image.asset(item.image, height: 30, width: 30),
+                  ),
             ),
             DataCell(
               Center(

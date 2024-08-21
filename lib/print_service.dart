@@ -49,9 +49,12 @@ class PrintService {
           children: [
             pw.Text('Bill', style: const pw.TextStyle(fontSize: 24)),
             pw.SizedBox(height: 16),
+            // ignore: deprecated_member_use
             pw.Table.fromTextArray(
               headers: ['Item', 'Quantity', 'Price'],
-              data: items.map((item) => [item.title, item.itemCount, item.price]).toList(),
+              data: items
+                  .map((item) => [item.title, item.itemCount, item.price])
+                  .toList(),
             ),
           ],
         ),
@@ -94,9 +97,8 @@ class PrintService {
   Future<Printer> _getDefaultPrinter() async {
     final printers = await Printing.listPrinters();
     return printers.firstWhere(
-          (printer) => printer.name == 'Microsoft Print to PDF',
+      (printer) => printer.name == 'Microsoft Print to PDF',
       orElse: () => printers.first,
     );
   }
 }
-

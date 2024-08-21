@@ -1,21 +1,27 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/login_page.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: SoftwareModePage(),
     );
   }
 }
 
 class SoftwareModePage extends StatefulWidget {
+  const SoftwareModePage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _SoftwareModePageState createState() => _SoftwareModePageState();
 }
 
@@ -30,7 +36,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         child: Container(
           width: 700,
           // height: 500,
-
           padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -43,7 +48,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 decoration: BoxDecoration(
@@ -73,7 +78,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: isOnline
-                                ? Color.fromARGB(255, 111, 218, 85)
+                                ? const Color.fromARGB(255, 111, 218, 85)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -102,7 +107,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: !isOnline
-                                ? Color.fromARGB(255, 191, 216, 52)
+                                ? const Color.fromARGB(255, 191, 216, 52)
                                 : const Color.fromARGB(0, 92, 30, 30),
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -122,9 +127,9 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                   ],
                 ),
               ),
-              SizedBox(height: 30),
-              if (isOnline) OnlineForm() else OfflineForm(),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
+              if (isOnline) const OnlineForm() else const OfflineForm(),
+              const SizedBox(height: 30),
               SizedBox(
                 width: double
                     .infinity, // Makes the button take the full width of its parent
@@ -137,14 +142,15 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                     );
                     print("isonline $isOnline");
                   },
-                  child: Text(
-                    'Next',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepOrange[400],
-                    foregroundColor: Color.fromARGB(255, 17, 17, 17),
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    foregroundColor: const Color.fromARGB(255, 17, 17, 17),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
+                  ),
+                  child: const Text(
+                    'Next',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                   ),
                 ),
               )
@@ -157,14 +163,16 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
 }
 
 class OnlineForm extends StatelessWidget {
+  const OnlineForm({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         _buildTextField('API Key'),
-        SizedBox(height: 10),
-        _buildTextField('Secret Key'),
+        const SizedBox(height: 10),
+        _buildTextField('Secret Key', obscureText: true),
       ],
     );
   }
@@ -173,31 +181,38 @@ class OnlineForm extends StatelessWidget {
     return TextField(
       obscureText: obscureText,
       decoration: InputDecoration(
-        labelText: label,
-        fillColor: const Color.fromARGB(255, 182, 167, 167),
+        hintText: label,
+        fillColor: Colors.white,
         filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30), // Rounded border
         ),
+        hintStyle: const TextStyle(
+          color: Colors.grey, // Ensure hint text is distinct
+        ),
+      ),
+      style: const TextStyle(
+        color: Colors.black, // Input text color
       ),
     );
   }
 }
 
 class OfflineForm extends StatelessWidget {
+  const OfflineForm({super.key});
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         _buildTextField('Company Name'),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         _buildTextField('Company ID'),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         _buildTextField('Contact Number'),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         _buildTextField('Company'),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         _buildTextField('Email ID'),
       ],
     );
@@ -205,14 +220,20 @@ class OfflineForm extends StatelessWidget {
 
   Widget _buildTextField(String label) {
     return TextField(
-      readOnly: true,
+      // readOnly: true,
       decoration: InputDecoration(
-        labelText: label,
-        fillColor: Color.fromARGB(255, 182, 167, 167),
+        hintText: label,
+        fillColor: const Color.fromARGB(255, 247, 243, 243),
         filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30), // Rounded border
         ),
+        hintStyle: const TextStyle(
+          color: Colors.grey, // Ensure hint text is distinct
+        ),
+      ),
+      style: const TextStyle(
+        color: Colors.black, // Input text color
       ),
     );
   }
