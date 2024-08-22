@@ -1,4 +1,3 @@
-// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/login_page.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:sqflite/sqflite.dart';
 
 void main() {
-  // Initialize the sqflite FFI for desktop
   runApp(const MyApp());
 }
 
@@ -25,12 +23,46 @@ class SoftwareModePage extends StatefulWidget {
   const SoftwareModePage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _SoftwareModePageState createState() => _SoftwareModePageState();
 }
 
 class _SoftwareModePageState extends State<SoftwareModePage> {
   bool isOnline = true; // Default state is Online
+
+  // Define the TextEditingControllers here to access them in _saveFormData
+  final TextEditingController companyNameController = TextEditingController();
+  final TextEditingController companyIdController = TextEditingController();
+  final TextEditingController contactNumberController = TextEditingController();
+  final TextEditingController companyController = TextEditingController();
+  final TextEditingController emailIdController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  void _saveFormData() async {
+    print("inside save");
+
+    // Create FormData instance
+    FormData formData = FormData(
+      companyName: companyNameController.text,
+      companyId: companyIdController.text,
+      contactNumber: contactNumberController.text,
+      company: companyController.text,
+      emailId: emailIdController.text,
+      username: usernameController.text,
+      password: passwordController.text,
+      online: false, // Set to false for offline login
+    );
+
+    print("FormData created: ${formData.toMap()}");
+
+    // Insert into database
+    try {
+      int result = await DatabaseHelper().insertOfflineData(formData);
+      print("Insert result: $result");
+    } catch (e) {
+      print("Error inserting data: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +71,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
       body: Center(
         child: Container(
           width: 700,
-          // height: 500,
           padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -123,19 +154,29 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                 ),
               ),
               const SizedBox(height: 30),
-              if (isOnline) const OnlineForm() else OfflineForm(),
+              if (isOnline)
+                const OnlineForm()
+              else
+                OfflineForm(
+                    companyNameController: companyNameController,
+                    companyIdController: companyIdController,
+                    contactNumberController: contactNumberController,
+                    companyController: companyController,
+                    emailIdController: emailIdController,
+                    usernameController: usernameController,
+                    passwordController: passwordController),
               const SizedBox(height: 30),
               SizedBox(
-                width: double
-                    .infinity, // Makes the button take the full width of its parent
+                width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Handle next button action
+                  onPressed: () async {
+                    if (!isOnline) {
+                      _saveFormData();
+                    }
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                           builder: (context) => const LoginPage()),
                     );
-                    print("isonline $isOnline");
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepOrange[400],
@@ -148,7 +189,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -180,51 +221,38 @@ class OnlineForm extends StatelessWidget {
         fillColor: Colors.white,
         filled: true,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // Rounded border
+          borderRadius: BorderRadius.circular(30),
         ),
         hintStyle: const TextStyle(
-          color: Colors.grey, // Ensure hint text is distinct
+          color: Colors.grey,
         ),
       ),
       style: const TextStyle(
-        color: Colors.black, // Input text color
+        color: Colors.black,
       ),
     );
   }
 }
 
 class OfflineForm extends StatelessWidget {
-  final TextEditingController companyNameController = TextEditingController();
-  final TextEditingController companyIdController = TextEditingController();
-  final TextEditingController contactNumberController = TextEditingController();
-  final TextEditingController companyController = TextEditingController();
-  final TextEditingController emailIdController = TextEditingController();
+  final TextEditingController companyNameController;
+  final TextEditingController companyIdController;
+  final TextEditingController contactNumberController;
+  final TextEditingController companyController;
+  final TextEditingController emailIdController;
+  final TextEditingController usernameController;
+  final TextEditingController passwordController;
 
-  // OfflineFormWidget({super.key});
-
-  void _saveFormData() async {
-    print("inside save");
-
-    // Create FormData instance
-    FormData formData = FormData(
-      companyName: companyNameController.text,
-      companyId: companyIdController.text,
-      contactNumber: contactNumberController.text,
-      company: companyController.text,
-      emailId: emailIdController.text,
-      online: false, // Set to false for offline login
-    );
-
-    print("FormData created: ${formData.toMap()}");
-
-    // Insert into database
-    try {
-      int result = await DatabaseHelper().insertOfflineData(formData);
-      print("Insert result: $result");
-    } catch (e) {
-      print("Error inserting data: $e");
-    }
-  }
+  const OfflineForm({
+    super.key,
+    required this.companyNameController,
+    required this.companyIdController,
+    required this.contactNumberController,
+    required this.companyController,
+    required this.emailIdController,
+    required this.usernameController,
+    required this.passwordController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -240,10 +268,10 @@ class OfflineForm extends StatelessWidget {
         _buildTextField('Company', controller: companyController),
         const SizedBox(height: 10),
         _buildTextField('Email ID', controller: emailIdController),
-        ElevatedButton(
-          onPressed: _saveFormData,
-          child: Text('Save Offline Data'),
-        ),
+        const SizedBox(height: 10),
+        _buildTextField('User Name', controller: usernameController),
+        const SizedBox(height: 10),
+        _buildTextField('Password', controller: passwordController),
       ],
     );
   }

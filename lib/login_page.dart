@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/main.dart';
 
 class LoginPage extends StatefulWidget {
@@ -9,9 +10,26 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  String selectedRole = 'Staff'; // Default role
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? selectedCompany; // Updated to handle dynamic selection
+  List<String> companyNames = []; // List to hold company names
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompanyNames();
+  }
+
+  Future<void> _fetchCompanyNames() async {
+    List<String> names = await DatabaseHelper().getCompanyNames();
+    setState(() {
+      companyNames = names;
+      if (companyNames.isNotEmpty) {
+        selectedCompany = companyNames[0]; // Set default selection
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,12 +84,12 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 20),
                             DropdownButtonFormField<String>(
-                              value: selectedRole,
-                              items: ['Staff', 'Manager', 'Admin']
-                                  .map((role) => DropdownMenuItem<String>(
-                                        value: role,
+                              value: selectedCompany,
+                              items: companyNames
+                                  .map((name) => DropdownMenuItem<String>(
+                                        value: name,
                                         child: Text(
-                                          role,
+                                          name,
                                           style: const TextStyle(
                                               color: Colors.black),
                                         ),
@@ -79,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                                   .toList(),
                               onChanged: (value) {
                                 setState(() {
-                                  selectedRole = value!;
+                                  selectedCompany = value!;
                                 });
                               },
                               decoration: InputDecoration(

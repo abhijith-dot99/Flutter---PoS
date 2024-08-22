@@ -5,6 +5,8 @@ class FormData {
   final String? contactNumber;
   final String? company;
   final String? emailId;
+  final String? username;
+  final String? password;
   final bool online;
 
   FormData({
@@ -14,6 +16,8 @@ class FormData {
     this.contactNumber,
     this.company,
     this.emailId,
+    required this.username,
+    required this.password,
     required this.online,
   });
 
@@ -26,6 +30,8 @@ class FormData {
       'contactNumber': contactNumber,
       'company': company,
       'emailId': emailId,
+      'username': username,
+      'password': password,
       'online': online ? 1 : 0,
     };
   }
