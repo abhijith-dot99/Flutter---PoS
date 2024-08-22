@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/Mode_selector.dart';
 import 'package:flutter_pos_app/home.dart';
@@ -6,8 +8,16 @@ import 'package:flutter_pos_app/sales_report.dart';
 import 'package:flutter_pos_app/shop_config.dart';
 import 'model/item.dart';
 import 'settings.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
+  // sqfliteFfiInit();
+  // databaseFactory = databaseFactoryFfi;
+
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   runApp(const MyApp());
 }
 

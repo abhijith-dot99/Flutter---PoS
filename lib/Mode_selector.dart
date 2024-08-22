@@ -1,8 +1,12 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
+import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/login_page.dart';
+import 'package:flutter_pos_app/model/form_data.dart';
+import 'package:sqflite/sqflite.dart';
 
 void main() {
+  // Initialize the sqflite FFI for desktop
   runApp(const MyApp());
 }
 
@@ -54,15 +58,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 176, 193, 201),
                   borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color.fromARGB(141, 211, 204, 193)
-                          .withOpacity(0.2), // Shadow color
-                      spreadRadius: 10, // Spread radius
-                      blurRadius: 10, // Blur radius
-                      offset: const Offset(5, 5), // Changes position of shadow
-                    ),
-                  ],
                 ),
                 child: Row(
                   children: <Widget>[
@@ -128,7 +123,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                 ),
               ),
               const SizedBox(height: 30),
-              if (isOnline) const OnlineForm() else const OfflineForm(),
+              if (isOnline) const OnlineForm() else OfflineForm(),
               const SizedBox(height: 30),
               SizedBox(
                 width: double
@@ -199,41 +194,77 @@ class OnlineForm extends StatelessWidget {
 }
 
 class OfflineForm extends StatelessWidget {
-  const OfflineForm({super.key});
+  final TextEditingController companyNameController = TextEditingController();
+  final TextEditingController companyIdController = TextEditingController();
+  final TextEditingController contactNumberController = TextEditingController();
+  final TextEditingController companyController = TextEditingController();
+  final TextEditingController emailIdController = TextEditingController();
+
+  // OfflineFormWidget({super.key});
+
+  void _saveFormData() async {
+    print("inside save");
+
+    // Create FormData instance
+    FormData formData = FormData(
+      companyName: companyNameController.text,
+      companyId: companyIdController.text,
+      contactNumber: contactNumberController.text,
+      company: companyController.text,
+      emailId: emailIdController.text,
+      online: false, // Set to false for offline login
+    );
+
+    print("FormData created: ${formData.toMap()}");
+
+    // Insert into database
+    try {
+      int result = await DatabaseHelper().insertOfflineData(formData);
+      print("Insert result: $result");
+    } catch (e) {
+      print("Error inserting data: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        _buildTextField('Company Name'),
+        _buildTextField('Company Name', controller: companyNameController),
         const SizedBox(height: 10),
-        _buildTextField('Company ID'),
+        _buildTextField('Company ID', controller: companyIdController),
         const SizedBox(height: 10),
-        _buildTextField('Contact Number'),
+        _buildTextField('Contact Number', controller: contactNumberController),
         const SizedBox(height: 10),
-        _buildTextField('Company'),
+        _buildTextField('Company', controller: companyController),
         const SizedBox(height: 10),
-        _buildTextField('Email ID'),
+        _buildTextField('Email ID', controller: emailIdController),
+        ElevatedButton(
+          onPressed: _saveFormData,
+          child: Text('Save Offline Data'),
+        ),
       ],
     );
   }
 
-  Widget _buildTextField(String label) {
+  Widget _buildTextField(String label,
+      {required TextEditingController controller}) {
     return TextField(
-      // readOnly: true,
+      controller: controller,
       decoration: InputDecoration(
         hintText: label,
         fillColor: const Color.fromARGB(255, 247, 243, 243),
         filled: true,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // Rounded border
+          borderRadius: BorderRadius.circular(30),
         ),
         hintStyle: const TextStyle(
-          color: Colors.grey, // Ensure hint text is distinct
+          color: Colors.grey,
         ),
       ),
       style: const TextStyle(
-        color: Colors.black, // Input text color
+        color: Colors.black,
       ),
     );
   }

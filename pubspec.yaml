@@ -51,6 +51,11 @@ dev_dependencies:
   dynamic_tabbar: ^1.0.7
   tabbed_view: ^1.18.0
   connectivity_plus: ^6.0.5
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  sqflite_common_ffi: ^2.3.3
+  sqflite_common_ffi_web: ^0.3.5
+  sqlite3_flutter_libs: ^0.5.24
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
