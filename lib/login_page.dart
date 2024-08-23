@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/main.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -21,13 +24,64 @@ class _LoginPageState extends State<LoginPage> {
     _fetchCompanyNames();
   }
 
+  void _login() async {
+    String username = _usernameController.text;
+    String password = _passwordController.text;
+
+    if (selectedCompany == null || selectedCompany!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Please Select A Company',
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      return;
+    }
+
+    bool isValidUser = await DatabaseHelper()
+        .validateUser(username, password, selectedCompany!);
+
+    if (isValidUser) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Invalid username, password, or company',
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   Future<void> _fetchCompanyNames() async {
     List<String> names = await DatabaseHelper().getCompanyNames();
     setState(() {
       companyNames = names;
-      if (companyNames.isNotEmpty) {
-        selectedCompany = companyNames[0]; // Set default selection
-      }
+      selectedCompany = null; // No default selection
+      // if (companyNames.isNotEmpty) {
+      //   selectedCompany = companyNames[0]; // Set default selection
+      // }
     });
   }
 
@@ -107,7 +161,10 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 10, horizontal: 15),
+                                    vertical: 10, horizontal: 12),
+                                hintText: 'Select your company',
+                                hintStyle: const TextStyle(
+                                    color: Colors.grey, height: 2.2),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -147,11 +204,12 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               onPressed: () {
+                                _login();
                                 // Validate login and navigate to MainPage
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                      builder: (context) => const MainPage()),
-                                );
+                                // Navigator.of(context).pushReplacement(
+                                //   MaterialPageRoute(
+                                //       builder: (context) => const MainPage()),
+                                // );
                               },
                               child: const Text('Login',
                                   style: TextStyle(fontSize: 18)),

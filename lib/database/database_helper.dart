@@ -55,6 +55,36 @@ class DatabaseHelper {
     return result.map((row) => row['companyName'] as String).toList();
   }
 
+  Future<bool> validateUser(
+      String username, String password, String company) async {
+    print("insdie validateuer function");
+    print("username $username");
+    print("password $password");
+    print("company$company");
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'DB_users',
+      where: 'username = ? AND password = ? AND companyName = ?',
+      whereArgs: [username, password, company],
+    );
+    if (result.isNotEmpty) {
+      print("Valid user found");
+      return true;
+    } else {
+      print("No valid user found");
+      return false;
+    }
+  }
+
+  Future<List<String>> getUserCredintials() async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'DB_company',
+      columns: ['username, password'],
+    );
+    return result.map((row) => row['companyName, password'] as String).toList();
+  }
+
   Future<void> _onCreate(Database db, int version) async {
     // Create the DB_company table
     await db.execute('''
@@ -74,7 +104,8 @@ class DatabaseHelper {
     CREATE TABLE IF NOT EXISTS DB_users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT,
-      password TEXT
+      password TEXT,
+       companyName TEXT
     )
   ''');
   }
@@ -103,6 +134,7 @@ class DatabaseHelper {
         Map<String, dynamic> userData = {
           'username': formData.username,
           'password': formData.password,
+          'companyName': formData.companyName,
         };
 
         print("User data: $userData");

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/login_page.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
@@ -243,7 +244,9 @@ class OfflineForm extends StatelessWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
 
-  const OfflineForm({
+  final _formKey = GlobalKey<FormState>(); // Add this line
+
+  OfflineForm({
     super.key,
     required this.companyNameController,
     required this.companyIdController,
@@ -256,30 +259,45 @@ class OfflineForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        _buildTextField('Company Name', controller: companyNameController),
-        const SizedBox(height: 10),
-        _buildTextField('Company ID', controller: companyIdController),
-        const SizedBox(height: 10),
-        _buildTextField('Contact Number', controller: contactNumberController),
-        const SizedBox(height: 10),
-        _buildTextField('Company', controller: companyController),
-        const SizedBox(height: 10),
-        _buildTextField('Email ID', controller: emailIdController),
-        const SizedBox(height: 10),
-        _buildTextField('User Name', controller: usernameController),
-        const SizedBox(height: 10),
-        _buildTextField('Password', controller: passwordController),
-      ],
+    return Form(
+      key: _formKey, // Add this line
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          _buildTextField('Company Name', controller: companyNameController),
+          const SizedBox(height: 10),
+          _buildTextField('Company ID',
+              controller: companyIdController, isNumeric: true),
+          const SizedBox(height: 10),
+          _buildTextField('Contact Number',
+              controller: contactNumberController, isNumeric: true),
+          const SizedBox(height: 10),
+          _buildTextField('Company', controller: companyController),
+          const SizedBox(height: 10),
+          _buildTextField('Email ID',
+              controller: emailIdController, isEmail: true),
+          const SizedBox(height: 10),
+          _buildTextField('User Name', controller: usernameController),
+          const SizedBox(height: 10),
+          _buildTextField('Password',
+              controller: passwordController, isPassword: true),
+        ],
+      ),
     );
   }
 
   Widget _buildTextField(String label,
-      {required TextEditingController controller}) {
-    return TextField(
+      {required TextEditingController controller,
+      bool isEmail = false,
+      bool isPassword = false,
+      bool isNumeric = false}) {
+    return TextFormField(
       controller: controller,
+      obscureText: isPassword,
+      keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+      inputFormatters: isNumeric
+          ? <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly]
+          : null,
       decoration: InputDecoration(
         hintText: label,
         fillColor: const Color.fromARGB(255, 247, 243, 243),
@@ -294,6 +312,15 @@ class OfflineForm extends StatelessWidget {
       style: const TextStyle(
         color: Colors.black,
       ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter $label';
+        }
+        if (isEmail && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+          return 'Please enter a valid email address';
+        }
+        return null;
+      },
     );
   }
 }
