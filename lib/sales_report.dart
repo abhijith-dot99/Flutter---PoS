@@ -21,17 +21,19 @@ class _SalesReportState extends State<SalesReport> {
     print('Items passed to ItemListPage: ${widget.items.length}');
 
     return Scaffold(
-      backgroundColor: const Color(0xff1f2029),
+      // backgroundColor: Colors.blueGrey,
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
-        backgroundColor: const Color(0xff2c2f36),
+        // backgroundColor: Colors.grey,
+        backgroundColor: Color.fromARGB(155, 239, 241, 241),
         elevation: 0,
         title: const Text(
           'Sales Report',
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black87,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: Column(
         children: [
@@ -43,13 +45,13 @@ class _SalesReportState extends State<SalesReport> {
                   flex: 3,
                   child: TextField(
                     controller: searchController,
-                    style: const TextStyle(color: Colors.white54),
+                    style: const TextStyle(color: Colors.black54),
                     decoration: const InputDecoration(
                       hintText: 'Search...',
-                      hintStyle: TextStyle(color: Colors.white54),
-                      prefixIcon: Icon(Icons.search, color: Colors.white54),
+                      hintStyle: TextStyle(color: Colors.black38),
+                      prefixIcon: Icon(Icons.search, color: Colors.black54),
                       filled: true,
-                      fillColor: Color(0xff2c2f36),
+                      fillColor: Color.fromARGB(255, 225, 229, 238),
                       border: OutlineInputBorder(
                         borderSide: BorderSide.none,
                         borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -67,8 +69,8 @@ class _SalesReportState extends State<SalesReport> {
                   flex: 2,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: const Color(0xff2c2f36), // Text color
+                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.white, // Text color
                       padding:
                           const EdgeInsets.symmetric(vertical: 21.5), // Padding
                       shape: RoundedRectangleBorder(
@@ -111,8 +113,8 @@ class _SalesReportState extends State<SalesReport> {
                   flex: 2,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: const Color(0xff2c2f36), // Text color
+                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.white, // Text color
                       padding:
                           const EdgeInsets.symmetric(vertical: 21.6), // Padding
                       shape: RoundedRectangleBorder(
@@ -208,19 +210,19 @@ class _SalesReportState extends State<SalesReport> {
     return DataTable(
       columnSpacing: 40.0,
       columns: const [
-        DataColumn(
-          label: Center(
-            child: Text(
-              'Image',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
+        // DataColumn(
+        //   label: Center(
+        //     child: Text(
+        //       'Image',
+        //       style: TextStyle(color: Colors.black87),
+        //     ),
+        //   ),
+        // ),
         DataColumn(
           label: Center(
             child: Text(
               'Title',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.black87),
             ),
           ),
         ),
@@ -228,7 +230,7 @@ class _SalesReportState extends State<SalesReport> {
           label: Center(
             child: Text(
               'Price',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.black87),
             ),
           ),
         ),
@@ -236,21 +238,21 @@ class _SalesReportState extends State<SalesReport> {
       rows: widget.items.map((item) {
         return DataRow(
           cells: [
-            const DataCell(
-              Center(
-                  // child: Image.asset(item.image, height: 30, width: 30),
-                  ),
-            ),
+            // const DataCell(
+            //   Center(
+            //       child: Image.asset(item.image, height: 30, width: 30),
+            //       ),
+            // ),
             DataCell(
               Center(
                 child: Text(item.title,
-                    style: const TextStyle(color: Colors.white)),
+                    style: const TextStyle(color: Colors.black87)),
               ),
             ),
             DataCell(
               Center(
                 child: Text(item.price,
-                    style: const TextStyle(color: Colors.white54)),
+                    style: const TextStyle(color: Colors.black87)),
               ),
             ),
           ],

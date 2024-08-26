@@ -119,6 +119,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       itemCount: 1,
       category: 'Noodles',
     ),
+    Item(
+      image: 'assets/items/9.png',
+      title: 'drinks',
+      price: ' 8.99',
+      tax: '',
+      itemCount: 1,
+      category: 'Drinks',
+    ),
   ];
 
   void _updateItemCount(String value) {
@@ -228,7 +236,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     return Scaffold(
-      backgroundColor: Color(0xff1f2020),
+      // backgroundColor: Color.fromARGB(255, 243, 239, 239),
+      backgroundColor: Colors.white,
       body: PageView.builder(
         controller: _pageController,
         itemCount: 3,
@@ -286,9 +295,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       itemWidth, // Use the updated width
                                   childAspectRatio: itemWidth /
                                       itemHeight, // Use the updated height and width
-                                  mainAxisSpacing: 10, // Spacing between rows
+                                  mainAxisSpacing: 5, // Spacing between rows
                                   crossAxisSpacing:
-                                      10, // Spacing between columns
+                                      5, // Spacing between columns
                                 ),
                                 itemCount: searchResults.length,
                                 itemBuilder: (context, index) {
@@ -342,10 +351,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     children: [
                       _buildNavButton(1),
                       const Icon(Icons.more_horiz,
-                          color: Colors.white54), // Dots icon
+                          color: Colors.black38), // Dots icon
                       _buildNavButton(2),
                       const Icon(Icons.more_horiz,
-                          color: Colors.white54), // Dots icon
+                          color: Colors.black38), // Dots icon
                       _buildNavButton(3),
                     ],
                   ),
@@ -358,7 +367,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   children: [
                     ...List.generate(10, (index) {
                       return Padding(
-                        padding: const EdgeInsets.all(4.0),
+                        padding: const EdgeInsets.all(1.0),
                         child: ElevatedButton(
                           onPressed: () {
                             setState(() {
@@ -372,7 +381,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               }
                             });
                             _updateItemCount(input);
-                            // print("from buttons $input");
                           },
                           style: ButtonStyle(
                             backgroundColor: WidgetStateProperty.all<Color>(
@@ -385,7 +393,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                           child: Text(
                             index.toString(),
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 10),
                           ),
                         ),
                       );
@@ -405,12 +413,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       onPressed: () => _openPage(page),
       style: ElevatedButton.styleFrom(
         shape: const CircleBorder(),
+        // backgroundColor:
+        //     _selectedPage == page ? Colors.white : Colors.deepOrangeAccent,
+
         backgroundColor:
-            _selectedPage == page ? Colors.white : Colors.deepOrangeAccent,
+            _selectedPage == page ? Colors.black26 : Colors.deepOrangeAccent,
         padding: const EdgeInsets.all(15),
         foregroundColor: _selectedPage == page
-            ? Colors.black // Text color for selected page
-            : Colors.white, // Text color for non-selected pages
+            ? Colors.white // Text color for selected page
+            : Colors.black, // Text color for non-selected pages
       ),
       child: Text('$page'),
     );
@@ -421,14 +432,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: TextField(
         decoration: const InputDecoration(
           filled: true,
-          fillColor: Color(0xff1f2029),
+          fillColor: Color.fromARGB(105, 225, 231, 231),
           hintText: 'Search item...',
-          hintStyle: TextStyle(color: Colors.white54),
-          prefixIcon: Icon(Icons.search, color: Colors.white54),
+          hintStyle: TextStyle(color: Color.fromARGB(137, 20, 12, 12)),
+          prefixIcon:
+              Icon(Icons.search, color: Color.fromARGB(137, 20, 12, 12)),
           border: OutlineInputBorder(
+              borderSide: BorderSide.none,
               borderRadius: BorderRadius.all(Radius.circular(15.0))),
         ),
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.black),
         onChanged: (query) {
           setState(() {
             searchResults = items
@@ -454,10 +467,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: isActive ? const Color(0xfffd8f27) : const Color(0xff1f2029),
+          color: isActive
+              ? const Color(0xfffd8f27)
+              : Color.fromARGB(255, 223, 230, 227),
           border: Border.all(
-            color: isActive ? Colors.deepOrangeAccent : const Color(0xff1f2029),
-            width: 3,
+            color: isActive
+                ? Colors.deepOrangeAccent
+                : const Color.fromARGB(255, 224, 201, 201),
+            width: 2,
           ),
         ),
         child: Row(
@@ -466,11 +483,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 width: 25,
                 errorBuilder: (context, error, stackTrace) =>
                     const Icon(Icons.error, color: Colors.red)),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             Text(title,
                 style: TextStyle(
                     fontSize: 13,
-                    color: isActive ? Colors.white : Colors.white,
+                    color: isActive ? Colors.white : Colors.black,
                     fontWeight: FontWeight.bold)),
           ],
         ),
@@ -499,14 +516,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   const Icon(
                     Icons.date_range,
                     size: 18,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                   const SizedBox(width: 8), // Space between icon and date
                   Text(
                     currentDate,
                     style: const TextStyle(
                       fontSize: 14,
-                      color: Colors.white,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(width: 20),
@@ -524,7 +541,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       {String? image,
       required String title,
       required String price,
-      // required String item,
       required int itemCount,
       required VoidCallback onTap}) {
     return GestureDetector(
@@ -534,15 +550,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         height: 50,
         decoration: BoxDecoration(
-          color: const Color(0xff1f2029),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(0, 3)),
-          ],
+          color: Color.fromARGB(155, 222, 229, 231),
+          borderRadius: BorderRadius.circular(9),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -554,11 +563,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Text(title,
                 style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.white,
+                    color: Colors.black,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(price,
-                style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                style: const TextStyle(fontSize: 14, color: Colors.brown)),
             const SizedBox(height: 4),
           ],
         ),
@@ -590,7 +599,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
           padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
           decoration: BoxDecoration(
-            color: const Color(0xff1f2029),
+            color: Color.fromARGB(155, 205, 212, 214),
             borderRadius: BorderRadius.circular(13),
             boxShadow: [
               BoxShadow(color: Colors.grey.withOpacity(0.3)),
@@ -611,7 +620,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         title,
                         style: const TextStyle(
                           fontSize: 15,
-                          color: Colors.white,
+                          color: Colors.black87,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -626,14 +635,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-              // const SizedBox(height: 4), // Spacing between the two vertical pieces
+
               Row(
                 children: [
                   // Item count taking full width
                   Expanded(
                     child: Text(
                       itemCount.toString(),
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
                       // textAlign: TextAlign.center, // Center the text if needed
                     ),
                   ),
@@ -641,7 +650,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Expanded(
                     child: Text(
                       price,
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
                       // textAlign: TextAlign.center, // Center the text if needed
                     ),
                   ),
@@ -650,7 +659,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Expanded(
                     child: Text(
                       total.toStringAsFixed(2),
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
                       textAlign: TextAlign.center, // Center the text if needed
                     ),
                   ),
@@ -680,20 +689,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xff1f2029),
+          // backgroundColor: Color(0xff1f2029),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           title: const Text(
             'Edit Item',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.black),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: quantityController,
-                style: TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -705,13 +715,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Color(0xff1f2029),
+                  fillColor: Colors.white,
                 ),
               ),
               SizedBox(height: 10),
               TextField(
                 controller: priceController,
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.black),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -723,7 +733,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Color(0xff1f2029),
+                  fillColor: Colors.white,
                 ),
               ),
             ],
@@ -827,7 +837,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         margin: const EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: const Color(0xff1f2029),
+          // color: const Color(0xff1f2029),
+          // color: Colors.blueGrey,
+          color: Color.fromARGB(155, 222, 229, 231),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -839,10 +851,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 const Text('Sub Total',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                        fontWeight: FontWeight.bold, color: Colors.black)),
                 Text(' ${subtotal.toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                        fontWeight: FontWeight.bold, color: Colors.black)),
               ],
             ),
             // const SizedBox(height: 2),
@@ -851,10 +863,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 const Text('Tax',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                        fontWeight: FontWeight.bold, color: Colors.black87)),
                 Text(' ${tax.toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                        fontWeight: FontWeight.bold, color: Colors.black87)),
               ],
             ),
             // const SizedBox(height: 5),
@@ -863,7 +875,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 const Text('Discount',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                        fontWeight: FontWeight.bold, color: Colors.black87)),
                 SizedBox(
                   width: 50, // Adjust the width as needed
                   child: TextField(
@@ -872,7 +884,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Colors.white),
+                        color: Colors.black87),
                     textAlign: TextAlign.end,
                     decoration: const InputDecoration(
                       // border: InputBorder.none, // Remove the underline
@@ -908,17 +920,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               margin: const EdgeInsets.symmetric(vertical: 1),
               height: 2,
               width: double.infinity,
-              color: Colors.white,
+              color: Colors.black12,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                        fontWeight: FontWeight.bold, color: Colors.black87)),
                 Text('${(total * 1.1).toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.white)),
+                        fontWeight: FontWeight.bold, color: Colors.black87)),
               ],
             ),
             // const SizedBox(height: 6),
@@ -961,7 +973,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildOrderedItemsSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.blueGrey[900],
+        color: Color.fromARGB(155, 239, 241, 241),
         borderRadius: BorderRadius.circular(12),
       ),
       child: orderedItems.isEmpty
@@ -973,13 +985,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Icon(
                     Icons.shopping_cart_outlined,
                     size: 50,
-                    color: Colors.white70,
+                    color: Colors.black26,
                   ),
                   SizedBox(height: 10),
                   Text(
                     'Cart',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: Colors.black26,
                       fontSize: 16,
                     ),
                   ),
@@ -1020,19 +1032,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   filter: ImageFilter.blur(
                       sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
                   child: Container(
-                    color: Colors.black.withOpacity(
+                    color: Colors.white.withOpacity(
                         0), // Just to make the BackdropFilter visible
                   ),
                 ),
                 AlertDialog(
-                  backgroundColor:
-                      Color(0xff1f2029), // Set background color here
+                  backgroundColor: const Color.fromARGB(
+                      255, 255, 255, 255), // Set background color here
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   title: const Text(
                     'Select Customer',
-                    style: TextStyle(color: Colors.white54), // Title color
+                    style: TextStyle(color: Colors.black87), // Title color
                   ),
                   content: Container(
                     width: MediaQuery.of(context).size.width *
@@ -1042,18 +1054,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       children: [
                         TextField(
                           onChanged: _filterCustomers,
-                          style: TextStyle(
-                              color: Colors.white), // Text field text color
+                          style: const TextStyle(
+                              color: Colors.black87), // Text field text color
                           decoration: InputDecoration(
                             hintText: 'Search',
-                            hintStyle: TextStyle(
-                                color: Colors.white), // Hint text color
+                            hintStyle: const TextStyle(
+                                color: Colors.black26), // Hint text color
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             prefixIcon: const Icon(
                               Icons.search,
-                              color: Colors.white, // Icon color
+                              color: Colors.black38, // Icon color
                             ),
                           ),
                         ),
@@ -1064,10 +1076,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             'Select a customer',
                             style: TextStyle(
                                 color: Colors
-                                    .white), // Hint text color for dropdown
+                                    .black38), // Hint text color for dropdown
                           ),
                           isExpanded: true,
-                          dropdownColor: Color(0xff1f2029),
+                          dropdownColor: Color.fromARGB(255, 226, 226, 233),
                           items: _filteredCustomers.map((String customer) {
                             return DropdownMenuItem<String>(
                               value: customer,
@@ -1075,7 +1087,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 customer,
                                 style: const TextStyle(
                                     color: Colors
-                                        .white54), // Dropdown item text color
+                                        .black87), // Dropdown item text color
                               ),
                             );
                           }).toList(),

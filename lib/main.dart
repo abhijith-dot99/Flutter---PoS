@@ -68,7 +68,8 @@ class _AppInitializerState extends State<AppInitializer> {
     if (_isLoggedIn) {
       return const MainPage(); // Show the main page if logged in
     } else {
-      return const SoftwareModePage(); // Show the login page if not logged in
+      // return const SoftwareModePage(); // Show the login page if not logged in
+      return MainPage();
     }
   }
 }
@@ -129,7 +130,9 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff1f2029),
+      // backgroundColor: const Color(0xff1f2029),
+      // backgroundColor: Color.fromARGB(255, 240, 231, 231),
+      backgroundColor: Colors.white,
       body: Row(
         children: [
           Container(
@@ -140,13 +143,12 @@ class _MainPageState extends State<MainPage> {
           ),
           Expanded(
             child: Container(
-              margin: const EdgeInsets.only(top: 24, right: 12),
-              padding: const EdgeInsets.only(top: 12, right: 12, left: 12),
+              margin: const EdgeInsets.only(top: 34),
+              padding: const EdgeInsets.only(top: 3, left: 3, right: 2),
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12)),
-                color: Color(0xff17181f),
+                    topLeft: Radius.circular(2), topRight: Radius.circular(2)),
+                color: Color.fromARGB(255, 230, 203, 203),
               ),
               child: _pageView(),
             ),
@@ -237,7 +239,7 @@ class _MainPageState extends State<MainPage> {
         const Text(
           'POSFood',
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
             fontSize: 8,
             fontWeight: FontWeight.bold,
           ),
@@ -271,12 +273,12 @@ class _MainPageState extends State<MainPage> {
               children: [
                 Icon(
                   icon,
-                  color: Colors.white,
+                  color: Colors.black54,
                 ),
                 const SizedBox(height: 5),
                 Text(
                   menu,
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                  style: const TextStyle(color: Colors.black54, fontSize: 10),
                 ),
               ],
             ),

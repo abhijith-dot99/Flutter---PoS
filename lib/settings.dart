@@ -26,17 +26,17 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff1f2029),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
-        backgroundColor: const Color(0xff2c2f36),
+        backgroundColor: Color.fromARGB(155, 239, 241, 241),
         title: const Text(
           'Settings',
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black87,
           ),
         ),
         iconTheme: const IconThemeData(
-          color: Colors.white, // Set the back arrow color to white
+          color: Colors.black54, // Set the back arrow color to white
         ),
       ),
       body: Padding(
@@ -47,7 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
               title: const Text(
                 'Show Images',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
               value: _showImages,
@@ -64,6 +64,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-
-
-

@@ -88,7 +88,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff1f2029),
+      // backgroundColor: const Color(0xff1f2029),
+      backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
           // Check if the screen width is larger than 600 (or any value you consider for desktop)
@@ -99,12 +100,13 @@ class _LoginPageState extends State<LoginPage> {
               if (isDesktop) // Display only on desktop
                 Expanded(
                   child: Container(
-                    color: const Color(0xff2c2f36),
+                    // color: const Color(0xff2c2f36),
+                    color: Color.fromARGB(209, 211, 212, 154),
                     child: const Center(
                       child: Text(
-                        'Welcome to POSFood!\nWhere Taste Meets Quality',
+                        ' POSFood!\nWhere Taste Meets Quality',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.black,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -118,7 +120,9 @@ class _LoginPageState extends State<LoginPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Card(
-                      color: const Color(0xff2c2f36),
+                      // color: const Color(0xff2c2f36),
+                      color: const Color.fromARGB(255, 224, 201, 201),
+
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),

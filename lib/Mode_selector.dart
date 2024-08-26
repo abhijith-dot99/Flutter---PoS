@@ -68,7 +68,8 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff1f2029),
+      // backgroundColor: const Color(0xff1f2029),
+      backgroundColor: Colors.white,
       body: Center(
         child: Container(
           width: 700,
@@ -80,7 +81,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                 'Software Mode',
                 style: TextStyle(
                   fontSize: 28,
-                  color: Colors.white,
+                  color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -88,7 +89,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 176, 193, 201),
+                  color: const Color.fromARGB(209, 211, 212, 154),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Row(
@@ -105,7 +106,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: isOnline
-                                ? const Color.fromARGB(255, 111, 218, 85)
+                                ? Color.fromARGB(255, 33, 199, 191)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -223,13 +224,21 @@ class OnlineForm extends StatelessWidget {
         filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(
+            color: Colors.brown, // Set the border color here
+            width: 2.0, // Set the border width here
+          ),
         ),
         hintStyle: const TextStyle(
           color: Colors.grey,
         ),
       ),
       style: const TextStyle(
-        color: Colors.black,
+        color: Color.fromARGB(255, 15, 1, 1),
       ),
     );
   }
@@ -304,6 +313,14 @@ class OfflineForm extends StatelessWidget {
         filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(
+            color: Colors.brown, // Set the border color here
+            width: 2.0, // Set the border width here
+          ),
         ),
         hintStyle: const TextStyle(
           color: Colors.grey,
