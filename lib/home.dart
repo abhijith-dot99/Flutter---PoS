@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_pos_app/database/database_helper.dart';
 import 'model/item.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
@@ -64,70 +65,72 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     setState(() {});
   }
 
-  final List<Item> items = [
-    Item(
-        image: 'assets/items/1.png',
-        title: 'Original Burger',
-        price: ' 5.99',
-        tax: '',
-        itemCount: 1,
-        category: 'Burger'),
-    Item(
-        image: 'assets/items/2.png',
-        title: 'Double Burger',
-        price: ' 10.99',
-        tax: '',
-        itemCount: 1,
-        category: 'Burger'),
-    Item(
-      image: 'assets/items/3.png',
-      title: 'Cheese Burger',
-      price: ' 6.99',
-      tax: '1.50',
-      itemCount: 1,
-      category: 'Burger',
-    ),
-    Item(
-      image: 'assets/items/4.png',
-      title: 'Double Cheese Burger',
-      price: ' 12.99',
-      tax: '2',
-      itemCount: 1,
-      category: 'Burger',
-    ),
-    Item(
-      image: 'assets/items/5.png',
-      title: 'Spicy Burger',
-      price: ' 7.39',
-      tax: '100',
-      itemCount: 1,
-      category: 'Burger',
-    ),
-    Item(
-      image: 'assets/items/6.png',
-      title: 'Special Black Burger',
-      price: '7.39',
-      tax: '',
-      itemCount: 1,
-      category: 'Burger',
-    ),
-    Item(
-      image: 'assets/items/9.png',
-      title: 'Noodles',
-      price: ' 8.99',
-      tax: '',
-      itemCount: 1,
-      category: 'Noodles',
-    ),
-    Item(
-      image: 'assets/items/9.png',
-      title: 'drinks',
-      price: ' 8.99',
-      tax: '',
-      itemCount: 1,
-      category: 'Drinks',
-    ),
-  ];
+  List<Item> items = [];
+
+  // final List<Item> items = [
+  //   Item(
+  //       image: 'assets/items/1.png',
+  //       title: 'Original Burger',
+  //       price: ' 5.99',
+  //       tax: '',
+  //       itemCount: 1,
+  //       category: 'Burger'),
+  //   Item(
+  //       image: 'assets/items/2.png',
+  //       title: 'Double Burger',
+  //       price: ' 10.99',
+  //       tax: '',
+  //       itemCount: 1,
+  //       category: 'Burger'),
+  //   Item(
+  //     image: 'assets/items/3.png',
+  //     title: 'Cheese Burger',
+  //     price: ' 6.99',
+  //     tax: '1.50',
+  //     itemCount: 1,
+  //     category: 'Burger',
+  //   ),
+  //   Item(
+  //     image: 'assets/items/4.png',
+  //     title: 'Double Cheese Burger',
+  //     price: ' 12.99',
+  //     tax: '2',
+  //     itemCount: 1,
+  //     category: 'Burger',
+  //   ),
+  //   Item(
+  //     image: 'assets/items/5.png',
+  //     title: 'Spicy Burger',
+  //     price: ' 7.39',
+  //     tax: '100',
+  //     itemCount: 1,
+  //     category: 'Burger',
+  //   ),
+  //   Item(
+  //     image: 'assets/items/6.png',
+  //     title: 'Special Black Burger',
+  //     price: '7.39',
+  //     tax: '',
+  //     itemCount: 1,
+  //     category: 'Burger',
+  //   ),
+  //   Item(
+  //     image: 'assets/items/9.png',
+  //     title: 'Noodles',
+  //     price: ' 8.99',
+  //     tax: '',
+  //     itemCount: 1,
+  //     category: 'Noodles',
+  //   ),
+  //   Item(
+  //     image: 'assets/items/9.png',
+  //     title: 'drinks',
+  //     price: ' 8.99',
+  //     tax: '',
+  //     itemCount: 1,
+  //     category: 'Drinks',
+  //   ),
+  // ];
 
   void _updateItemCount(String value) {
     print("Inside updateItemCount, value: $value");
@@ -178,6 +181,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _pageController = PageController(
         initialPage: _selectedPage); // Initialize the PageController
+
+    _loadItemsFromDatabase();
   }
 
   @override
@@ -186,14 +191,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void filterItems(String category) {
+  Future<void> _loadItemsFromDatabase() async {
+    print("inside load items");
+    final dbHelper = DatabaseHelper();
+    final fetchedItems = await dbHelper.getItems();
     setState(() {
-      selectedCategory = category;
-      searchResults = category == 'All'
-          ? items
-          : items.where((item) => item.category == category).toList();
+      items = fetchedItems;
+      searchResults = items;
     });
   }
+
+  // void filterItems(String category) {
+  //   setState(() {
+  //     selectedCategory = category;
+  //     searchResults = category == 'All'
+  //         ? items
+  //         : items.where((item) => item.category == category).toList();
+  //   });
+  // }
 
   void _filterCustomers(String query) {
     setState(() {
@@ -208,7 +223,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     setState(() {
       // Check if the item is already in the orderedItems list
       int existingItemIndex = orderedItems
-          .indexWhere((orderedItem) => orderedItem.title == item.title);
+          .indexWhere((orderedItem) => orderedItem.itemName == item.itemName);
 
       if (existingItemIndex != -1) {
         // If the item exists, increase the item count
@@ -262,24 +277,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             children: [
-                              _itemTab(
-                                icon: 'assets/icons/samplepic.jpg',
-                                title: 'All',
-                                isActive: selectedCategory == 'All',
-                                onTap: () => filterItems('All'),
-                              ),
-                              _itemTab(
-                                icon: 'assets/items/1.png',
-                                title: 'Burger',
-                                isActive: selectedCategory == 'Burger',
-                                onTap: () => filterItems('Burger'),
-                              ),
-                              _itemTab(
-                                icon: 'assets/icons/icon-noodles.png',
-                                title: 'Noodles',
-                                isActive: selectedCategory == 'Noodles',
-                                onTap: () => filterItems('Noodles'),
-                              ),
+                              // _itemTab(
+                              //   icon: 'assets/icons/samplepic.jpg',
+                              //   title: 'All',
+                              //   isActive: selectedCategory == 'All',
+                              //   // onTap: () => filterItems('All'),
+                              // ),
+                              // _itemTab(
+                              //   icon: 'assets/items/1.png',
+                              //   title: 'Burger',
+                              //   isActive: selectedCategory == 'Burger',
+                              //   onTap: () => filterItems('Burger'),
+                              // ),
+                              // _itemTab(
+                              //   icon: 'assets/icons/icon-noodles.png',
+                              //   title: 'Noodles',
+                              //   isActive: selectedCategory == 'Noodles',
+                              //   onTap: () => filterItems('Noodles'),
+                              // ),
                               // Add more item tabs here
                             ],
                           ),
@@ -305,7 +320,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   return _item(
                                     image:
                                         widget.showImages ? item.image : null,
-                                    title: item.title,
+                                    itemName: item.itemName,
                                     price: item.price,
                                     itemCount: item.itemCount,
                                     onTap: () => addItemToOrder(item),
@@ -446,7 +461,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           setState(() {
             searchResults = items
                 .where((item) =>
-                    item.title.toLowerCase().contains(query.toLowerCase()))
+                    item.itemName.toLowerCase().contains(query.toLowerCase()))
                 .toList();
           });
         },
@@ -454,46 +469,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _itemTab(
-      {required String icon,
-      required String title,
-      required bool isActive,
-      required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        // width: 150,
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: isActive
-              ? const Color(0xfffd8f27)
-              : Color.fromARGB(255, 223, 230, 227),
-          border: Border.all(
-            color: isActive
-                ? Colors.deepOrangeAccent
-                : const Color.fromARGB(255, 224, 201, 201),
-            width: 2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Image.asset(icon,
-                width: 25,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.error, color: Colors.red)),
-            const SizedBox(width: 4),
-            Text(title,
-                style: TextStyle(
-                    fontSize: 13,
-                    color: isActive ? Colors.white : Colors.black,
-                    fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _itemTab(
+  //     {required String icon,
+  //     required String title,
+  //     required bool isActive,
+  //     required VoidCallback onTap}) {
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: Container(
+  //       // width: 150,
+  //       margin: const EdgeInsets.only(right: 16),
+  //       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(10),
+  //         color: isActive
+  //             ? const Color(0xfffd8f27)
+  //             : Color.fromARGB(255, 223, 230, 227),
+  //         border: Border.all(
+  //           color: isActive
+  //               ? Colors.deepOrangeAccent
+  //               : const Color.fromARGB(255, 224, 201, 201),
+  //           width: 2,
+  //         ),
+  //       ),
+  //       child: Row(
+  //         children: [
+  //           Image.asset(icon,
+  //               width: 25,
+  //               errorBuilder: (context, error, stackTrace) =>
+  //                   const Icon(Icons.error, color: Colors.red)),
+  //           const SizedBox(width: 4),
+  //           Text(itemName,
+  //               style: TextStyle(
+  //                   fontSize: 13,
+  //                   color: isActive ? Colors.white : Colors.black,
+  //                   fontWeight: FontWeight.bold)),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _topMenu({
     required String title,
@@ -539,7 +554,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _item(
       {String? image,
-      required String title,
+      required String itemName,
       required String price,
       required int itemCount,
       required VoidCallback onTap}) {
@@ -560,15 +575,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Image.asset(image,
                   fit: BoxFit.cover, height: 30, width: double.infinity),
             const SizedBox(height: 8),
-            Text(title,
+            Text(itemName,
                 style: const TextStyle(
                     fontSize: 16,
                     color: Colors.black,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text(price,
-                style: const TextStyle(fontSize: 14, color: Colors.brown)),
-            const SizedBox(height: 4),
+            // Text(price,
+            //     style: const TextStyle(fontSize: 14, color: Colors.brown)),
+            // const SizedBox(height: 4),
           ],
         ),
       ),
@@ -577,7 +592,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _itemOrder({
     String? image,
-    required String title,
+    required String itemName,
     required int itemCount,
     required String price,
     required int index, // Add index to identify the item in the list
@@ -617,7 +632,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Text(
-                        title,
+                        itemName,
                         style: const TextStyle(
                           fontSize: 15,
                           color: Colors.black87,
@@ -751,12 +766,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 setState(() {
                   orderedItems[index] = Item(
                     image: item.image,
-                    title: item.title,
+                    itemName: item.itemName,
+                    itemCode: item.itemCode,
                     price: priceController.text,
                     tax: item.tax,
                     // itemCount: quantityController.text,
                     itemCount: int.parse(quantityController.text),
-                    category: item.category,
+                    // category: item.category,
                   );
                 });
                 Navigator.of(context).pop();
@@ -1005,7 +1021,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 // Print the itemCount and its datatype
                 return _itemOrder(
                   image: item.image,
-                  title: item.title,
+                  itemName: item.itemName,
                   price: item.price,
                   itemCount: item.itemCount,
                   index: index,

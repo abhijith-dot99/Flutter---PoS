@@ -68,8 +68,8 @@ class _AppInitializerState extends State<AppInitializer> {
     if (_isLoggedIn) {
       return const MainPage(); // Show the main page if logged in
     } else {
-      // return const SoftwareModePage(); // Show the login page if not logged in
-      return MainPage();
+      return const SoftwareModePage(); // Show the login page if not logged in
+      // return MainPage();
     }
   }
 }
@@ -87,22 +87,22 @@ class _MainPageState extends State<MainPage> {
   double itemHeight = 250; // Default height
   double itemWidth = 120;
 
-  final List<Item> items = [
-    Item(
-        image: 'assets/items/1.png',
-        title: 'Original Burger',
-        price: '\$5.99',
-        itemCount: 1,
-        category: 'Burger',
-        tax: ''),
-    Item(
-        image: 'assets/items/2.png',
-        title: 'Double Burger',
-        price: '\$10.99',
-        itemCount: 1,
-        category: 'Burger',
-        tax: ''),
-  ];
+  // final List<Item> items = [
+  //   Item(
+  //       image: 'assets/items/1.png',
+  //       title: 'Original Burger',
+  //       price: '\$5.99',
+  //       itemCount: 1,
+  //       category: 'Burger',
+  //       tax: ''),
+  //   Item(
+  //       image: 'assets/items/2.png',
+  //       title: 'Double Burger',
+  //       price: '\$10.99',
+  //       itemCount: 1,
+  //       category: 'Burger',
+  //       tax: ''),
+  // ];
 
   _pageView() {
     switch (pageActive) {
@@ -176,13 +176,13 @@ class _MainPageState extends State<MainPage> {
               menu: 'Sales',
               icon: Icons.assignment,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => SalesReport(
-                            items: items,
-                          )),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //       builder: (context) => SalesReport(
+                //             items: items,
+                //           )),
+                // );
               },
             ),
             _itemMenu(

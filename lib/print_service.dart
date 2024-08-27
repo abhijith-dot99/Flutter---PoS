@@ -50,12 +50,12 @@ class PrintService {
             pw.Text('Bill', style: const pw.TextStyle(fontSize: 24)),
             pw.SizedBox(height: 16),
             // ignore: deprecated_member_use
-            pw.Table.fromTextArray(
-              headers: ['Item', 'Quantity', 'Price'],
-              data: items
-                  .map((item) => [item.title, item.itemCount, item.price])
-                  .toList(),
-            ),
+            // pw.Table.fromTextArray(
+            //   headers: ['Item', 'Quantity', 'Price'],
+            //   data: items
+            //       .map((item) => [item.title, item.itemCount, item.price])
+            //       .toList(),
+            // ),
           ],
         ),
       ),

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_pos_app/model/form_data.dart';
+import 'package:flutter_pos_app/model/item.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
@@ -27,10 +28,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     String path = 'Db_bizdot.db';
 
-    // Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    // String path = join(documentsDirectory.path, 'Db_bizdot.db'); // Proper path
-
-    print('Database path: $path');
+    // print('Database path: $path');
 
     try {
       final db = await openDatabase(
@@ -38,7 +36,7 @@ class DatabaseHelper {
         version: 1,
         onCreate: _onCreate, // Called only if the database is being created
       );
-      print("Database opened successfully: $db");
+      // print("Database opened successfully: $db");
       return db;
     } catch (e) {
       print("Error opening database: $e");
@@ -86,6 +84,7 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    print("inside oncreate");
     // Create the DB_company table
     await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_company (
@@ -108,6 +107,18 @@ class DatabaseHelper {
        companyName TEXT
     )
   ''');
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS DB_itemss (
+    item_code TEXT PRIMARY KEY,
+    item_name TEXT,
+    image TEXT,
+    price TEXT,
+    tax TEXT,
+    item_count INTEGER,
+    category TEXT
+  )
+''');
   }
 
   Future<int> insertOfflineData(FormData formData) async {
@@ -125,6 +136,9 @@ class DatabaseHelper {
           'company': formData.company,
           'emailId': formData.emailId,
           'online': formData.online ? 1 : 0, // Assuming online is a boolean
+          'apikey': formData.apikey,
+          'secretkey': formData.secretkey,
+          'url': formData.url,
         };
 
         print("Company data: $companyData");
@@ -162,5 +176,18 @@ class DatabaseHelper {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query('DB_company');
     print("All rows in DB_company: $result");
+  }
+
+  Future<List<Item>> getItems() async {
+    try {
+      final db = await database;
+      print("Database accessed: $db");
+      final List<Map<String, dynamic>> result = await db.query('DB_items');
+      print("Items fetched: $result");
+      return result.map((map) => Item.fromMap(map)).toList();
+    } catch (e) {
+      print("Error fetching items: $e");
+      return [];
+    }
   }
 }

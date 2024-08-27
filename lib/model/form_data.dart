@@ -8,6 +8,9 @@ class FormData {
   final String? username;
   final String? password;
   final bool online;
+  final String? apikey;
+  final String? secretkey;
+  final String? url;
 
   FormData({
     this.id,
@@ -19,6 +22,9 @@ class FormData {
     required this.username,
     required this.password,
     required this.online,
+    required this.apikey,
+    required this.secretkey,
+    required this.url,
   });
 
   // Convert a FormData into a Map.

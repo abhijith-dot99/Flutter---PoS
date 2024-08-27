@@ -243,18 +243,18 @@ class _SalesReportState extends State<SalesReport> {
             //       child: Image.asset(item.image, height: 30, width: 30),
             //       ),
             // ),
-            DataCell(
-              Center(
-                child: Text(item.title,
-                    style: const TextStyle(color: Colors.black87)),
-              ),
-            ),
-            DataCell(
-              Center(
-                child: Text(item.price,
-                    style: const TextStyle(color: Colors.black87)),
-              ),
-            ),
+            // DataCell(
+            //   Center(
+            //     child: Text(item.title,
+            //         style: const TextStyle(color: Colors.black87)),
+            //   ),
+            // ),
+            // DataCell(
+            //   Center(
+            //     child: Text(item.price,
+            //         style: const TextStyle(color: Colors.black87)),
+            //   ),
+            // ),
           ],
         );
       }).toList(),
