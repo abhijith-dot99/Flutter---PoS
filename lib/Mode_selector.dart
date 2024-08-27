@@ -1,10 +1,12 @@
 import 'dart:convert';
-import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_pos_app/CompanyDetailsPage%20.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/login_page.dart';
+import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
@@ -47,8 +49,10 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
   final TextEditingController secretKeyController = TextEditingController();
   final TextEditingController urlController = TextEditingController();
 
+  List<Company> _companies = [];
   List<String> _companyNames = [];
-  String? _selectedCompany;
+
+  Company? _selectedCompany;
 
   void _saveFormData() async {
     print("inside save");
@@ -83,6 +87,15 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
     final secretKey = secretKeyController.text;
     final url = urlController.text;
 
+    if (apiKey.isEmpty || secretKey.isEmpty || url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter API Key, Secret Key, and URL'),
+        ),
+      );
+      return;
+    }
+
     // Encode API key and secret key for Basic Auth
     String basicAuth =
         'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
@@ -100,15 +113,20 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         final data = jsonDecode(response.body);
 
         // Check if the 'data' key exists and is a list
-        if (data['data'] != null && data['data'] is List) {
+        if (data['message'] != null && data['message'] is List) {
           setState(() {
-            // Map through the list and extract company names
-            _companyNames = List<String>.from((data['data'] as List)
-                .map((item) => item['company_name'] ?? ''));
-            _selectedCompany =
-                _companyNames.isNotEmpty ? _companyNames[0] : null;
+            _companies = (data['message'] as List).map((item) {
+              return Company(
+                  companyName: item['company_name'] ?? '',
+                  phoneNo: item['phone_no'] ?? '',
+                  email: item['email'] ?? '',
+                  company_branch: item['company_branch'] ?? '',
+                  name: item['name'] ?? '');
+            }).toList();
+
+            _selectedCompany = _companies.isNotEmpty ? _companies[0] : null;
           });
-          print("Names: $_companyNames");
+          print("Companies fetched successfully${_selectedCompany.toString()}");
         } else {
           print('Key "data" is missing or not a list in the response');
           print(response.statusCode);
@@ -128,12 +146,14 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
       // backgroundColor: const Color(0xff1f2029),
       backgroundColor: Colors.white,
       body: Center(
-        child: Container(
-          width: 700,
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: newMethod,
+        child: SingleChildScrollView(
+          child: Container(
+            width: 700,
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: newMethod,
+            ),
           ),
         ),
       ),
@@ -165,14 +185,14 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                   setState(() {
                     isOnline = true;
                   });
-                  print("isonline $isOnline");
+                  print("isOnline $isOnline");
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
                     color: isOnline
-                        ? Color.fromARGB(255, 87, 212, 124)
+                        ? const Color.fromARGB(255, 87, 212, 124)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -195,14 +215,14 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                   setState(() {
                     isOnline = false;
                   });
-                  print("isonline $isOnline");
+                  print("isOnline $isOnline");
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
                     color: !isOnline
-                        ? Color.fromARGB(255, 221, 67, 170)
+                        ? const Color.fromARGB(255, 221, 67, 170)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -236,22 +256,29 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
               children: <Widget>[
                 Expanded(
                   flex: 9,
-                  child: DropdownButtonFormField<String>(
+                  child: DropdownButtonFormField<Company>(
                     isExpanded: true,
                     value: _selectedCompany,
                     hint: const Text(
                       'Select Your Company',
                       style: TextStyle(color: Colors.grey),
                     ),
-                    items: _companyNames.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
+                    items: _companies.map((Company company) {
+                      return DropdownMenuItem<Company>(
+                        value: company,
+                        child: Text(company.companyName),
                       );
                     }).toList(),
                     onChanged: (newValue) {
                       setState(() {
-                        _selectedCompany = newValue!;
+                        _selectedCompany = newValue;
+                        if (newValue != null) {
+                          print('Selected Company Details:');
+                          print('Name: ${newValue.companyName}');
+                          print('Phone Number: ${newValue.phoneNo}');
+                          print('Email: ${newValue.email}');
+                          // print('Website: ${newValue.website}');
+                        }
                       });
                     },
                     decoration: InputDecoration(
@@ -292,13 +319,14 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         )
       else
         OfflineForm(
-            companyNameController: companyNameController,
-            companyIdController: companyIdController,
-            contactNumberController: contactNumberController,
-            companyController: companyController,
-            emailIdController: emailIdController,
-            usernameController: usernameController,
-            passwordController: passwordController),
+          companyNameController: companyNameController,
+          companyIdController: companyIdController,
+          contactNumberController: contactNumberController,
+          companyController: companyController,
+          emailIdController: emailIdController,
+          usernameController: usernameController,
+          passwordController: passwordController,
+        ),
       const SizedBox(height: 30),
       SizedBox(
         width: double.infinity,
@@ -308,11 +336,25 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
             // Navigator.of(context).pushReplacement(
             //   MaterialPageRoute(builder: (context) => const LoginPage()),
             // );
+            if (isOnline && _selectedCompany != null) {
+              final selectedCompany = _selectedCompany!;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => CompanyDetailsPage(
+                    company: selectedCompany,
+                    usernameController: usernameController,
+                    passwordController: passwordController,
+                    companyNameController: companyNameController,
+                    saveFormData: _saveFormData,
+                  ),
+                ),
+              );
+            }
           },
           style: ElevatedButton.styleFrom(
             // backgroundColor: Colors.deepOrange[400],
             backgroundColor: const Color(0xff4285f4),
-            foregroundColor: const Color.fromARGB(255, 17, 17, 17),
+            foregroundColor: Color.fromARGB(255, 255, 255, 255),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           ),
           child: const Text(
@@ -344,7 +386,7 @@ class OnlineForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          _buildTextField('Url', controller: urlController, obscureText: false),
+          _buildTextField('URL', controller: urlController, obscureText: false),
           const SizedBox(height: 10),
           _buildTextField('API Key',
               controller: apiKeyController, obscureText: false),
