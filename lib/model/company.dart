@@ -4,13 +4,13 @@ class Company {
   final String phoneNo;
   final String email;
   final String company_branch;
-  final String name;
+  final String emp_name;
 
   Company({
     required this.companyName,
     required this.phoneNo,
     required this.email,
     required this.company_branch,
-    required this.name,
+    required this.emp_name,
   });
 }

@@ -121,7 +121,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                   phoneNo: item['phone_no'] ?? '',
                   email: item['email'] ?? '',
                   company_branch: item['company_branch'] ?? '',
-                  name: item['name'] ?? '');
+                  emp_name: item['emp_name'] ?? '');
             }).toList();
 
             _selectedCompany = _companies.isNotEmpty ? _companies[0] : null;
@@ -345,7 +345,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                     usernameController: usernameController,
                     passwordController: passwordController,
                     companyNameController: companyNameController,
-                    saveFormData: _saveFormData,
+                    // saveFormData: _saveFormData,
                   ),
                 ),
               );

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/Mode_selector.dart';
+import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/model/company.dart';
+import 'package:flutter_pos_app/model/form_data.dart';
 
 class CompanyDetailsPage extends StatelessWidget {
   final Company company;
   final TextEditingController usernameController;
   final TextEditingController passwordController;
   final TextEditingController companyNameController;
-  final Function saveFormData;
+  // final Function saveFormData;
 
   const CompanyDetailsPage({
     Key? key,
@@ -15,7 +17,7 @@ class CompanyDetailsPage extends StatelessWidget {
     required this.usernameController,
     required this.passwordController,
     required this.companyNameController,
-    required this.saveFormData,
+    // required this.saveFormData,
   }) : super(key: key);
 
   @override
@@ -34,7 +36,7 @@ class CompanyDetailsPage extends StatelessWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            _buildDetailRow('Owner:', company.name),
+            _buildDetailRow('Employee Name:', company.emp_name),
             const SizedBox(height: 20),
             _buildDetailRow('Company Name:', company.companyName),
             const SizedBox(height: 10),
@@ -50,13 +52,22 @@ class CompanyDetailsPage extends StatelessWidget {
                 controller: passwordController, obscureText: true),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
-                // Call the saveFormData function to save data
-                saveFormData();
+              onPressed: () async {
+                await saveFormData(
+                  company: company,
+                  username: usernameController.text,
+                  password: passwordController.text,
+                );
               },
               style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    Colors.green, // Set the background color to green
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  // Add rounded corners
+                ),
               ),
               child: const Text(
                 'Save',
@@ -152,5 +163,35 @@ class CompanyDetailsPage extends StatelessWidget {
         color: Colors.black,
       ),
     );
+  }
+
+  Future<void> saveFormData({
+    required Company company,
+    required String username,
+    required String password,
+  }) async {
+    final dbHelper = DatabaseHelper();
+
+    FormData formData = FormData(
+      companyName: company.companyName,
+      // companyId: company.companyId,
+      contactNumber: company.phoneNo,
+      company: company.company_branch,
+      emailId: company.email,
+      online: true,
+      apikey: '', // You can pass appropriate values here
+      secretkey: '', // You can pass appropriate values here
+      url: '', // You can pass appropriate values here
+      username: username,
+      password: password,
+    );
+
+    int result = await dbHelper.insertOfflineData(formData);
+
+    if (result == 1) {
+      print("Company details saved successfully.");
+    } else {
+      print("Failed to save company details.");
+    }
   }
 }
