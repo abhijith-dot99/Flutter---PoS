@@ -28,17 +28,24 @@ class FormData {
   });
 
   // Convert a FormData into a Map.
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'companyName': companyName,
-      'companyId': companyId,
-      'contactNumber': contactNumber,
-      'company': company,
-      'emailId': emailId,
-      'username': username,
-      'password': password,
-      'online': online ? 1 : 0,
-    };
+  // Map<String, dynamic> toMap() {
+  //   return {
+  //     'id': id,
+  //     'companyName': companyName,
+  //     'companyId': companyId,
+  //     'contactNumber': contactNumber,
+  //     'company': company,
+  //     'emailId': emailId,
+  //     'username': username,
+  //     'password': password,
+  //     'online': online ? 1 : 0,
+  //   };
+  // }
+
+  @override
+  String toString() {
+    return 'FormData(companyName: $companyName, companyId: $companyId, contactNumber: $contactNumber, '
+        'company: $company, emailId: $emailId, online: $online, apikey: $apikey, '
+        'secretkey: $secretkey, url: $url, username: $username, password: $password)';
   }
 }

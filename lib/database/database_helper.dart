@@ -1,11 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:flutter_pos_app/model/item.dart';
+import 'package:flutter_pos_app/model/users.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -189,5 +189,56 @@ class DatabaseHelper {
       print("Error fetching items: $e");
       return [];
     }
+  }
+
+  Future<List<Company>> getLatestCompany() async {
+    try {
+      final db = await database;
+      print('Database instance obtained: $db');
+
+      // Perform the query
+      final List<Map<String, dynamic>> maps =
+          await db.query('DB_company', orderBy: 'id DESC');
+
+      print('Query result: $maps');
+
+      if (maps.isNotEmpty) {
+        print('Data found in database: ${maps.first}');
+        // Convert the first map to a Company object
+        final companies = maps.map((map) => Company.fromMap(map)).toList();
+        // print('Company object created: $company');
+        return companies;
+      } else {
+        print('No data found in DB_company table');
+        return [];
+      }
+    } catch (e) {
+      // Handle the error here
+      print('Error fetching latest company: $e');
+      return [];
+    }
+  }
+
+  Future<List<Users>> getAllUsers() async {
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> maps = await db.query('DB_users');
+
+      return List.generate(maps.length, (i) {
+        return Users.fromMap(maps[i]);
+      });
+    } catch (e) {
+      // Handle the error here, such as logging it or returning an empty list
+      print('Error fetching users: $e');
+      return []; // Return an empty list in case of error
+    }
+  }
+
+  Future<List<Item>> getAllItems() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('DB_items');
+    return List.generate(maps.length, (i) {
+      return Item.fromMap(maps[i]);
+    });
   }
 }

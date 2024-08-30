@@ -10,6 +10,7 @@ import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -70,9 +71,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
       secretkey: secretKeyController.text,
       url: urlController.text,
     );
-
-    print("FormData created: ${formData.toMap()}");
-
     // Insert into database
     try {
       int result = await DatabaseHelper().insertOfflineData(formData);
@@ -119,13 +117,17 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
               return Company(
                   companyName: item['company_name'] ?? '',
                   phoneNo: item['phone_no'] ?? '',
+                  companyId: item[''] ?? '1',
                   email: item['email'] ?? '',
-                  company_branch: item['company_branch'] ?? '',
-                  emp_name: item['emp_name'] ?? '');
+                  empName: item['emp_name'] ?? '',
+                  companyBranch: item['company_branch'] ?? '');
             }).toList();
 
             _selectedCompany = _companies.isNotEmpty ? _companies[0] : null;
           });
+
+          print(
+              "Companies fetched and stored successfully: ${_selectedCompany.toString()}");
           print("Companies fetched successfully${_selectedCompany.toString()}");
         } else {
           print('Key "data" is missing or not a list in the response');
@@ -269,7 +271,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                         child: Text(company.companyName),
                       );
                     }).toList(),
-                    onChanged: (newValue) {
+                    onChanged: (newValue) async {
                       setState(() {
                         _selectedCompany = newValue;
                         if (newValue != null) {
@@ -277,9 +279,21 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                           print('Name: ${newValue.companyName}');
                           print('Phone Number: ${newValue.phoneNo}');
                           print('Email: ${newValue.email}');
-                          // print('Website: ${newValue.website}');
                         }
                       });
+                      if (newValue != null) {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString(
+                            'selectedCompanyName', newValue.companyName);
+                        await prefs.setString(
+                            'selectedCompanyId', newValue.companyId);
+
+                        // Debugging prints to ensure it's working
+                        print(
+                            'Stored selected company name: ${newValue.companyName}');
+                        print(
+                            'Stored selected company ID: ${newValue.companyId}');
+                      }
                     },
                     decoration: InputDecoration(
                       contentPadding:
@@ -292,6 +306,13 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: const BorderSide(
+                          color: Colors.brown,
+                          width: 2.0,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30.0),
                         borderSide: const BorderSide(
                           color: Colors.brown,
@@ -332,7 +353,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () async {
-            _saveFormData();
+            // _saveFormData();
             // Navigator.of(context).pushReplacement(
             //   MaterialPageRoute(builder: (context) => const LoginPage()),
             // );
@@ -345,7 +366,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                     usernameController: usernameController,
                     passwordController: passwordController,
                     companyNameController: companyNameController,
-                    // saveFormData: _saveFormData,
                   ),
                 ),
               );

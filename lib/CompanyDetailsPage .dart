@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_pos_app/Mode_selector.dart';
-import 'package:flutter_pos_app/database/database_helper.dart';
+import 'package:flutter_pos_app/fetch_details.dart';
 import 'package:flutter_pos_app/model/company.dart';
+import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
 
 class CompanyDetailsPage extends StatelessWidget {
@@ -9,7 +9,6 @@ class CompanyDetailsPage extends StatelessWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
   final TextEditingController companyNameController;
-  // final Function saveFormData;
 
   const CompanyDetailsPage({
     Key? key,
@@ -17,7 +16,6 @@ class CompanyDetailsPage extends StatelessWidget {
     required this.usernameController,
     required this.passwordController,
     required this.companyNameController,
-    // required this.saveFormData,
   }) : super(key: key);
 
   @override
@@ -35,8 +33,6 @@ class CompanyDetailsPage extends StatelessWidget {
               'Demo Heading',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
-            _buildDetailRow('Employee Name:', company.emp_name),
             const SizedBox(height: 20),
             _buildDetailRow('Company Name:', company.companyName),
             const SizedBox(height: 10),
@@ -44,30 +40,32 @@ class CompanyDetailsPage extends StatelessWidget {
             const SizedBox(height: 10),
             _buildDetailRow('Email:', company.email),
             const SizedBox(height: 10),
-            _buildDetailRow('Branch:', company.company_branch),
+            _buildDetailRow('Branch:', company.companyBranch),
             const SizedBox(height: 10),
-            _buildTextField('Username', controller: usernameController),
-            const SizedBox(height: 10),
-            _buildTextField('Password',
-                controller: passwordController, obscureText: true),
-            const SizedBox(height: 10),
+            // _buildTextField('Username', controller: usernameController),
+            // const SizedBox(height: 10),
+            // _buildTextField('Password',
+            //     controller: passwordController, obscureText: true),
+            // const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () async {
-                await saveFormData(
-                  company: company,
-                  username: usernameController.text,
-                  password: passwordController.text,
+                // await saveFormData(
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FetchDetailsPage(company: company),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.green, // Set the background color to green
+                backgroundColor: Colors.green,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  // Add rounded corners
                 ),
+                foregroundColor: Colors.white,
               ),
               child: const Text(
                 'Save',
@@ -89,18 +87,18 @@ class CompanyDetailsPage extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              color: Colors.brown, // Label color
+              color: Colors.brown,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        const SizedBox(width: 10), // Space between label and TextField
+        const SizedBox(width: 10),
         Expanded(
           flex: 3,
           child: TextField(
             decoration: InputDecoration(
-              hintText: value, // The value inside the TextField
+              hintText: value,
               fillColor: Colors.white,
               filled: true,
               border: OutlineInputBorder(
@@ -110,20 +108,18 @@ class CompanyDetailsPage extends StatelessWidget {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: const BorderSide(
-                  color: Colors.brown, // Border color
-                  width: 2.0, // Border width
+                  color: Colors.brown,
+                  width: 2.0,
                 ),
               ),
               hintStyle: const TextStyle(
-                color: Colors
-                    .black, // Color for the hint text (value inside the box)
+                color: Colors.black,
               ),
             ),
             style: const TextStyle(
-              color: Color.fromARGB(
-                  255, 15, 1, 1), // Text color inside the TextField
+              color: Color.fromARGB(255, 15, 1, 1),
             ),
-            readOnly: true, // Makes the TextField read-only
+            readOnly: true,
           ),
         ),
       ],
@@ -174,14 +170,14 @@ class CompanyDetailsPage extends StatelessWidget {
 
     FormData formData = FormData(
       companyName: company.companyName,
-      // companyId: company.companyId,
+      companyId: company.companyId,
       contactNumber: company.phoneNo,
-      company: company.company_branch,
+      company: company.companyBranch,
       emailId: company.email,
       online: true,
-      apikey: '', // You can pass appropriate values here
-      secretkey: '', // You can pass appropriate values here
-      url: '', // You can pass appropriate values here
+      apikey: '',
+      secretkey: '',
+      url: '',
       username: username,
       password: password,
     );
