@@ -45,8 +45,7 @@ class AppInitializer extends StatefulWidget {
 }
 
 class _AppInitializerState extends State<AppInitializer> {
-  bool _isLoggedIn = false; // Change this based on actual login state
-
+  bool _isLoggedIn = false;
   @override
   void initState() {
     super.initState();
@@ -55,11 +54,17 @@ class _AppInitializerState extends State<AppInitializer> {
 
   Future<void> _checkLoginStatus() async {
     // Simulate a delay for checking login status
-    await Future.delayed(const Duration(seconds: 2));
+    String? username;
+    // await Future.delayed(const Duration(seconds: 2));
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // bool? isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    // String? namedd = prefs.getString('username');
+    // String? email = prefs.getString('emailId');
 
     // Here you would typically check the actual login status from storage
     setState(() {
       _isLoggedIn = false; // Set to true if user is logged in
+      // username = prefs.getString('username') ?? 'Unknown User';
     });
   }
 
@@ -87,23 +92,6 @@ class _MainPageState extends State<MainPage> {
   double itemHeight = 250; // Default height
   double itemWidth = 120;
 
-  // final List<Item> items = [
-  //   Item(
-  //       image: 'assets/items/1.png',
-  //       title: 'Original Burger',
-  //       price: '\$5.99',
-  //       itemCount: 1,
-  //       category: 'Burger',
-  //       tax: ''),
-  //   Item(
-  //       image: 'assets/items/2.png',
-  //       title: 'Double Burger',
-  //       price: '\$10.99',
-  //       itemCount: 1,
-  //       category: 'Burger',
-  //       tax: ''),
-  // ];
-
   _pageView() {
     switch (pageActive) {
       case 'Home':
@@ -130,8 +118,6 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: const Color(0xff1f2029),
-      // backgroundColor: Color.fromARGB(255, 240, 231, 231),
       backgroundColor: Colors.white,
       body: Row(
         children: [

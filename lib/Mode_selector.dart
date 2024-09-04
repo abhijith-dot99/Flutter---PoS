@@ -57,6 +57,12 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
 
   void _saveFormData() async {
     print("inside save");
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('apiKey', apiKeyController.text);
+    await prefs.setString('secretKey', secretKeyController.text);
+    await prefs.setString('url', urlController.text);
+
     // Create FormData instance
     FormData formData = FormData(
       companyName: companyNameController.text,
@@ -353,7 +359,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () async {
-            // _saveFormData();
+            _saveFormData();
             // Navigator.of(context).pushReplacement(
             //   MaterialPageRoute(builder: (context) => const LoginPage()),
             // );

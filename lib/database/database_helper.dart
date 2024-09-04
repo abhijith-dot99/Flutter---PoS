@@ -181,7 +181,7 @@ class DatabaseHelper {
   Future<List<Item>> getItems() async {
     try {
       final db = await database;
-      print("Database accessed: $db");
+      // print("Database accessed: $db");
       final List<Map<String, dynamic>> result = await db.query('DB_items');
       print("Items fetched: $result");
       return result.map((map) => Item.fromMap(map)).toList();

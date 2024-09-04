@@ -1,10 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_pos_app/Mode_selector.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'model/item.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   final bool showImages; // Add this parameter
@@ -67,71 +69,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   List<Item> items = [];
 
-  // final List<Item> items = [
-  //   Item(
-  //       image: 'assets/items/1.png',
-  //       title: 'Original Burger',
-  //       price: ' 5.99',
-  //       tax: '',
-  //       itemCount: 1,
-  //       category: 'Burger'),
-  //   Item(
-  //       image: 'assets/items/2.png',
-  //       title: 'Double Burger',
-  //       price: ' 10.99',
-  //       tax: '',
-  //       itemCount: 1,
-  //       category: 'Burger'),
-  //   Item(
-  //     image: 'assets/items/3.png',
-  //     title: 'Cheese Burger',
-  //     price: ' 6.99',
-  //     tax: '1.50',
-  //     itemCount: 1,
-  //     category: 'Burger',
-  //   ),
-  //   Item(
-  //     image: 'assets/items/4.png',
-  //     title: 'Double Cheese Burger',
-  //     price: ' 12.99',
-  //     tax: '2',
-  //     itemCount: 1,
-  //     category: 'Burger',
-  //   ),
-  //   Item(
-  //     image: 'assets/items/5.png',
-  //     title: 'Spicy Burger',
-  //     price: ' 7.39',
-  //     tax: '100',
-  //     itemCount: 1,
-  //     category: 'Burger',
-  //   ),
-  //   Item(
-  //     image: 'assets/items/6.png',
-  //     title: 'Special Black Burger',
-  //     price: '7.39',
-  //     tax: '',
-  //     itemCount: 1,
-  //     category: 'Burger',
-  //   ),
-  //   Item(
-  //     image: 'assets/items/9.png',
-  //     title: 'Noodles',
-  //     price: ' 8.99',
-  //     tax: '',
-  //     itemCount: 1,
-  //     category: 'Noodles',
-  //   ),
-  //   Item(
-  //     image: 'assets/items/9.png',
-  //     title: 'drinks',
-  //     price: ' 8.99',
-  //     tax: '',
-  //     itemCount: 1,
-  //     category: 'Drinks',
-  //   ),
-  // ];
-
   void _updateItemCount(String value) {
     print("Inside updateItemCount, value: $value");
 
@@ -170,7 +107,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } else {
       print("Editing index is null or out of bounds");
     }
-    // print("Ordered items: $orderedItems");
   }
 
   @override
@@ -200,15 +136,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       searchResults = items;
     });
   }
-
-  // void filterItems(String category) {
-  //   setState(() {
-  //     selectedCategory = category;
-  //     searchResults = category == 'All'
-  //         ? items
-  //         : items.where((item) => item.category == category).toList();
-  //   });
-  // }
 
   void _filterCustomers(String query) {
     setState(() {
@@ -276,7 +203,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: ListView(
                             scrollDirection: Axis.horizontal,
-                            children: [
+                            children: const [
                               // _itemTab(
                               //   icon: 'assets/icons/samplepic.jpg',
                               //   title: 'All',
@@ -338,6 +265,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Column(
                       children: [
                         _viewCustomerList(context),
+                        // _checkLogout(context),
                         const SizedBox(height: 2),
                         Flexible(
                           flex: 2,
@@ -1158,6 +1086,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Navigate to the login page after logging out
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const SoftwareModePage()),
+    );
+    await prefs.clear(); // Clear all stored preferences
+  }
+
+  Widget _checkLogout(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () => _logout(context),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.red,
+        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        foregroundColor: Colors.white,
+      ),
+      child: Icon(Icons.logout, color: Colors.white, size: 16),
     );
   }
 }

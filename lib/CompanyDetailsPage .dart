@@ -50,7 +50,6 @@ class CompanyDetailsPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 // await saveFormData(
-
                 Navigator.push(
                   context,
                   MaterialPageRoute(
