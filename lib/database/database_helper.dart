@@ -1,9 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter_pos_app/model/company.dart';
+import 'package:flutter_pos_app/model/companyy.dart';
+import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:flutter_pos_app/model/item.dart';
+import 'package:flutter_pos_app/model/itemData.dart';
+import 'package:flutter_pos_app/model/supplier.dart';
 import 'package:flutter_pos_app/model/users.dart';
+import 'package:flutter_pos_app/model/userss.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -27,8 +32,6 @@ class DatabaseHelper {
 /////
   Future<Database> _initDatabase() async {
     String path = 'Db_bizdot.db';
-
-    // print('Database path: $path');
 
     try {
       final db = await openDatabase(
@@ -90,35 +93,30 @@ class DatabaseHelper {
     CREATE TABLE IF NOT EXISTS DB_company (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       companyName TEXT,
-      companyId TEXT,
-      contactNumber TEXT,
-      company TEXT,
-      emailId TEXT,
-      online BOOLEAN
+      owner TEXT,
+        abbr TEXT,
+        country TEXT,
+        vat_number TEXT,
+        phone_no TEXT,
+        email TEXT,
+        website TEXT
     )
   ''');
 
     // Create the DB_users table
     await db.execute('''
-    CREATE TABLE IF NOT EXISTS DB_users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT,
-      password TEXT,
-       companyName TEXT
-    )
+CREATE TABLE IF NOT EXISTS DB_users (
+        id INTEGER PRIMARY KEY,
+        emp_name TEXT,
+        phone_no TEXT,
+        email TEXT,
+        company_name TEXT,
+        company_branch TEXT,
+        emp_status TEXT,
+        username TEXT,
+        password TEXT
+      )
   ''');
-
-    await db.execute('''
-  CREATE TABLE IF NOT EXISTS DB_itemss (
-    item_code TEXT PRIMARY KEY,
-    item_name TEXT,
-    image TEXT,
-    price TEXT,
-    tax TEXT,
-    item_count INTEGER,
-    category TEXT
-  )
-''');
   }
 
   Future<int> insertOfflineData(FormData formData) async {
@@ -128,17 +126,24 @@ class DatabaseHelper {
       if (db != null) {
         print("Database initialized: $db");
 
-        // Insert data into DB_company
         Map<String, dynamic> companyData = {
-          'companyName': formData.companyName,
-          'companyId': formData.companyId,
-          'contactNumber': formData.contactNumber,
-          'company': formData.company,
-          'emailId': formData.emailId,
-          'online': formData.online ? 1 : 0, // Assuming online is a boolean
+          'company_name': formData.companyName,
+          'owner':
+              formData.owner, // Assuming you have this field in your formData
+          'abbr':
+              formData.abbr, // Assuming you have this field in your formData
+          'country':
+              formData.country, // Assuming you have this field in your formData
+          'vat_number': formData
+              .vatNumber, // Assuming you have this field in your formData
+          'phone_no': formData.contactNumber,
+          'email': formData.emailId,
+          'website':
+              formData.website, // Assuming you have this field in your formData
           'apikey': formData.apikey,
           'secretkey': formData.secretkey,
           'url': formData.url,
+          'companyId': formData.companyId,
         };
 
         print("Company data: $companyData");
@@ -148,7 +153,7 @@ class DatabaseHelper {
         Map<String, dynamic> userData = {
           'username': formData.username,
           'password': formData.password,
-          'companyName': formData.companyName,
+          'company_name': formData.companyName,
         };
 
         print("User data: $userData");
@@ -240,5 +245,115 @@ class DatabaseHelper {
     return List.generate(maps.length, (i) {
       return Item.fromMap(maps[i]);
     });
+  }
+
+  // Fetch company details by company name
+  Future<List<Map<String, dynamic>>> fetchCompanyDetails(
+      String companyName) async {
+    final db = await database;
+    return await db.query(
+      'DB_company',
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+  }
+
+  // Fetch users by company name
+  Future<List<Map<String, dynamic>>> fetchUsersByCompanyName(
+      String companyName) async {
+    final db = await database;
+    return await db.query(
+      'DB_users',
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+  }
+
+  // Fetch items by company name
+  Future<List<Map<String, dynamic>>> fetchItemsByCompanyName(
+      String companyName) async {
+    final db = await database;
+    return await db.query(
+      'DB_items',
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCustomersByCompanyName(
+      String companyName) async {
+    final db = await database;
+    return await db.query(
+      'DB_customer',
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSuppliersByCompanyName(
+      String companyName) async {
+    final db = await database;
+    return await db.query(
+      'DB_suppliers',
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+  }
+
+  Future<int> insertItem(ItemData item) async {
+    print("insdie iteminsert");
+    final db = await database;
+    return await db.insert('DB_items', item.toJson(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<int> insertUser(User user) async {
+    final db = await database;
+    return await db.insert(
+      'DB_users',
+      user.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // Insert a company into the database
+  Future<int> insertCompany(Companyy company) async {
+    final db = await database;
+    return await db.insert(
+      'DB_company',
+      company.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // Insert a supplier into the database
+  Future<void> insertSupplier(Supplier supplier) async {
+    final db = await database; // Obtain your database instance
+
+    await db.insert(
+      'Db_suppliers', // Table name
+      supplier.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // Method to fetch all suppliers
+  Future<List<Supplier>> getSuppliers() async {
+    final db = await database; // Obtain your database instance
+
+    final List<Map<String, dynamic>> maps = await db.query('suppliers');
+
+    return List.generate(maps.length, (i) {
+      return Supplier.fromMap(maps[i]);
+    });
+  }
+
+  Future<void> insertCustomer(Customer customer) async {
+    final db = await database;
+    await db.insert(
+      'DB_customer',
+      customer.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 }

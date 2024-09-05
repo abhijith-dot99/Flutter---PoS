@@ -1,222 +1,15 @@
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_pos_app/home.dart';
-// import 'package:flutter_pos_app/main.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:flutter_pos_app/database/database_helper.dart';
-// import 'package:flutter_pos_app/model/company.dart';
-// import 'package:flutter_pos_app/model/form_data.dart';
-
-// class FetchDetailsPage extends StatefulWidget {
-//   final Company company;
-
-//   const FetchDetailsPage({Key? key, required this.company}) : super(key: key);
-
-//   @override
-//   _FetchDetailsPageState createState() => _FetchDetailsPageState();
-// }
-
-// class _FetchDetailsPageState extends State<FetchDetailsPage> {
-//   late String apiKey;
-//   late String secretKey;
-//   late String url;
-//   late String selectedCompanyName;
-//   late String selectedCompanyId;
-
-//   Map<String, dynamic>? fetchedData;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _loadPreferences();
-//   }
-
-//   Future<void> _loadPreferences() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     setState(() {
-//       apiKey = prefs.getString('apiKey') ?? '';
-//       secretKey = prefs.getString('secretKey') ?? '';
-//       url = prefs.getString('url') ?? '';
-//       selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
-//       selectedCompanyId = prefs.getString('selectedCompanyId') ?? '';
-//     });
-//     print('apiKey: $apiKey');
-//     print('secretKey: $secretKey');
-//     print('url$url');
-//     print('scompanyname$selectedCompanyName');
-//     print('selectdcompnayid$selectedCompanyId');
-//     _fetchCompanyDetails(); // Fetch company details after loading preferences
-//   }
-
-//   Future<void> _fetchCompanyDetails() async {
-//     print("Selectedcompan$selectedCompanyName");
-//     final detailsUrl = '$url/company_details?company_name=$selectedCompanyName';
-//     String basicAuth =
-//         'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
-//     print('Full URL: $detailsUrl');
-
-//     try {
-//       final response = await http.get(
-//         Uri.parse(detailsUrl),
-//         headers: <String, String>{
-//           'Authorization': basicAuth,
-//           'Content-Type': 'application/json',
-//         },
-//       );
-
-//       if (response.statusCode == 200) {
-//         final data = jsonDecode(response.body);
-//         // Check if the response contains a "message" key
-//         if (data.containsKey('message') && data['message'] is List) {
-//           fetchedData = {'entries': data['message']};
-//           print("insdide iffff");
-//         } else {
-//           print('Unexpected data format: $data');
-//           fetchedData = null;
-//         }
-//       } else {
-//         print('Failed to fetch company details. Response: ${response.body}');
-//       }
-//     } catch (e, stacktrace) {
-//       print('Error fetching company details: $e');
-//       print('Stacktrace: $stacktrace');
-//     }
-//   }
-
-//   Future<void> _saveData() async {
-//     print("fetcheddd $fetchedData");
-//     if (fetchedData == null || !fetchedData!.containsKey('entries')) {
-//       print("No data fetched to save.");
-//       return;
-//     }
-
-//     final dbHelper = DatabaseHelper();
-//     final entries = fetchedData!['entries'] as List;
-
-//     // Filter entries to include only those with the selected company name
-//     final filteredEntries = entries
-//         .where((entry) => entry['company_name'] == selectedCompanyName)
-//         .toList();
-
-//     if (filteredEntries.isEmpty) {
-//       print(
-//           "No matching entries found for the selected company: $selectedCompanyName");
-//       return;
-//     }
-
-//     print(
-//         "Total entries to save for $selectedCompanyName: ${filteredEntries.length}");
-
-//     for (var i = 0; i < filteredEntries.length; i++) {
-//       try {
-//         var entry = filteredEntries[i];
-//         FormData formData = FormData(
-//           companyName: entry['company_name'] ?? widget.company.companyName,
-//           companyId: entry['company_id'] ?? selectedCompanyId,
-//           contactNumber: entry['phone_no'] ?? '',
-//           company: entry['company_branch'] ?? '',
-//           emailId: entry['email'] ?? '',
-//           online: true,
-//           apikey: apiKey,
-//           secretkey: secretKey,
-//           url: url,
-//           username: entry['emp_name'] ?? '',
-//           password: entry['phone_no'], // Replace with actual password
-//         );
-
-//         print(
-//             "Attempting to save entry ${i + 1} of ${filteredEntries.length}: $formData");
-//         int result = await dbHelper.insertOfflineData(formData);
-//         print("Database insert result for entry ${i + 1}: $result");
-
-//         if (result == 1) {
-//           print("result is 1");
-//         } else {
-//           print("Failed to save entry ${i + 1}.");
-//         }
-//       } catch (e, stacktrace) {
-//         print('Error saving entry ${i + 1}: $e');
-//         print('Stacktrace: $stacktrace');
-//       }
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Details Page'),
-//       ),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             ElevatedButton(
-//               onPressed: _saveData,
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.green,
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-//                 textStyle:
-//                     const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-//                 foregroundColor: Colors.white,
-//               ),
-//               child: const Text('Save Data'),
-//             ),
-//             const SizedBox(height: 10),
-//             ElevatedButton(
-//               onPressed: () => {},
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.yellow,
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-//                 textStyle:
-//                     const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-//                 foregroundColor: Colors.white,
-//               ),
-//               child: const Text('D'),
-//             ),
-//             const SizedBox(height: 10),
-//             ElevatedButton(
-//               onPressed: () => {},
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.blue,
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-//                 textStyle:
-//                     const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-//                 foregroundColor: Colors.white,
-//               ),
-//               child: const Text('Update '),
-//             ),
-//             const SizedBox(height: 10),
-//             ElevatedButton(
-//               onPressed: () => {},
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.orange,
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-//                 textStyle:
-//                     const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-//                 foregroundColor: Colors.white,
-//               ),
-//               child: const Text('Load '),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_pos_app/model/customer.dart';
+import 'package:flutter_pos_app/model/itemData.dart';
+import 'package:flutter_pos_app/model/supplier.dart';
+import 'package:flutter_pos_app/model/userss.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
+import 'package:flutter_pos_app/model/companyy.dart';
 
 class FetchDetailsPage extends StatefulWidget {
   final Company company;
@@ -251,6 +44,9 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
       selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
       selectedCompanyId = prefs.getString('selectedCompanyId') ?? '';
     });
+    print(apiKey);
+    print("selectedco$selectedCompanyName");
+    print(secretKey);
     _fetchCompanyDetails(); // Fetch company details after loading preferences
   }
 
@@ -258,6 +54,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
     final detailsUrl = '$url/company_details?company_name=$selectedCompanyName';
     String basicAuth =
         'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+    print("fdf$detailsUrl");
 
     try {
       final response = await http.get(
@@ -284,69 +81,290 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
     }
   }
 
-  Future<void> saveCompany() async {
-    print("inside saveCompany");
-    await _saveData('company_name', 'company_branch');
-  }
-
-  Future<void> saveUser() async {
-    print("inside user");
-    await _saveData('emp_name', 'user');
-  }
-
-  Future<void> saveItems() async {
-    print("inside item");
-    await _saveData('item_name', 'items');
-  }
-
-  Future<void> _saveData(String keyField, String category) async {
-    if (fetchedData == null || !fetchedData!.containsKey('entries')) {
-      print("No data fetched to save.");
-      return;
-    }
-
+  Future<void> _saveItemsToDB(List<dynamic> itemsList) async {
     final dbHelper = DatabaseHelper();
-    final entries = fetchedData!['entries'] as List;
 
-    final filteredEntries = entries
-        .where((entry) => entry[keyField] == selectedCompanyName)
-        .toList();
-
-    if (filteredEntries.isEmpty) {
-      print("No matching entries found for the selected $category.");
-      return;
-    }
-
-    for (var i = 0; i < filteredEntries.length; i++) {
-      try {
-        var entry = filteredEntries[i];
-        FormData formData = FormData(
-          companyName: entry['company_name'] ?? widget.company.companyName,
-          companyId: entry['company_id'] ?? selectedCompanyId,
-          contactNumber: entry['phone_no'] ?? '',
-          company: entry[keyField] ?? '',
-          emailId: entry['email'] ?? '',
-          online: true,
-          apikey: apiKey,
-          secretkey: secretKey,
-          url: url,
-          username: entry['emp_name'] ?? '',
-          password: entry['phone_no'], // Replace with actual password
+    for (var item in itemsList) {
+      if (item['company_name'] == selectedCompanyName) {
+        final itemData = ItemData(
+          itemCode: item['item_code'] ?? '',
+          itemName: item['item_name'] ?? '',
+          itemPrice: item['item_price'] != null
+              ? (item['item_price'] as num).toDouble()
+              : 0.0,
+          itemTax: item['item_tax'] != null
+              ? (item['item_tax'] as num).toDouble()
+              : 0.0,
+          itemGroup: item['item_group'] ?? '',
+          companyName: item['company_name'] ?? '',
+          warehouse: item['warehouse'] ?? '',
+          itemPriceList: item['item_price_list'] ?? '',
+          uom: item['uom'] ?? '',
+          itemTaxType: item['item_tax_type'] ?? '',
         );
 
-        int result = await dbHelper.insertOfflineData(formData);
-        if (result != 1) {
-          print("Failed to save entry ${i + 1}.");
-        }
-      } catch (e, stacktrace) {
-        print('Error saving entry ${i + 1}: $e');
-        print('Stacktrace: $stacktrace');
+        await dbHelper.insertItem(itemData);
       }
+    }
+  }
+
+  Future<void> fetchAndStoreItems() async {
+    String newUrl = trimUrl(url);
+    final String itemsUrl =
+        '${newUrl}item_details.get_item_details?company_name=$selectedCompanyName';
+
+    print("newurlddddd$newUrl");
+    print("oldurll$itemsUrl");
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+
+    try {
+      final response = await http.get(
+        Uri.parse(itemsUrl),
+        headers: <String, String>{
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> itemsList = jsonDecode(response.body)['message'];
+        if (itemsList.isNotEmpty) {
+          await _saveItemsToDB(itemsList);
+        } else {
+          print('No items found for the selected company.');
+        }
+      } else {
+        print('Failed to fetch items. Response: ${response.body}');
+      }
+    } catch (e, stacktrace) {
+      print('Error fetching items: $e');
+      print('Stacktrace: $stacktrace');
+    }
+  }
+
+  String trimUrl(String fullUrl) {
+    String baseUrl = '';
+
+    // Find the position of the 'duplex_dev.api.' part in the full URL
+    int index = fullUrl.indexOf('duplex_dev.api.');
+
+    if (index != -1) {
+      // Trim the URL to include only up to 'duplex_dev.api.'
+      baseUrl = fullUrl.substring(0, index + 'duplex_dev.api.'.length);
+    } else {
+      // If not found, return the original URL (or handle as needed)
+      baseUrl = fullUrl;
+    }
+
+    return baseUrl;
+  }
+
+  Future<void> fetchAndStoreCompanies() async {
+    String newUrl = trimUrl(url);
+    final String companyUrl =
+        '${newUrl}company_details.get_company_details?company_name=$selectedCompanyName';
+    print("fetchcompany $companyUrl");
+
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+
+    try {
+      final response = await http.get(
+        Uri.parse(companyUrl),
+        headers: <String, String>{
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> companyList = jsonDecode(response.body)['message'];
+        if (companyList.isNotEmpty) {
+          final dbHelper = DatabaseHelper();
+
+          for (var company in companyList) {
+            if (company['company_name'] == selectedCompanyName) {
+              final companyData = Companyy(
+                companyName: company['company_name'] ?? '',
+                owner: company['owner'] ?? '',
+                abbr: company['abbr'] ?? '',
+                country: company['country'] ?? '',
+                vatNumber: company['vat_number'] ?? '',
+                phoneNo: company['phone_no'] ?? '',
+                email: company['email'] ?? '',
+                website: company['website'] ?? '',
+              );
+              // Insert into the database
+              await dbHelper.insertCompany(companyData);
+            }
+          }
+        } else {
+          print('No companies found for the selected company.');
+        }
+      } else {
+        print('Failed to fetch companies. Response: ${response.body}');
+      }
+    } catch (e, stacktrace) {
+      print('Error fetching companies: $e');
+      print('Stacktrace: $stacktrace');
+    }
+  }
+
+  Future<void> fetchAndStoreUsers() async {
+    String newUrl = trimUrl(url);
+    final String itemsUrl =
+        '${newUrl}user_details.get_employee_auth_details?company_name=$selectedCompanyName';
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+    print("userurl$itemsUrl");
+
+    try {
+      final response = await http.get(
+        Uri.parse(itemsUrl),
+        headers: <String, String>{
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> usersList = jsonDecode(response.body)['message'];
+        if (usersList.isNotEmpty) {
+          final dbHelper = DatabaseHelper();
+
+          for (var user in usersList) {
+            if (user['company_name'] == selectedCompanyName) {
+              final userData = User(
+                empName: user['emp_name'] ?? '',
+                phoneNo: user['phone_no'] ?? '',
+                email: user['email'] ?? '',
+                companyName: user['company_name'] ?? '',
+                companyBranch: user['company_branch'] ?? '',
+                empStatus: user['emp_status'] ?? '',
+                username: user['username'] ?? '',
+                password: user['password'] ?? '',
+              );
+
+              await dbHelper.insertUser(userData);
+            }
+          }
+        } else {
+          print('No users found for the selected company.');
+        }
+      } else {
+        print('Failed to fetch users. Response: ${response.body}');
+      }
+    } catch (e, stacktrace) {
+      print('Error fetching users: $e');
+      print('Stacktrace: $stacktrace');
+    }
+  }
+
+  Future<void> fetchAndStoreSuppliers() async {
+    String newUrl = trimUrl(url);
+    final String itemsUrl =
+        '${newUrl}supplier_details.get_supplier_details?company_name=$selectedCompanyName';
+    print("fetchsupplie $itemsUrl");
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+
+    try {
+      final response = await http.get(
+        Uri.parse(itemsUrl),
+        headers: <String, String>{
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> suppliersList =
+            jsonDecode(response.body)['message'];
+        if (suppliersList.isNotEmpty) {
+          final dbHelper = DatabaseHelper();
+
+          for (var supplier in suppliersList) {
+            if (supplier['company_name'] == selectedCompanyName) {
+              final supplierData = Supplier(
+                supplierName: supplier['supplier_name'] ?? '',
+                type: supplier['type'] ?? '',
+                companyName: supplier['company_name'] ?? '',
+                supplierGroup: supplier['supplier_group'] ?? '',
+                vatNumber: supplier['vat_number'] ?? '',
+                phoneNo: supplier['phone_no'] ?? '',
+                email: supplier['email'] ?? '',
+                country: supplier['country'] ?? '',
+              );
+
+              await dbHelper.insertSupplier(supplierData);
+            }
+          }
+        } else {
+          print('No suppliers found for the selected company.');
+        }
+      } else {
+        print('Failed to fetch suppliers. Response: ${response.body}');
+      }
+    } catch (e, stacktrace) {
+      print('Error fetching suppliers: $e');
+      print('Stacktrace: $stacktrace');
+    }
+  }
+
+  Future<void> fetchAndStoreCustomers() async {
+    String newUrl = trimUrl(url);
+    final String itemsUrl =
+        '${newUrl}customers_details.get_customer_details?company_name=$selectedCompanyName';
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+
+    try {
+      final response = await http.get(
+        Uri.parse(itemsUrl),
+        headers: <String, String>{
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> customersList =
+            jsonDecode(response.body)['message'];
+        if (customersList.isNotEmpty) {
+          final dbHelper = DatabaseHelper();
+
+          for (var customer in customersList) {
+            if (customer['company_name'] == selectedCompanyName) {
+              final customerData = Customer(
+                customerName: customer['customer_name'] ?? '',
+                customerType: customer['customer_type'] ?? '',
+                companyName: customer['company_name'] ?? '',
+                customerGroup: customer['customer_group'] ?? '',
+                vatNumber: customer['vat_number'] ?? '',
+                phoneNo: customer['phone_no'] ?? '',
+                email: customer['email'] ?? '',
+              );
+
+              await dbHelper.insertCustomer(customerData);
+            }
+          }
+        } else {
+          print('No customers found for the selected company.');
+        }
+      } else {
+        print('Failed to fetch customers. Response: ${response.body}');
+      }
+    } catch (e, stacktrace) {
+      print('Error fetching customers: $e');
+      print('Stacktrace: $stacktrace');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final int numberOfButtons = 5; // Update this as needed
+    final bool hasExtraButton = numberOfButtons % 2 != 0;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Details Page'),
@@ -355,43 +373,108 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              onPressed: saveCompany,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                textStyle:
-                    const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Sync Company'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.business, size: 20),
+                      label: const Text('Sync Company'),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: fetchAndStoreUsers,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.yellow,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.person, size: 20),
+                      label: const Text('Sync Users'),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: saveUser,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.yellow,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                textStyle:
-                    const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Sync User'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: fetchAndStoreItems,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.inventory, size: 20),
+                      label: const Text('Sync Items'),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: fetchAndStoreCustomers,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 243, 33, 33),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.people, size: 20),
+                      label: const Text('Sync Customers'),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: saveItems,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                textStyle:
-                    const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Sync Items'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: fetchAndStoreSuppliers,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 68, 33, 223),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.local_shipping, size: 20),
+                      label: const Text('Sync Suppliers'),
+                    ),
+                  ),
+                ),
+                if (hasExtraButton) Expanded(child: Container()),
+              ],
             ),
           ],
         ),

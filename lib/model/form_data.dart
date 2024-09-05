@@ -7,7 +7,12 @@ class FormData {
   final String? emailId;
   final String? username;
   final String? password;
+  final String? owner;
+  String abbr; // New field
+  String country; // New field
+  String vatNumber; // New field
   final bool online;
+  String website;
   final String? apikey;
   final String? secretkey;
   final String? url;
@@ -18,9 +23,14 @@ class FormData {
     this.companyId,
     this.contactNumber,
     this.company,
+    required this.owner,
+    required this.abbr,
+    required this.country,
+    required this.vatNumber,
     this.emailId,
     required this.username,
     required this.password,
+    required this.website,
     required this.online,
     required this.apikey,
     required this.secretkey,

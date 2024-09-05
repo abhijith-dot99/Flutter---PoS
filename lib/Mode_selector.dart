@@ -68,11 +68,15 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
       companyName: companyNameController.text,
       companyId: companyIdController.text,
       contactNumber: contactNumberController.text,
-      company: companyController.text,
+      owner: usernameController.text,
+      abbr: usernameController.text, // New field
+      country: usernameController.text, // New field
+      vatNumber: usernameController.text, // New field
       emailId: emailIdController.text,
       username: usernameController.text,
       password: passwordController.text,
-      online: false, // Set to false for offline login
+      website: usernameController.text,
+      online: false,
       apikey: apiKeyController.text,
       secretkey: secretKeyController.text,
       url: urlController.text,

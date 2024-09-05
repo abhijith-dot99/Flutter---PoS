@@ -160,33 +160,34 @@ class CompanyDetailsPage extends StatelessWidget {
     );
   }
 
-  Future<void> saveFormData({
-    required Company company,
-    required String username,
-    required String password,
-  }) async {
-    final dbHelper = DatabaseHelper();
+  // Future<void> saveFormData({
+  //   required Company company,
+  //   required String username,
+  //   required String password,
+  // }) async {
+  //   final dbHelper = DatabaseHelper();
 
-    FormData formData = FormData(
-      companyName: company.companyName,
-      companyId: company.companyId,
-      contactNumber: company.phoneNo,
-      company: company.companyBranch,
-      emailId: company.email,
-      online: true,
-      apikey: '',
-      secretkey: '',
-      url: '',
-      username: username,
-      password: password,
-    );
+  //   FormData formData = FormData(
+  //     companyName: company.companyName,
+  //     companyId: company.companyId,
+  //     contactNumber: company.phoneNo,
+  //     company: company.companyBranch,
+  //     emailId: company.email,
 
-    int result = await dbHelper.insertOfflineData(formData);
+  //     online: true,
+  //     apikey: '',
+  //     secretkey: '',
+  //     url: '',
+  //     username: username,
+  //     password: password,
+  //   );
 
-    if (result == 1) {
-      print("Company details saved successfully.");
-    } else {
-      print("Failed to save company details.");
-    }
-  }
+  //   int result = await dbHelper.insertOfflineData(formData);
+
+  //   if (result == 1) {
+  //     print("Company details saved successfully.");
+  //   } else {
+  //     print("Failed to save company details.");
+  //   }
+  // }
 }
