@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/main.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -44,12 +45,15 @@ class _LoginPageState extends State<LoginPage> {
           duration: Duration(seconds: 3),
         ),
       );
-
       return;
     }
 
     bool isValidUser = await DatabaseHelper()
         .validateUser(username, password, selectedCompany!);
+    print("isvalide$isValidUser");
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isValidUser', isValidUser);
 
     if (isValidUser) {
       Navigator.of(context).pushReplacement(
@@ -120,9 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Card(
-                      // color: const Color(0xff2c2f36),
                       color: const Color.fromARGB(255, 224, 201, 201),
-
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),
@@ -209,11 +211,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               onPressed: () {
                                 _login();
-                                // Validate login and navigate to MainPage
-                                // Navigator.of(context).pushReplacement(
-                                //   MaterialPageRoute(
-                                //       builder: (context) => const MainPage()),
-                                // );
                               },
                               child: const Text('Login',
                                   style: TextStyle(fontSize: 18)),

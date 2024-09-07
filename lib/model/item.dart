@@ -1,27 +1,21 @@
 // models/item.dart
 class Item {
-  // final String image;
-  // final String title;
   final String price;
   final String tax;
   int itemCount;
-  // final String category;
-
   final String itemCode;
   final String itemName;
   final String image;
+  final String itemtaxtype;
 
   Item({
-    // required this.image,
-    // required this.title,
     required this.price,
     required this.tax,
     this.itemCount = 1,
-    // required this.category,
-
     required this.itemCode,
     required this.itemName,
     required this.image,
+    required this.itemtaxtype,
   });
 
   // @override
@@ -34,9 +28,10 @@ class Item {
       itemCode: map['item_code'],
       itemName: map['item_name'],
       image: map['image'] ?? '', // Assuming you store image paths
-      price: map['price'] ?? '0.00',
-      tax: map['tax'] ?? '0.00',
+      price: map['item_price'] ?? '0.00',
+      tax: map['item_tax'] ?? '0.00',
       itemCount: map['item_count'] ?? 1,
+      itemtaxtype: map['item_tax_type'],
       // category: map['category'] ?? '',
     );
   }

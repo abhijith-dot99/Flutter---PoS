@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
 import 'package:flutter_pos_app/model/supplier.dart';
@@ -156,7 +157,6 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
       // If not found, return the original URL (or handle as needed)
       baseUrl = fullUrl;
     }
-
     return baseUrl;
   }
 
@@ -182,6 +182,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
         final List<dynamic> companyList = jsonDecode(response.body)['message'];
         if (companyList.isNotEmpty) {
           final dbHelper = DatabaseHelper();
+          print("selected compa$selectedCompanyName");
 
           for (var company in companyList) {
             if (company['company_name'] == selectedCompanyName) {
@@ -313,11 +314,13 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
   }
 
   Future<void> fetchAndStoreCustomers() async {
+    print("inside fetchandstorecustomer");
     String newUrl = trimUrl(url);
     final String itemsUrl =
-        '${newUrl}customers_details.get_customer_details?company_name=$selectedCompanyName';
+        '${newUrl}customer_details.get_customer_details?company_name=$selectedCompanyName';
     String basicAuth =
         'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+    print("itemurlcuddtomer$itemsUrl");
 
     try {
       final response = await http.get(
@@ -338,7 +341,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
             if (customer['company_name'] == selectedCompanyName) {
               final customerData = Customer(
                 customerName: customer['customer_name'] ?? '',
-                customerType: customer['customer_type'] ?? '',
+                customerType: customer['type'] ?? '',
                 companyName: customer['company_name'] ?? '',
                 customerGroup: customer['customer_group'] ?? '',
                 vatNumber: customer['vat_number'] ?? '',
@@ -363,8 +366,8 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final int numberOfButtons = 5; // Update this as needed
-    final bool hasExtraButton = numberOfButtons % 2 != 0;
+    // final int numberOfButtons = 5; // Update this as needed
+    final bool hasExtraButton = true;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Details Page'),
@@ -380,7 +383,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: fetchAndStoreCompanies,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -399,7 +402,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                     child: ElevatedButton.icon(
                       onPressed: fetchAndStoreUsers,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow,
+                        backgroundColor: Colors.orange,
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         textStyle: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
@@ -439,7 +442,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                     child: ElevatedButton.icon(
                       onPressed: fetchAndStoreCustomers,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 243, 33, 33),
+                        backgroundColor: Colors.blue,
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         textStyle: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
@@ -462,7 +465,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                     child: ElevatedButton.icon(
                       onPressed: fetchAndStoreSuppliers,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 68, 33, 223),
+                        backgroundColor: Colors.orange,
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         textStyle: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
@@ -473,7 +476,158 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                     ),
                   ),
                 ),
-                if (hasExtraButton) Expanded(child: Container()),
+                // if (hasExtraButton) Expanded(child: Container()),
+                if (hasExtraButton)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      // child: ElevatedButton.icon(
+                      //   onPressed: () {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(builder: (context) => MainPage()),
+                      //     );
+                      //   },
+                      //   style: ElevatedButton.styleFrom(
+                      //     backgroundColor:
+                      //         Colors.green, // Customize the color if needed
+                      //     padding: const EdgeInsets.symmetric(vertical: 20),
+                      //     textStyle: const TextStyle(
+                      //       fontSize: 16,
+                      //       fontWeight: FontWeight.bold,
+                      //     ),
+                      //     foregroundColor: Colors.white,
+                      //   ),
+                      //   label: const Text('Go to MainPage'),
+                      //   icon: const Icon(Icons.arrow_forward, size: 20),
+                      // ),
+
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => MainPage()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Colors.green, // Customize the color if needed
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize
+                              .min, // Ensures the button wraps tightly around the content
+                          children: [
+                            Text('Go to MainPage'),
+                            SizedBox(
+                                width:
+                                    8), // Adds some space between the text and icon
+                            Icon(Icons.arrow_forward, size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+              ],
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    final dbHelper = DatabaseHelper();
+                    await dbHelper.clearItems();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 10),
+                  ),
+                  child: const Text(
+                    'Clear Items',
+                    style: TextStyle(
+                      color: Colors.white, // Set your desired color here
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                ElevatedButton(
+                  onPressed: () async {
+                    final dbHelper = DatabaseHelper();
+                    await dbHelper.clearCustomers();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 10),
+                  ),
+                  child: const Text(
+                    'Clear Customers',
+                    style: TextStyle(
+                      color: Colors.white, // Set your desired color here
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                ElevatedButton(
+                  onPressed: () async {
+                    final dbHelper = DatabaseHelper();
+                    await dbHelper.clearSuppliers();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 10),
+                  ),
+                  child: const Text(
+                    'Clear Suppliers',
+                    style: TextStyle(
+                      color: Colors.white, // Set your desired color here
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                ElevatedButton(
+                  onPressed: () async {
+                    final dbHelper = DatabaseHelper();
+                    await dbHelper.clearUsers();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 10),
+                  ),
+                  child: const Text(
+                    'Clear Users',
+                    style: TextStyle(
+                      color: Colors.white, // Set your desired color here
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                ElevatedButton(
+                  onPressed: () async {
+                    final dbHelper = DatabaseHelper();
+                    await dbHelper.clearCompanies();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 10),
+                  ),
+                  child: const Text(
+                    'Clear Companies',
+                    style: TextStyle(
+                      color: Colors.white, // Set your desired color here
+                    ),
+                  ),
+                ),
               ],
             ),
           ],

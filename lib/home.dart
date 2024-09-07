@@ -23,8 +23,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Item> orderedItems = []; // Track ordered items
 
   String? _selectedCustomer;
-  final List<String> _customers = ['Alice', 'Bob', 'Charlie', 'David'];
-  late List<String> _filteredCustomers;
+  List<String> customers = [];
+  List<String> _filteredCustomers = [];
 
   late PageController _pageController; // Add a PageController
 
@@ -43,6 +43,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   int? editingItemIndex; // Track the index of the item being edited
   bool isEditing = false;
+  late String selectedCompanyName;
+
+  @override
+  void initState() {
+    super.initState();
+    searchResults = items;
+    // _filteredCustomers = _customers;
+
+    _pageController = PageController(
+        initialPage: _selectedPage); // Initialize the PageController
+
+    // _loadEmployeesForSelectedCompany();
+
+    _loadPreferences().then((_) {
+      // Ensure preferences are loaded before fetching items
+      _loadItemsFromDatabase();
+      _loadCustomerForSelectedCompany();
+    });
+  }
 
   void _openPage(int pageIndex) {
     print("insdide open page");
@@ -69,6 +88,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   List<Item> items = [];
 
+  Future<void> _loadCustomerForSelectedCompany() async {
+    print("loademplyeee");
+    if (selectedCompanyName.isNotEmpty) {
+      final dbHelper = DatabaseHelper();
+
+      // Fetch employees from the database
+      List<String> customers =
+          await dbHelper.getCustomerByCompany(selectedCompanyName);
+
+      setState(() {
+        _filteredCustomers = customers;
+      });
+    }
+  }
+
   void _updateItemCount(String value) {
     print("Inside updateItemCount, value: $value");
 
@@ -89,7 +123,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         } else if (!isEditing &&
             orderedItems[editingItemIndex!].itemCount == 1) {
           print("isediting $isEditing");
-          print("inside elseif");
           print(orderedItems[editingItemIndex!].itemCount);
           orderedItems[editingItemIndex!].itemCount = int.parse(value);
           isEditing = true;
@@ -110,27 +143,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   @override
-  void initState() {
-    super.initState();
-    searchResults = items;
-    _filteredCustomers = _customers; //newchange
-
-    _pageController = PageController(
-        initialPage: _selectedPage); // Initialize the PageController
-
-    _loadItemsFromDatabase();
-  }
-
-  @override
   void dispose() {
     _discountController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
+    });
+    print("selectedcoinhomee$selectedCompanyName");
+  }
+
   Future<void> _loadItemsFromDatabase() async {
     print("inside load items");
     final dbHelper = DatabaseHelper();
-    final fetchedItems = await dbHelper.getItems();
+    final fetchedItems = await dbHelper.getItems(selectedCompanyName);
     setState(() {
       items = fetchedItems;
       searchResults = items;
@@ -139,11 +168,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _filterCustomers(String query) {
     setState(() {
-      _filteredCustomers = _customers
+      _filteredCustomers = customers
           .where((customer) =>
               customer.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
+    print("filteredcust$_filteredCustomers");
   }
 
   void addItemToOrder(Item item) {
@@ -260,21 +290,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                   ),
+                  // Expanded(
+                  //   flex: 4,
+                  //   child: Column(
+                  //     children: [
+                  //       _viewCustomerList(context),
+                  //       const SizedBox(height: 2),
+                  //       Flexible(
+                  //         flex: 2,
+                  //         child: _buildOrderedItemsSection(),
+                  //       ),
+                  //       const SizedBox(height: 2),
+                  //       Flexible(
+                  //         flex:
+                  //             1, // Adjust this value for shorter print section
+                  //         child: _calculateAndPrintSection(),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   Expanded(
                     flex: 4,
                     child: Column(
                       children: [
                         _viewCustomerList(context),
-                        // _checkLogout(context),
                         const SizedBox(height: 2),
-                        Flexible(
-                          flex: 2,
+                        Expanded(
+                          flex: 2, // Equivalent to Flexible
                           child: _buildOrderedItemsSection(),
                         ),
                         const SizedBox(height: 2),
-                        Flexible(
+                        Expanded(
                           flex:
-                              1, // Adjust this value for shorter print section
+                              1, // Equivalent to Flexible for the print section
                           child: _calculateAndPrintSection(),
                         ),
                       ],
@@ -509,9 +557,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     color: Colors.black,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            // Text(price,
-            //     style: const TextStyle(fontSize: 14, color: Colors.brown)),
-            // const SizedBox(height: 4),
+            Text(price,
+                style: const TextStyle(fontSize: 14, color: Colors.brown)),
+            const SizedBox(height: 4),
           ],
         ),
       ),
@@ -532,8 +580,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     double total = itemPrice * quantity;
     editingItemIndex = index; // Set the index of the item being edited
     input = ''; //initialized the input
-    // print("Item tapped. Editing item at index: $editingItemIndex");
-
     return GestureDetector(
       onTap: () {
         _showEditDialog(context, index);
@@ -700,7 +746,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     tax: item.tax,
                     // itemCount: quantityController.text,
                     itemCount: int.parse(quantityController.text),
-                    // category: item.category,
+                    itemtaxtype: item.itemtaxtype,
                   );
                 });
                 Navigator.of(context).pop();
@@ -781,8 +827,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         margin: const EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          // color: const Color(0xff1f2029),
-          // color: Colors.blueGrey,
           color: Color.fromARGB(155, 222, 229, 231),
         ),
         child: Column(
@@ -887,9 +931,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
               onPressed: () async {
                 print(orderedItems);
+                double subtotal = calculateSubtotal();
+                double tax = calculateTax();
+                double total = calculateTotal();
                 try {
                   final printService = PrintService();
-                  await printService.printBill(orderedItems);
+                  await printService.printBill(
+                      orderedItems, subtotal, tax, total);
                   print("Print job started.");
                 } catch (e) {
                   print("Error occurred while printing: $e");
@@ -1015,12 +1063,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                         SizedBox(height: 10),
                         DropdownButton<String>(
-                          value: _selectedCustomer,
+                          value: _filteredCustomers.contains(_selectedCustomer)
+                              ? _selectedCustomer
+                              : null,
                           hint: const Text(
                             'Select a customer',
-                            style: TextStyle(
-                                color: Colors
-                                    .black38), // Hint text color for dropdown
+                            style: TextStyle(color: Colors.black38),
                           ),
                           isExpanded: true,
                           dropdownColor: Color.fromARGB(255, 226, 226, 233),
@@ -1029,9 +1077,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               value: customer,
                               child: Text(
                                 customer,
-                                style: const TextStyle(
-                                    color: Colors
-                                        .black87), // Dropdown item text color
+                                style: const TextStyle(color: Colors.black87),
                               ),
                             );
                           }).toList(),
@@ -1039,6 +1085,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             setState(() {
                               _selectedCustomer = newValue;
                             });
+                            Navigator.of(context).pop();
                           },
                         ),
                       ],
@@ -1060,8 +1107,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             Navigator.of(context).pop();
                           },
                         ),
-                        // const SizedBox(width: 8), // Adjust the width as needed to control spacing
-                        // const Icon(Icons.close, color: Colors.redAccent, size: 16),
                       ],
                     ),
                   ],
@@ -1071,44 +1116,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           },
         );
       },
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person,
-              color: Colors.white, size: 16), // Add list icon here
-          // SizedBox(width: 28), // Space between icon and text
+          const Icon(Icons.person,
+              color: Colors.white, size: 16), // Icon stays constant
+          const SizedBox(width: 8), // Add some space between the icon and text
           FittedBox(
             child: Text(
-              'Customer',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              _selectedCustomer ??
+                  'Customer', // If _selectedCustomer is null, show 'Customer'
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Future<void> _logout(BuildContext context) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Navigate to the login page after logging out
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const SoftwareModePage()),
-    );
-    await prefs.clear(); // Clear all stored preferences
-  }
-
-  Widget _checkLogout(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () => _logout(context),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.red,
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        foregroundColor: Colors.white,
-      ),
-      child: Icon(Icons.logout, color: Colors.white, size: 16),
     );
   }
 }

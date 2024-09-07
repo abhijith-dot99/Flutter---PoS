@@ -286,7 +286,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                         _selectedCompany = newValue;
                         if (newValue != null) {
                           print('Selected Company Details:');
-                          print('Name: ${newValue.companyName}');
+                          print('Names: ${newValue.companyName}');
                           print('Phone Number: ${newValue.phoneNo}');
                           print('Email: ${newValue.email}');
                         }
@@ -389,6 +389,41 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
           ),
           child: const Text(
             'Next',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+          ),
+        ),
+      ),
+      const SizedBox(height: 20),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () async {
+            // _saveFormData();
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+            if (isOnline && _selectedCompany != null) {
+              final selectedCompany = _selectedCompany!;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => CompanyDetailsPage(
+                    company: selectedCompany,
+                    usernameController: usernameController,
+                    passwordController: passwordController,
+                    companyNameController: companyNameController,
+                  ),
+                ),
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            // backgroundColor: Colors.deepOrange[400],
+            backgroundColor: const Color.fromARGB(255, 204, 19, 19),
+            foregroundColor: Color.fromARGB(255, 255, 255, 255),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          ),
+          child: const Text(
+            'login',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
         ),

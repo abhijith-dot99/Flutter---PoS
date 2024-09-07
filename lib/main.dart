@@ -9,6 +9,7 @@ import 'package:flutter_pos_app/shop_config.dart';
 import 'model/item.dart';
 import 'settings.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   // sqfliteFfiInit();
@@ -52,20 +53,20 @@ class _AppInitializerState extends State<AppInitializer> {
     _checkLoginStatus();
   }
 
-  Future<void> _checkLoginStatus() async {
-    // Simulate a delay for checking login status
-    String? username;
-    // await Future.delayed(const Duration(seconds: 2));
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // bool? isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    // String? namedd = prefs.getString('username');
-    // String? email = prefs.getString('emailId');
+  Future<bool> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isValidUser = prefs.getBool('isValidUser') ?? false;
+    print("isvalidedmain$isValidUser");
 
-    // Here you would typically check the actual login status from storage
+    // Use setState before returning to update the UI
     setState(() {
-      _isLoggedIn = false; // Set to true if user is logged in
-      // username = prefs.getString('username') ?? 'Unknown User';
+      _isLoggedIn =
+          isValidUser; // Update _isLoggedIn based on stored login status
     });
+
+    print("isloginmain$_isLoggedIn");
+
+    return isValidUser;
   }
 
   @override
@@ -115,10 +116,23 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Set the login status to false
+    await prefs.setBool('isValidUser', false);
+    // print("insde logiut$isValidUser");
+
+    // After setting isLoggedIn to false, navigate to the login page
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+          builder: (context) =>
+              const SoftwareModePage()), // Replace with your login page
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Row(
         children: [
           Container(
@@ -200,6 +214,22 @@ class _MainPageState extends State<MainPage> {
                 });
               },
             ),
+            const SizedBox(height: 10),
+            IconButton(
+              icon: const Column(
+                mainAxisSize: MainAxisSize
+                    .min, // This ensures the column doesn't take more space than necessary
+                children: [
+                  Icon(
+                    Icons.logout,
+                    size: 28,
+                    color: Colors.red, // Set the icon color to red
+                  ),
+                  SizedBox(height: 4), // Space between the icon and text
+                ],
+              ),
+              onPressed: _logout, // Call the logout function when clicked
+            )
           ],
         ),
       ),

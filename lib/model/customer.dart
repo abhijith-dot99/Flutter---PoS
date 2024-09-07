@@ -21,7 +21,7 @@ class Customer {
   Map<String, dynamic> toMap() {
     return {
       'customer_name': customerName,
-      'companytype': customerType,
+      'type': customerType,
       'company_name': companyName,
       'customer_group': customerGroup,
       'vat_number': vatNumber,
