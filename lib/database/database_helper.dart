@@ -64,6 +64,8 @@ class DatabaseHelper {
     final List<Map<String, dynamic>> result = await db.query(
       'DB_company',
       columns: ['company_name'],
+      where:
+          'company_name IS NOT NULL AND company_name != ""', // Filter condition
     );
     return result.map((row) => row['company_name'] as String).toList();
   }
@@ -139,19 +141,19 @@ CREATE TABLE IF NOT EXISTS DB_users (
         print("Database initialized: $db");
 
         Map<String, dynamic> companyData = {
-          'company_name': formData.companyName,
-          'owner':
-              formData.owner, // Assuming you have this field in your formData
-          'abbr':
-              formData.abbr, // Assuming you have this field in your formData
-          'country':
-              formData.country, // Assuming you have this field in your formData
-          'vat_number': formData
-              .vatNumber, // Assuming you have this field in your formData
-          'phone_no': formData.contactNumber,
-          'email': formData.emailId,
-          'website':
-              formData.website, // Assuming you have this field in your formData
+          // 'company_name': formData.companyName,
+          // 'owner':
+          //     formData.owner, // Assuming you have this field in your formData
+          // 'abbr':
+          //     formData.abbr, // Assuming you have this field in your formData
+          // 'country':
+          //     formData.country, // Assuming you have this field in your formData
+          // 'vat_number': formData
+          //     .vatNumber, // Assuming you have this field in your formData
+          // 'phone_no': formData.contactNumber,
+          // 'email': formData.emailId,
+          // 'website':
+          //     formData.website, // Assuming you have this field in your formData
           'apikey': formData.apikey,
           'secretkey': formData.secretkey,
           'url': formData.url,
@@ -198,7 +200,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
   Future<List<Item>> getItems(String selectedCompanyName) async {
     try {
       final db = await database;
-      print("insdie fetchitems db$selectedCompanyName");
+      // print("insdie fetchitems db$selectedCompanyName");
       // Query the database for items that match the selected company name
       final List<Map<String, dynamic>> result = await db.query(
         'DB_items',
@@ -208,7 +210,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
         ], // Passing the company name argument safely
       );
 
-      print("Items fetched: $result");
+      // print("Items fetched: $result");
 
       // Convert the result into a list of Item objects
       return result.map((map) => Item.fromMap(map)).toList();
@@ -427,8 +429,6 @@ CREATE TABLE IF NOT EXISTS DB_users (
   }
 
   ///newchanges
-  ///
-  ///
   Future<bool> validateUser(
       String username, String password, String company) async {
     print("inside validateUser function");
@@ -496,7 +496,6 @@ CREATE TABLE IF NOT EXISTS DB_users (
       }
       blockNum++;
     }
-
     return output;
   }
 
@@ -527,6 +526,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
 
 // Helper function to fix base64 padding
   Uint8List _fixBase64(String base64String) {
+    base64String = base64String.replaceAll('.', '+');
     // Only keep valid Base64 characters (A-Z, a-z, 0-9, +, /)
     base64String = base64String.replaceAll(RegExp(r'[^A-Za-z0-9+/=]'), '');
 
@@ -542,7 +542,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
         base64String += '=';
         break;
     }
-
+    print("base64s${base64.decode(base64String)}");
     return base64.decode(base64String);
   }
 }

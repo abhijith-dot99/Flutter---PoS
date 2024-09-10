@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_pos_app/Mode_selector.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/main.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -16,7 +17,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  String? selectedCompany; // Updated to handle dynamic selection
+  String? selectedCompany; // Updated to handle dynamic
   List<String> companyNames = []; // List to hold company names
 
   @override
@@ -83,15 +84,24 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       companyNames = names;
       selectedCompany = null; // No default selection
-      // if (companyNames.isNotEmpty) {
-      //   selectedCompany = companyNames[0]; // Set default selection
-      // }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 35,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back), // Back arrow icon
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => SoftwareModePage()),
+            );
+          },
+        ),
+      ),
       // backgroundColor: const Color(0xff1f2029),
       backgroundColor: Colors.white,
       body: LayoutBuilder(

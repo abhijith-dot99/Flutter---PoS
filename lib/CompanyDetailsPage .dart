@@ -77,6 +77,54 @@ class CompanyDetailsPage extends StatelessWidget {
     );
   }
 
+  // Widget _buildDetailRow(String label, String value) {
+  //   return Row(
+  //     crossAxisAlignment: CrossAxisAlignment.center,
+  //     children: [
+  //       Expanded(
+  //         flex: 2,
+  //         child: Text(
+  //           label,
+  //           style: const TextStyle(
+  //             color: Colors.brown,
+  //             fontSize: 16,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(width: 10),
+  //       Expanded(
+  //         flex: 3,
+  //         child: TextField(
+  //           decoration: InputDecoration(
+  //             hintText: value,
+  //             fillColor: Colors.white,
+  //             filled: true,
+  //             border: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(30),
+  //               borderSide: BorderSide.none,
+  //             ),
+  //             enabledBorder: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(30),
+  //               borderSide: const BorderSide(
+  //                 color: Colors.brown,
+  //                 width: 2.0,
+  //               ),
+  //             ),
+  //             hintStyle: const TextStyle(
+  //               color: Colors.black,
+  //             ),
+  //           ),
+  //           style: const TextStyle(
+  //             color: Color.fromARGB(255, 15, 1, 1),
+  //           ),
+  //           readOnly: true,
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
   Widget _buildDetailRow(String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,

@@ -284,26 +284,33 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                     onChanged: (newValue) async {
                       setState(() {
                         _selectedCompany = newValue;
-                        if (newValue != null) {
-                          print('Selected Company Details:');
-                          print('Names: ${newValue.companyName}');
-                          print('Phone Number: ${newValue.phoneNo}');
-                          print('Email: ${newValue.email}');
-                        }
                       });
                       if (newValue != null) {
+                        print('Selected Company Details:');
+                        print('Names: ${newValue.companyName}');
+                        print('Phone Number: ${newValue.phoneNo}');
+                        print('Email: ${newValue.email}');
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.setString(
                             'selectedCompanyName', newValue.companyName);
                         await prefs.setString(
                             'selectedCompanyId', newValue.companyId);
-
-                        // Debugging prints to ensure it's working
                         print(
                             'Stored selected company name: ${newValue.companyName}');
-                        print(
-                            'Stored selected company ID: ${newValue.companyId}');
                       }
+                      // if (newValue != null) {
+                      //   final prefs = await SharedPreferences.getInstance();
+                      //   await prefs.setString(
+                      //       'selectedCompanyName', newValue.companyName);
+                      //   await prefs.setString(
+                      //       'selectedCompanyId', newValue.companyId);
+
+                      //   // Debugging prints to ensure it's working
+                      //   print(
+                      //       'Stored selected company name: ${newValue.companyName}');
+                      //   print(
+                      //       'Stored selected company ID: ${newValue.companyId}');
+                      // }
                     },
                     decoration: InputDecoration(
                       contentPadding:
@@ -364,9 +371,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         child: ElevatedButton(
           onPressed: () async {
             _saveFormData();
-            // Navigator.of(context).pushReplacement(
-            //   MaterialPageRoute(builder: (context) => const LoginPage()),
-            // );
             if (isOnline && _selectedCompany != null) {
               final selectedCompany = _selectedCompany!;
               Navigator.of(context).push(
@@ -402,28 +406,27 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const LoginPage()),
             );
-            if (isOnline && _selectedCompany != null) {
-              final selectedCompany = _selectedCompany!;
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => CompanyDetailsPage(
-                    company: selectedCompany,
-                    usernameController: usernameController,
-                    passwordController: passwordController,
-                    companyNameController: companyNameController,
-                  ),
-                ),
-              );
-            }
+            // if (isOnline && _selectedCompany != null) {
+            //   final selectedCompany = _selectedCompany!;
+            //   Navigator.of(context).push(
+            //     MaterialPageRoute(
+            //       builder: (context) => CompanyDetailsPage(
+            //         company: selectedCompany,
+            //         usernameController: usernameController,
+            //         passwordController: passwordController,
+            //         companyNameController: companyNameController,
+            //       ),
+            //     ),
+            //   );
+            // }
           },
           style: ElevatedButton.styleFrom(
-            // backgroundColor: Colors.deepOrange[400],
             backgroundColor: const Color.fromARGB(255, 204, 19, 19),
             foregroundColor: Color.fromARGB(255, 255, 255, 255),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           ),
           child: const Text(
-            'login',
+            'Sign Up',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
         ),

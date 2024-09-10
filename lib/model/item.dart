@@ -18,11 +18,6 @@ class Item {
     required this.itemtaxtype,
   });
 
-  // @override
-  // String toString() {
-  //   return 'Title: $title, Price: $price, Quantity: $itemCount';
-  // }
-
   factory Item.fromMap(Map<String, dynamic> map) {
     return Item(
       itemCode: map['item_code'],
@@ -34,5 +29,10 @@ class Item {
       itemtaxtype: map['item_tax_type'],
       // category: map['category'] ?? '',
     );
+  }
+
+  @override
+  String toString() {
+    return 'Item(name: $itemName, count: $itemCount, price: $price)';
   }
 }

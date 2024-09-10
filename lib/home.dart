@@ -20,11 +20,16 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
-  List<Item> orderedItems = []; // Track ordered items
+  List<Item> orderedItems = [];
+
+  List<Item> orderedItemsPage1 = [];
+  List<Item> orderedItemsPage2 = [];
+  List<Item> orderedItemsPage3 = [];
 
   String? _selectedCustomer;
   List<String> customers = [];
   List<String> _filteredCustomers = [];
+  List<Item> items = [];
 
   late PageController _pageController; // Add a PageController
 
@@ -49,12 +54,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     searchResults = items;
-    // _filteredCustomers = _customers;
+    // _filteredCustomers = customers;
 
     _pageController = PageController(
         initialPage: _selectedPage); // Initialize the PageController
-
-    // _loadEmployeesForSelectedCompany();
 
     _loadPreferences().then((_) {
       // Ensure preferences are loaded before fetching items
@@ -64,32 +67,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _openPage(int pageIndex) {
-    print("insdide open page");
+    setState(() {
+      // Save the current page's ordered items before switching
+      if (currentPageIndex == 1) {
+        orderedItemsPage1 = List.from(orderedItems);
+      } else if (currentPageIndex == 2) {
+        orderedItemsPage2 = List.from(orderedItems);
+      } else if (currentPageIndex == 3) {
+        orderedItemsPage3 = List.from(orderedItems);
+      }
 
-    pageOrderedItems[currentPageIndex] = orderedItems;
+      // Switch to the new page and load its items
+      currentPageIndex = pageIndex;
 
-    // Clear the current ordered items list
-    orderedItems = [];
+      if (currentPageIndex == 1) {
+        orderedItems = List.from(orderedItemsPage1);
+      } else if (currentPageIndex == 2) {
+        orderedItems = List.from(orderedItemsPage2);
+      } else if (currentPageIndex == 3) {
+        orderedItems = List.from(orderedItemsPage3);
+      }
 
-    // Switch to the new page
-    currentPageIndex = pageIndex;
-    print("current page index $currentPageIndex");
-
-    // Load the ordered items for the new page if available
-    if (pageOrderedItems.containsKey(currentPageIndex)) {
-      orderedItems = pageOrderedItems[currentPageIndex]!;
-    } else {
-      orderedItems = [];
-    }
-    _selectedPage = pageIndex;
-    // Update the UI
-    setState(() {});
+      _selectedPage = pageIndex; // Update the selected page
+    });
   }
 
-  List<Item> items = [];
-
   Future<void> _loadCustomerForSelectedCompany() async {
-    print("loademplyeee");
+    print("loadcustomer");
     if (selectedCompanyName.isNotEmpty) {
       final dbHelper = DatabaseHelper();
 
@@ -98,7 +102,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           await dbHelper.getCustomerByCompany(selectedCompanyName);
 
       setState(() {
-        _filteredCustomers = customers;
+        _filteredCustomers = customers.toSet().toList();
       });
     }
   }
@@ -176,18 +180,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     print("filteredcust$_filteredCustomers");
   }
 
+// Function to add an item to the order
   void addItemToOrder(Item item) {
     setState(() {
-      // Check if the item is already in the orderedItems list
+      // Check if the item is already in the orderedItems list for the current page
       int existingItemIndex = orderedItems
           .indexWhere((orderedItem) => orderedItem.itemName == item.itemName);
 
       if (existingItemIndex != -1) {
-        // If the item exists, increase the item count
+        // If the item exists, increase the item count for the selected page
         orderedItems[existingItemIndex].itemCount += 1;
       } else {
-        // If the item doesn't exist, add it to the list with itemCount = 1
+        item = Item(
+          // Create a new instance of the item for this page
+          itemName: item.itemName,
+          image: item.image,
+          price: item.price,
+          itemCount: 1, tax: item.tax, itemCode: item.itemCode,
+          itemtaxtype: item.itemtaxtype, // Fresh count for new item
+        );
         orderedItems.add(item);
+      }
+
+      // Save the updated list for the current page
+      if (currentPageIndex == 1) {
+        orderedItemsPage1 = List.from(orderedItems);
+      } else if (currentPageIndex == 2) {
+        orderedItemsPage2 = List.from(orderedItems);
+      } else if (currentPageIndex == 3) {
+        orderedItemsPage3 = List.from(orderedItems);
       }
     });
   }
@@ -290,25 +311,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                   ),
-                  // Expanded(
-                  //   flex: 4,
-                  //   child: Column(
-                  //     children: [
-                  //       _viewCustomerList(context),
-                  //       const SizedBox(height: 2),
-                  //       Flexible(
-                  //         flex: 2,
-                  //         child: _buildOrderedItemsSection(),
-                  //       ),
-                  //       const SizedBox(height: 2),
-                  //       Flexible(
-                  //         flex:
-                  //             1, // Adjust this value for shorter print section
-                  //         child: _calculateAndPrintSection(),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
                   Expanded(
                     flex: 4,
                     child: Column(
@@ -404,9 +406,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       onPressed: () => _openPage(page),
       style: ElevatedButton.styleFrom(
         shape: const CircleBorder(),
-        // backgroundColor:
-        //     _selectedPage == page ? Colors.white : Colors.deepOrangeAccent,
-
         backgroundColor:
             _selectedPage == page ? Colors.black26 : Colors.deepOrangeAccent,
         padding: const EdgeInsets.all(15),
@@ -574,8 +573,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     required int index, // Add index to identify the item in the list
   }) {
     double itemPrice = double.parse(price.replaceAll(' ', ''));
-    // int quantity = int.parse(itemCount.split(' ')[0]);
-    int quantity = itemCount;
+
+    // int quantity = itemCount;
+    int quantity =
+        itemCount > 0 ? itemCount : 1; // Ensure quantity starts at 1 if not set
 
     double total = itemPrice * quantity;
     editingItemIndex = index; // Set the index of the item being edited
@@ -588,7 +589,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
           padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
           decoration: BoxDecoration(
-            color: Color.fromARGB(155, 205, 212, 214),
+            color: const Color.fromARGB(155, 205, 212, 214),
             borderRadius: BorderRadius.circular(13),
             boxShadow: [
               BoxShadow(color: Colors.grey.withOpacity(0.3)),
@@ -632,7 +633,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Text(
                       itemCount.toString(),
                       style: const TextStyle(fontSize: 14, color: Colors.black),
-                      // textAlign: TextAlign.center, // Center the text if needed
                     ),
                   ),
                   // Price taking full width
@@ -640,7 +640,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Text(
                       price,
                       style: const TextStyle(fontSize: 14, color: Colors.black),
-                      // textAlign: TextAlign.center, // Center the text if needed
                     ),
                   ),
                   const SizedBox(width: 30),
@@ -661,7 +660,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _removeItem(int index) {
     setState(() {
+      // Reset the item count to 1 before removing (or any desired behavior)
+      orderedItems[index].itemCount = 1;
       orderedItems.removeAt(index);
+
+      // Save the updated list for the current page
+      if (currentPageIndex == 1) {
+        orderedItemsPage1 = List.from(orderedItems);
+      } else if (currentPageIndex == 2) {
+        orderedItemsPage2 = List.from(orderedItems);
+      } else if (currentPageIndex == 3) {
+        orderedItemsPage3 = List.from(orderedItems);
+      }
     });
   }
 
@@ -744,7 +754,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     itemCode: item.itemCode,
                     price: priceController.text,
                     tax: item.tax,
-                    // itemCount: quantityController.text,
                     itemCount: int.parse(quantityController.text),
                     itemtaxtype: item.itemtaxtype,
                   );
@@ -845,7 +854,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         fontWeight: FontWeight.bold, color: Colors.black)),
               ],
             ),
-            // const SizedBox(height: 2),
+           
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -857,7 +866,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         fontWeight: FontWeight.bold, color: Colors.black87)),
               ],
             ),
-            // const SizedBox(height: 5),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -903,7 +912,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ],
             ),
-            // const SizedBox(height: 5),
+           
             Container(
               margin: const EdgeInsets.symmetric(vertical: 1),
               height: 2,
@@ -930,7 +939,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () async {
-                print(orderedItems);
+                print("ordereditemss$orderedItems");
                 double subtotal = calculateSubtotal();
                 double tax = calculateTax();
                 double total = calculateTotal();
