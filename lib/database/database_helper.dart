@@ -210,7 +210,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
         ], // Passing the company name argument safely
       );
 
-      // print("Items fetched: $result");
+      print("Items fetched: $result");
 
       // Convert the result into a list of Item objects
       return result.map((map) => Item.fromMap(map)).toList();

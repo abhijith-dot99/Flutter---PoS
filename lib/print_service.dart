@@ -9,20 +9,21 @@ import 'package:open_file/open_file.dart';
 import 'model/item.dart';
 
 class PrintService {
-  Future<void> printBill(
-      List<Item> items, double subtotal, double tax, double total) async {
+  Future<void> printBill(List<Item> items, double subtotal, double tax,
+      double total, String selectedcust) async {
     if (Platform.isWindows) {
-      await printBillWindows(items, subtotal, tax, total);
+      await printBillWindows(items, subtotal, tax, total, selectedcust);
     } else if (Platform.isAndroid) {
-      await printBillAndroid(items, subtotal, tax, total);
+      await printBillAndroid(items, subtotal, tax, total, selectedcust);
     } else {
       throw UnsupportedError('Unsupported platform');
     }
   }
 
-  Future<void> printBillWindows(
-      List<Item> items, double subtotal, double tax, double total) async {
-    final pdfData = await generatePdf(items, subtotal, tax, total);
+  Future<void> printBillWindows(List<Item> items, double subtotal, double tax,
+      double total, String selectedcust) async {
+    final pdfData =
+        await generatePdf(items, subtotal, tax, total, selectedcust);
 
     // Direct print with A4 format on Windows
     await Printing.directPrintPdf(
@@ -32,17 +33,18 @@ class PrintService {
     print('Order Details:\n$pdfData');
   }
 
-  Future<void> printBillAndroid(
-      List<Item> items, double subtotal, double tax, double total) async {
+  Future<void> printBillAndroid(List<Item> items, double subtotal, double tax,
+      double total, String selectedcust) async {
     await requestPermissions();
-    final pdfData = await generatePdf(items, subtotal, tax, total);
+    final pdfData =
+        await generatePdf(items, subtotal, tax, total, selectedcust);
     final filePath = await savePdfToFile(pdfData);
     await openPdfFile(filePath);
     print('Order Details:\n$pdfData');
   }
 
-  Future<Uint8List> generatePdf(
-      List<Item> items, double subtotal, double tax, double total) async {
+  Future<Uint8List> generatePdf(List<Item> items, double subtotal, double tax,
+      double total, String selectedcust) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -54,10 +56,15 @@ class PrintService {
             pw.Text('Bill', style: const pw.TextStyle(fontSize: 24)),
             pw.SizedBox(height: 16),
             pw.Table.fromTextArray(
-              headers: ['Item', 'Quantity', 'Price', 'Tax'],
+              headers: ['Item', 'Quantity', 'Price', 'Tax', 'Customer'],
               data: items
-                  .map((item) =>
-                      [item.itemName, item.itemCount, item.price, item.tax])
+                  .map((item) => [
+                        item.itemName,
+                        item.itemCount,
+                        item.price,
+                        item.tax,
+                        selectedcust,
+                      ])
                   .toList(),
             ),
             pw.SizedBox(height: 20),

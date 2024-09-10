@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_pos_app/Mode_selector.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'model/item.dart';
 import 'package:intl/intl.dart';
@@ -27,6 +26,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Item> orderedItemsPage3 = [];
 
   String? _selectedCustomer;
+
+  String? _selectedCustomerPage1;
+  String? _selectedCustomerPage2;
+  String? _selectedCustomerPage3;
+
   List<String> customers = [];
   List<String> _filteredCustomers = [];
   List<Item> items = [];
@@ -54,7 +58,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     searchResults = items;
-    // _filteredCustomers = customers;
 
     _pageController = PageController(
         initialPage: _selectedPage); // Initialize the PageController
@@ -66,15 +69,51 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  String? _getSelectedCustomerForCurrentPage() {
+    if (currentPageIndex == 1) {
+      print("getcust$_selectedCustomerPage1");
+
+      return _selectedCustomerPage1;
+    } else if (currentPageIndex == 2) {
+      return _selectedCustomerPage2;
+    } else if (currentPageIndex == 3) {
+      print("getcust$_selectedCustomerPage3");
+      return _selectedCustomerPage3;
+    }
+    return null;
+  }
+
+  void _setSelectedCustomerForCurrentPage(String? newValue) {
+    if (currentPageIndex == 1) {
+      _selectedCustomerPage1 = newValue;
+      print(
+          "newvalue and currentPageIndex $_selectedCustomerPage1 $currentPageIndex");
+    } else if (currentPageIndex == 2) {
+      _selectedCustomerPage2 = newValue;
+      print(
+          "newvalue and currentPageIndex $_selectedCustomerPage2 $currentPageIndex");
+    } else if (currentPageIndex == 3) {
+      _selectedCustomerPage3 = newValue;
+      print(
+          "newvalue and currentPageIndex $_selectedCustomerPage3 $currentPageIndex");
+    }
+  }
+
   void _openPage(int pageIndex) {
     setState(() {
       // Save the current page's ordered items before switching
       if (currentPageIndex == 1) {
         orderedItemsPage1 = List.from(orderedItems);
+        _selectedCustomer = _selectedCustomerPage1;
+        print("Saved selected customer for Page 1: $_selectedCustomerPage1");
       } else if (currentPageIndex == 2) {
         orderedItemsPage2 = List.from(orderedItems);
+        _selectedCustomer = _selectedCustomerPage2;
+        print("Saved selected customer for Page 2: $_selectedCustomerPage2");
       } else if (currentPageIndex == 3) {
         orderedItemsPage3 = List.from(orderedItems);
+        _selectedCustomer = _selectedCustomerPage1;
+        print("Saved selected customer for Page 3: $_selectedCustomerPage3");
       }
 
       // Switch to the new page and load its items
@@ -82,12 +121,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       if (currentPageIndex == 1) {
         orderedItems = List.from(orderedItemsPage1);
+        _selectedCustomer = _selectedCustomerPage1;
+        print("Loaded selected customer for Page 1: $_selectedCustomer");
       } else if (currentPageIndex == 2) {
         orderedItems = List.from(orderedItemsPage2);
+        _selectedCustomer = _selectedCustomerPage2;
+        print("Loaded selected customer for Page 2: $_selectedCustomer");
       } else if (currentPageIndex == 3) {
         orderedItems = List.from(orderedItemsPage3);
+        _selectedCustomer = _selectedCustomerPage3;
+        print("Loaded selected customer for Page 3: $_selectedCustomer");
       }
-
       _selectedPage = pageIndex; // Update the selected page
     });
   }
@@ -196,7 +240,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           itemName: item.itemName,
           image: item.image,
           price: item.price,
-          itemCount: 1, tax: item.tax, itemCode: item.itemCode,
+          itemCount: 1,
+          tax: item.tax,
+          itemCode: item.itemCode,
           itemtaxtype: item.itemtaxtype, // Fresh count for new item
         );
         orderedItems.add(item);
@@ -301,6 +347,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     itemName: item.itemName,
                                     price: item.price,
                                     itemCount: item.itemCount,
+                                    tax: item.tax,
                                     onTap: () => addItemToOrder(item),
                                   );
                                 },
@@ -532,7 +579,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       required String itemName,
       required String price,
       required int itemCount,
-      required VoidCallback onTap}) {
+      required VoidCallback onTap,
+      required String tax}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -854,7 +902,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         fontWeight: FontWeight.bold, color: Colors.black)),
               ],
             ),
-           
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -866,7 +913,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         fontWeight: FontWeight.bold, color: Colors.black87)),
               ],
             ),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -912,7 +958,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ],
             ),
-           
             Container(
               margin: const EdgeInsets.symmetric(vertical: 1),
               height: 2,
@@ -930,7 +975,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         fontWeight: FontWeight.bold, color: Colors.black87)),
               ],
             ),
-            // const SizedBox(height: 6),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -938,20 +982,52 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
+              // onPressed: () async {
+              //   double subtotal = calculateSubtotal();
+              //   double tax = calculateTax();
+              //   double total = calculateTotal();
+              //   print(
+              //       "ordereditemss$orderedItems$subtotal $tax $total,$_selectedCustomer");
+              //   try {
+              //     final printService = PrintService();
+              //     await printService.printBill(
+              //         orderedItems, subtotal, tax, total, _selectedCustomer!);
+              //     print("Print job started.");
+              //   } catch (e) {
+              //     print("Error occurred while printing: $e");
+              //   }
+              // },
               onPressed: () async {
-                print("ordereditemss$orderedItems");
                 double subtotal = calculateSubtotal();
                 double tax = calculateTax();
                 double total = calculateTotal();
+
+                print(
+                    "ordereditemss$orderedItems $subtotal $tax $total, $_selectedCustomer");
+
+                // Check if _selectedCustomer is null
+                if (_selectedCustomer == null) {
+                  print("Error: No customer selected.");
+                  // You can show a dialog or a Snackbar to notify the user
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text("Please select a customer before printing."),
+                    ),
+                  );
+                  return; // Stop the execution
+                }
+
                 try {
                   final printService = PrintService();
                   await printService.printBill(
-                      orderedItems, subtotal, tax, total);
+                      orderedItems, subtotal, tax, total, _selectedCustomer!);
                   print("Print job started.");
                 } catch (e) {
                   print("Error occurred while printing: $e");
                 }
               },
+
               child: Container(
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(2),
@@ -1053,27 +1129,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextField(
-                          onChanged: _filterCustomers,
-                          style: const TextStyle(
-                              color: Colors.black87), // Text field text color
-                          decoration: InputDecoration(
-                            hintText: 'Search',
-                            hintStyle: const TextStyle(
-                                color: Colors.black26), // Hint text color
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: Colors.black38, // Icon color
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10),
+                        // TextField(
+                        //   onChanged: _filterCustomers,
+                        //   style: const TextStyle(
+                        //       color: Colors.black87), // Text field text color
+                        //   decoration: InputDecoration(
+                        //     hintText: 'Search',
+                        //     hintStyle: const TextStyle(
+                        //         color: Colors.black26), // Hint text color
+                        //     border: OutlineInputBorder(
+                        //       borderRadius: BorderRadius.circular(12),
+                        //     ),
+                        //     prefixIcon: const Icon(
+                        //       Icons.search,
+                        //       color: Colors.black38, // Icon color
+                        //     ),
+                        //   ),
+                        // ),
+                        // SizedBox(height: 10),
                         DropdownButton<String>(
-                          value: _filteredCustomers.contains(_selectedCustomer)
-                              ? _selectedCustomer
+                          value: _filteredCustomers.contains(
+                                  _getSelectedCustomerForCurrentPage())
+                              ? _getSelectedCustomerForCurrentPage()
                               : null,
                           hint: const Text(
                             'Select a customer',
@@ -1092,7 +1169,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           }).toList(),
                           onChanged: (String? newValue) {
                             setState(() {
-                              _selectedCustomer = newValue;
+                              _setSelectedCustomerForCurrentPage(newValue);
                             });
                             Navigator.of(context).pop();
                           },
@@ -1131,12 +1208,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           const Icon(Icons.person,
               color: Colors.white, size: 16), // Icon stays constant
           const SizedBox(width: 8), // Add some space between the icon and text
+
           FittedBox(
             child: Text(
-              _selectedCustomer ??
-                  'Customer', // If _selectedCustomer is null, show 'Customer'
+              _getSelectedCustomerForCurrentPage() ?? 'Customer',
               style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
