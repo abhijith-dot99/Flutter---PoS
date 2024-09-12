@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/fetch_details.dart';
 import 'package:flutter_pos_app/model/company.dart';
-import 'package:flutter_pos_app/database/database_helper.dart';
-import 'package:flutter_pos_app/model/form_data.dart';
 
 class CompanyDetailsPage extends StatelessWidget {
   final Company company;

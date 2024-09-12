@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'model/item.dart';
+import 'model/items.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
   List<Item> orderedItems = [];
+  List<Items> soldItems = [];
 
   List<Item> orderedItemsPage1 = [];
   List<Item> orderedItemsPage2 = [];
@@ -53,7 +55,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int? editingItemIndex; // Track the index of the item being edited
   bool isEditing = false;
   late String selectedCompanyName;
+  late String secretKey;
+  late String apiKey;
 
+  String?
+      previousCustomer; // Keep track of previous customer outside the function.
   @override
   void initState() {
     super.initState();
@@ -104,15 +110,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Save the current page's ordered items before switching
       if (currentPageIndex == 1) {
         orderedItemsPage1 = List.from(orderedItems);
-        _selectedCustomer = _selectedCustomerPage1;
+        //
+        //_selectedCustomer = _selectedCustomerPage1;
+        _selectedCustomerPage1 = _selectedCustomer;
+
         print("Saved selected customer for Page 1: $_selectedCustomerPage1");
       } else if (currentPageIndex == 2) {
         orderedItemsPage2 = List.from(orderedItems);
-        _selectedCustomer = _selectedCustomerPage2;
+        // _selectedCustomer = _selectedCustomerPage2;
+        _selectedCustomerPage2 = _selectedCustomer;
         print("Saved selected customer for Page 2: $_selectedCustomerPage2");
       } else if (currentPageIndex == 3) {
         orderedItemsPage3 = List.from(orderedItems);
-        _selectedCustomer = _selectedCustomerPage1;
+        // _selectedCustomer = _selectedCustomerPage1;
+        _selectedCustomerPage3 = _selectedCustomer;
         print("Saved selected customer for Page 3: $_selectedCustomerPage3");
       }
 
@@ -200,8 +211,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
+      secretKey = prefs.getString('secretKey') ?? '';
+      apiKey = prefs.getString('apiKey') ?? '';
     });
     print("selectedcoinhomee$selectedCompanyName");
+    print("apikey home $apiKey");
+    print("seceretkey home$secretKey");
   }
 
   Future<void> _loadItemsFromDatabase() async {
@@ -1001,6 +1016,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 double subtotal = calculateSubtotal();
                 double tax = calculateTax();
                 double total = calculateTotal();
+                _selectedCustomer = _getSelectedCustomerForCurrentPage();
 
                 print(
                     "ordereditemss$orderedItems $subtotal $tax $total, $_selectedCustomer");
@@ -1018,13 +1034,118 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   return; // Stop the execution
                 }
 
+                // try {
+                //   // Transfer ordered items to soldItems after printing
+                //   soldItems = orderedItems
+                //       .map((item) => Items(
+                //             itemCode: item.itemCode,
+                //             itemName: item.itemName,
+                //             itemDescription: '',
+                //             itemGroup: '',
+                //             itemImage: item.image,
+                //             itemUom: '',
+                //             baseRate: double.parse(item.price),
+                //             baseAmount:
+                //                 double.parse(item.price) * item.itemCount,
+                //             netRate: double.parse(item.price),
+                //             netAmount:
+                //                 double.parse(item.price) * item.itemCount,
+                //             pricingRules: '',
+                //             isFreeItem: item.itemCount == 0,
+                //             itemTaxRate: item.tax,
+                //             invoice: '',
+                //             customername: _selectedCustomer!,
+                //           ))
+                //       .toList();
+
+                //   // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
+                //   List<Map<String, dynamic>> soldItemsMap =
+                //       soldItems.map((item) => item.toMap()).toList();
+
+                //   // Insert the sold items into the database
+                //   final dbHelper = DatabaseHelper();
+                //   print("selecteddb$_selectedCustomer");
+                //   String invoiceNo = await dbHelper.getNextInvoiceNumber();
+                //   // await dbHelper.insertSalesItems(soldItemsMap, invoiceNo);
+                //   await dbHelper.insertSalesItems(soldItemsMap, invoiceNo);
+                //   // await dbHelper.postSalesItemsToApi(soldItemsMap);
+                //   await dbHelper.postSalesItemsToApi(
+                //       soldItemsMap, apiKey, secretKey);
+                //   print("solditemsmap$soldItemsMap");
+
+                //   final printService = PrintService();
+                //   await printService.printBill(
+                //       orderedItems, subtotal, tax, total, _selectedCustomer!);
+                //   print("Print job started.");
+                // } catch (e) {
+                //   print("Error occurred while printing: $e");
+                // }
+
                 try {
-                  final printService = PrintService();
-                  await printService.printBill(
-                      orderedItems, subtotal, tax, total, _selectedCustomer!);
-                  print("Print job started.");
+                  // Check if the customer has changed
+                  if (_selectedCustomer != previousCustomer) {
+                    // Customer has changed, so it's considered a new sale.
+                    print(
+                        "Customer has changed from $previousCustomer to $_selectedCustomer");
+
+                    // Transfer ordered items to soldItems after printing
+                    soldItems = orderedItems
+                        .map((item) => Items(
+                              itemCode: item.itemCode,
+                              itemName: item.itemName,
+                              itemDescription: '',
+                              itemGroup: '',
+                              itemImage: item.image,
+                              itemUom: '',
+                              baseRate: double.parse(item.price),
+                              baseAmount:
+                                  double.parse(item.price) * item.itemCount,
+                              netRate: double.parse(item.price),
+                              netAmount:
+                                  double.parse(item.price) * item.itemCount,
+                              pricingRules: '',
+                              isFreeItem: item.itemCount == 0,
+                              itemTaxRate: item.tax,
+                              invoice: '',
+                              customername:
+                                  _selectedCustomer!, // Set new customer name
+                            ))
+                        .toList();
+
+                    // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
+                    List<Map<String, dynamic>> soldItemsMap =
+                        soldItems.map((item) => item.toMap()).toList();
+
+                    // Insert the sold items into the database
+                    final dbHelper = DatabaseHelper();
+                    print("selecteddb $_selectedCustomer");
+
+                    // Get next invoice number
+                    String invoiceNo = await dbHelper.getNextInvoiceNumber();
+
+                    // Insert sales items into DB_sales_items with new customer name
+                    await dbHelper.insertSalesItems(
+                        soldItemsMap, invoiceNo, _selectedCustomer!);
+
+                    // Post sales items to API
+                    await dbHelper.postSalesItemsToApi(
+                        soldItemsMap, apiKey, secretKey);
+                    print("soldItemsMap $soldItemsMap");
+
+                    // Print bill after inserting and posting
+                    final printService = PrintService();
+                    await printService.printBill(
+                        orderedItems, subtotal, tax, total, _selectedCustomer!);
+                    print("Print job started.");
+
+                    // Update previousCustomer after the sale is successfully processed
+                    previousCustomer =
+                        _selectedCustomer; // Update to track customer change
+                  } else {
+                    print("Same customer, no need to create new entry.");
+                  }
                 } catch (e) {
-                  print("Error occurred while printing: $e");
+                  print("Error occurred while processing sale: $e");
                 }
               },
 

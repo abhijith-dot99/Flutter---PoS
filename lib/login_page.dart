@@ -55,6 +55,7 @@ class _LoginPageState extends State<LoginPage> {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isValidUser', isValidUser);
+    await prefs.setString('selectedCompanyName', selectedCompany!);
 
     if (isValidUser) {
       Navigator.of(context).pushReplacement(
@@ -190,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                                 filled: true,
                                 fillColor: Colors.white,
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(18),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 hintText: 'Username',
                               ),
@@ -203,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                                 filled: true,
                                 fillColor: Colors.white,
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 hintText: 'Password',
                               ),

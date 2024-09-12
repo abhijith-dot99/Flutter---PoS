@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_pos_app/login_page.dart';
 import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
@@ -506,7 +507,8 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => MainPage()),
+                            MaterialPageRoute(
+                                builder: (context) => const LoginPage()),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -523,7 +525,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                           mainAxisSize: MainAxisSize
                               .min, // Ensures the button wraps tightly around the content
                           children: [
-                            Text('Go to MainPage'),
+                            Text('Go to LoginPage'),
                             SizedBox(
                                 width:
                                     8), // Adds some space between the text and icon

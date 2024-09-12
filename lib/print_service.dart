@@ -30,7 +30,7 @@ class PrintService {
       printer: await _getDefaultPrinter(),
       onLayout: (PdfPageFormat format) async => pdfData,
     );
-    print('Order Details:\n$pdfData');
+    // print('Order Details:\n$pdfData');
   }
 
   Future<void> printBillAndroid(List<Item> items, double subtotal, double tax,

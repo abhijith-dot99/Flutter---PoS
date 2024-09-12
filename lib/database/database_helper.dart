@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/companyy.dart';
@@ -14,14 +12,11 @@ import 'package:flutter_pos_app/model/userss.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:crypto/crypto.dart';
-import 'package:crypt/crypt.dart';
 import 'package:collection/collection.dart';
+import 'package:http/http.dart' as http;
 
 import 'dart:convert'; // for utf8 encoding
 // ignore: depend_on_referenced_packages
-import 'package:crypto/crypto.dart' as pbkdf2;
-import 'package:crypto/crypto.dart' as crypto;
-import 'package:crypto/src/utils.dart' as crypto_utils; // For PBKDF2 functions
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -70,27 +65,6 @@ class DatabaseHelper {
     return result.map((row) => row['company_name'] as String).toList();
   }
 
-  // Future<bool> validateUser(
-  //     String username, String password, String company) async {
-  //   print("insdie validateuer function");
-  //   print("username $username");
-  //   print("password $password");
-  //   print("company$company");
-  //   final db = await database;
-  //   final List<Map<String, dynamic>> result = await db.query(
-  //     'DB_users',
-  //     where: 'username = ? AND password = ? AND company_name = ?',
-  //     whereArgs: [username, password, company],
-  //   );
-  //   if (result.isNotEmpty) {
-  //     print("Valid user found");
-  //     return true;
-  //   } else {
-  //     print("No valid user found");
-  //     return false;
-  //   }
-  // }
-
   Future<List<String>> getUserCredintials() async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
@@ -131,55 +105,64 @@ CREATE TABLE IF NOT EXISTS DB_users (
         password TEXT
       )
   ''');
+
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS invoice_counter (
+      id INTEGER PRIMARY KEY,
+      current_invoice_number INTEGER
+    );
+  ''');
+
+    // Initialize the invoice counter if it's empty
+    var result = await db.query('invoice_counter');
+    if (result.isEmpty) {
+      await db
+          .insert('invoice_counter', {'id': 1, 'current_invoice_number': 1});
+    }
   }
 
   Future<int> insertOfflineData(FormData formData) async {
     print("Inside insertOfflineData");
     try {
       final db = await database;
-      if (db != null) {
-        print("Database initialized: $db");
+      print("Database initialized: $db");
 
-        Map<String, dynamic> companyData = {
-          // 'company_name': formData.companyName,
-          // 'owner':
-          //     formData.owner, // Assuming you have this field in your formData
-          // 'abbr':
-          //     formData.abbr, // Assuming you have this field in your formData
-          // 'country':
-          //     formData.country, // Assuming you have this field in your formData
-          // 'vat_number': formData
-          //     .vatNumber, // Assuming you have this field in your formData
-          // 'phone_no': formData.contactNumber,
-          // 'email': formData.emailId,
-          // 'website':
-          //     formData.website, // Assuming you have this field in your formData
-          'apikey': formData.apikey,
-          'secretkey': formData.secretkey,
-          'url': formData.url,
-          'companyId': formData.companyId,
-        };
+      Map<String, dynamic> companyData = {
+        // 'company_name': formData.companyName,
+        // 'owner':
+        //     formData.owner, // Assuming you have this field in your formData
+        // 'abbr':
+        //     formData.abbr, // Assuming you have this field in your formData
+        // 'country':
+        //     formData.country, // Assuming you have this field in your formData
+        // 'vat_number': formData
+        //     .vatNumber, // Assuming you have this field in your formData
+        // 'phone_no': formData.contactNumber,
+        // 'email': formData.emailId,
+        // 'website':
+        //     formData.website, // Assuming you have this field in your formData
+        'apikey': formData.apikey,
+        'secretkey': formData.secretkey,
+        'url': formData.url,
+        'companyId': formData.companyId,
+      };
 
-        print("Company data: $companyData");
-        int companyId = await db.insert('DB_company', companyData);
+      print("Company data: $companyData");
+      int companyId = await db.insert('DB_company', companyData);
 
-        // Insert data into DB_users
-        Map<String, dynamic> userData = {
-          'username': formData.username,
-          'password': formData.password,
-          'company_name': formData.companyName,
-        };
+      // Insert data into DB_users
+      Map<String, dynamic> userData = {
+        'username': formData.username,
+        'password': formData.password,
+        'company_name': formData.companyName,
+      };
 
-        print("User data: $userData");
-        int userId = await db.insert('DB_users', userData);
+      print("User data: $userData");
+      int userId = await db.insert('DB_users', userData);
 
-        return companyId != -1 && userId != -1
-            ? 1
-            : -1; // Indicate success or failure
-      } else {
-        print("Database is null");
-        return -1; // Indicate failure
-      }
+      return companyId != -1 && userId != -1
+          ? 1
+          : -1; // Indicate success or failure
     } catch (e) {
       print("Error accessing database: $e");
       return -1; // Indicate failure
@@ -200,7 +183,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
   Future<List<Item>> getItems(String selectedCompanyName) async {
     try {
       final db = await database;
-      // print("insdie fetchitems db$selectedCompanyName");
+
       // Query the database for items that match the selected company name
       final List<Map<String, dynamic>> result = await db.query(
         'DB_items',
@@ -544,5 +527,198 @@ CREATE TABLE IF NOT EXISTS DB_users (
     }
     print("base64s${base64.decode(base64String)}");
     return base64.decode(base64String);
+  }
+
+  Future<void> insertSalesItems(List<Map<String, dynamic>> orderedItems,
+      String invoiceNo, String customerName) async {
+    print("Inside insertSalesItems for customer: $customerName");
+
+    final db = await database;
+
+    // Iterate over each ordered item and insert into the DB_sales_items table
+    for (var item in orderedItems) {
+      await db.insert(
+        'DB_sales_items',
+        {
+          'item_code': item['item_code'],
+          'item_name': item['item_name'],
+          'item_description': item['item_description'],
+          'item_group': item['item_group'],
+          'item_image': item['item_image'],
+          'item_uom': item['item_uom'],
+          'base_rate': item['base_rate'],
+          'base_amount': item['base_amount'],
+          'net_rate': item['net_rate'],
+          'net_amount': item['net_amount'],
+          'pricing_rules': item['pricing_rules'],
+          'is_free_item': item['is_free_item'] == true ? 1 : 0,
+          'item_tax_rate': item['item_tax_rate'].toString(),
+          'invoice_no': invoiceNo, // Invoice number for tracking the sale
+          'customer_name':
+              customerName, // Add customer name to track sale by customer
+        },
+        conflictAlgorithm:
+            ConflictAlgorithm.abort, // Replace if a conflict occurs
+      );
+    }
+
+    print("Items inserted into DB_sales_items for invoice: $invoiceNo");
+  }
+
+// Define your API URL
+  // String apiUrl =
+  //     'http://143.110.187.133:82/api/method/duplex_dev.api.sales_invoice_item.get_invoice_item_details';
+  String apiUrl =
+      "http://143.110.187.133:82/api/resource/Sales%20Invoice?fields=[%22*%22]";
+
+  // Future<void> postSalesItemsToApi(
+  //   List<Map<String, dynamic>> items,
+  //   String apiKey,
+  //   String secretKey,
+  // ) async {
+  //   print("solditemsmap inpost $items");
+  //   // Create Basic Authentication header
+  //   String basicAuth =
+  //       'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+
+  //   print("basicAuth$basicAuth");
+
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse(apiUrl),
+  //       headers: {
+  //         'Authorization': basicAuth, // Set Basic Auth header
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body:
+  //           jsonEncode({'message': items}), // Convert the list of maps to JSON
+  //     );
+  //     print("url$apiUrl");
+  //     print(jsonEncode({'messaged': items}));
+
+  //     if (response.statusCode == 200) {
+  //       print("response${response.body}");
+  //       print('Sales items posted to API successfully.');
+  //     } else {
+  //       print('Failed to post sales items to API. ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error posting sales items to API: $e');
+  //   }
+  // }
+
+  Future<String> getNextInvoiceNumber() async {
+    final db = await database;
+
+    // Retrieve current invoice number
+    var result =
+        await db.query('invoice_counter', where: 'id = ?', whereArgs: [1]);
+    if (result.isEmpty) {
+      // Initialize if not present
+      await db
+          .insert('invoice_counter', {'id': 1, 'current_invoice_number': 1});
+      result =
+          await db.query('invoice_counter', where: 'id = ?', whereArgs: [1]);
+    }
+
+    int currentNumber = result.first['current_invoice_number'] as int;
+    int nextNumber = currentNumber + 1;
+
+    // Update the counter in the database
+    await db.update(
+      'invoice_counter',
+      {'current_invoice_number': nextNumber},
+      where: 'id = ?',
+      whereArgs: [1],
+    );
+
+    // Return the new invoice number formatted
+    return 'ACC-SINV-2024-${nextNumber.toString().padLeft(5, '0')}';
+  }
+
+  Future<void> postSalesItemsToApi(
+    List<Map<String, dynamic>> items,
+    String apiKey,
+    String secretKey,
+  ) async {
+    print("=== Initiating Sales Items Post to API ===");
+
+    // Step 1: Verify the API URL
+    if (!apiUrl.startsWith("http")) {
+      print("Error: Invalid API URL. The URL should start with http or https.");
+      return;
+    }
+    print("API URL: $apiUrl");
+
+    // Step 2: Create Basic Authentication header
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+    print("Basic Authentication Header: $basicAuth");
+
+    // Step 3: Prepare the payload
+    // String payload;
+    String payload = jsonEncode({
+      'message': items.map((item) {
+        return {
+          ...item,
+          'base_write_off_amount': 0.0, // Default value
+        };
+      }).toList()
+    });
+    try {
+      payload = jsonEncode({'message': items});
+      print("Payload to be sent: $payload");
+    } catch (e) {
+      print("Error encoding payload: $e");
+      return;
+    }
+
+    // Step 4: Measure the response time
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      // Step 5: Make the API request
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': basicAuth, // Set Basic Auth header
+          'Content-Type': 'application/json',
+        },
+        body: payload,
+      );
+
+      stopwatch.stop();
+      print("API request completed in ${stopwatch.elapsedMilliseconds} ms");
+
+      // Step 6: Check for status code and response
+      if (response.statusCode == 200) {
+        print("Success: API returned status code 200");
+        try {
+          final responseBody = jsonDecode(response.body);
+          print("Response Body: ${jsonEncode(responseBody)}");
+        } catch (e) {
+          print("Error parsing API response: $e");
+        }
+
+        // Step 7: Check for expected data in response (customize based on API)
+        if (response.body.contains('item_code')) {
+          print("Item details found in the API response.");
+        } else {
+          print("Warning: Item details are missing in the API response.");
+        }
+      } else {
+        print("Error: API returned status code ${response.statusCode}");
+        print("Response Body: ${response.body}");
+      }
+    } catch (e) {
+      print("Error during API request: $e");
+    }
+
+    // Step 8: Check if the request was too slow
+    if (stopwatch.elapsedMilliseconds > 2000) {
+      print("Warning: The API request took more than 2 seconds.");
+    }
+
+    print("=== Sales Items Post to API Complete ===");
   }
 }

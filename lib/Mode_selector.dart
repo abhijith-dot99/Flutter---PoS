@@ -298,19 +298,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                         print(
                             'Stored selected company name: ${newValue.companyName}');
                       }
-                      // if (newValue != null) {
-                      //   final prefs = await SharedPreferences.getInstance();
-                      //   await prefs.setString(
-                      //       'selectedCompanyName', newValue.companyName);
-                      //   await prefs.setString(
-                      //       'selectedCompanyId', newValue.companyId);
-
-                      //   // Debugging prints to ensure it's working
-                      //   print(
-                      //       'Stored selected company name: ${newValue.companyName}');
-                      //   print(
-                      //       'Stored selected company ID: ${newValue.companyId}');
-                      // }
                     },
                     decoration: InputDecoration(
                       contentPadding:
@@ -406,19 +393,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const LoginPage()),
             );
-            // if (isOnline && _selectedCompany != null) {
-            //   final selectedCompany = _selectedCompany!;
-            //   Navigator.of(context).push(
-            //     MaterialPageRoute(
-            //       builder: (context) => CompanyDetailsPage(
-            //         company: selectedCompany,
-            //         usernameController: usernameController,
-            //         passwordController: passwordController,
-            //         companyNameController: companyNameController,
-            //       ),
-            //     ),
-            //   );
-            // }
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 204, 19, 19),
