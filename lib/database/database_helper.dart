@@ -54,14 +54,15 @@ class DatabaseHelper {
   }
 
   Future<List<String>> getCompanyNames() async {
-    print("insde getcompany");
+    print("inside getCompany");
+
     final db = await database;
-    final List<Map<String, dynamic>> result = await db.query(
-      'DB_company',
-      columns: ['company_name'],
-      where:
-          'company_name IS NOT NULL AND company_name != ""', // Filter condition
+    // Query to fetch distinct company names
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+      'SELECT DISTINCT company_name FROM DB_company WHERE company_name IS NOT NULL AND company_name != ""',
     );
+
+    // Map the result to a list of company names
     return result.map((row) => row['company_name'] as String).toList();
   }
 
@@ -128,24 +129,25 @@ CREATE TABLE IF NOT EXISTS DB_users (
       print("Database initialized: $db");
 
       Map<String, dynamic> companyData = {
-        // 'company_name': formData.companyName,
-        // 'owner':
-        //     formData.owner, // Assuming you have this field in your formData
-        // 'abbr':
-        //     formData.abbr, // Assuming you have this field in your formData
-        // 'country':
-        //     formData.country, // Assuming you have this field in your formData
-        // 'vat_number': formData
-        //     .vatNumber, // Assuming you have this field in your formData
-        // 'phone_no': formData.contactNumber,
-        // 'email': formData.emailId,
-        // 'website':
-        //     formData.website, // Assuming you have this field in your formData
+        'company_name': formData.companyName,
+        'owner':
+            formData.owner, // Assuming you have this field in your formData
+        'abbr': formData.abbr, // Assuming you have this field in your formData
+        'country':
+            formData.country, // Assuming you have this field in your formData
+        'vat_number':
+            formData.vatNumber, // Assuming you have this field in your formData
+        'phone_no': formData.contactNumber,
+        'email': formData.emailId,
+        'website':
+            formData.website, // Assuming you have this field in your formData
+        'online': formData.online ? 1 : 0,
         'apikey': formData.apikey,
         'secretkey': formData.secretkey,
         'url': formData.url,
         'companyId': formData.companyId,
       };
+      print("FormData online value: ${formData.online}");
 
       print("Company data: $companyData");
       int companyId = await db.insert('DB_company', companyData);
@@ -411,14 +413,14 @@ CREATE TABLE IF NOT EXISTS DB_users (
     print('Companies table cleared.');
   }
 
-  ///newchanges
+//   ///newchanges
   Future<bool> validateUser(
       String username, String password, String company) async {
     print("inside validateUser function");
     print("username $username");
     print("company $company");
 
-    // Retrieve the stored password hash from the database
+    // Retrieve the stored password from the database
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
       'DB_users',
@@ -427,32 +429,50 @@ CREATE TABLE IF NOT EXISTS DB_users (
     );
 
     if (result.isNotEmpty) {
-      String storedHash = result
-          .first['password']; // Stored hash in the format $pbkdf2-sha256$...
-      print("Stored hash: $storedHash");
+      String storedPassword =
+          result.first['password']; // Stored password or hash
+      print("Stored password: $storedPassword");
 
-      // Parse the stored hash into components
-      final parts = storedHash.split(r'$');
-      if (parts.length != 5) {
-        print("Invalid hash format");
-        return false;
-      }
+      // Check if the stored password is hashed (starts with "$pbkdf2-sha256$")
+      if (storedPassword.startsWith(r'$pbkdf2-sha256$')) {
+        // Perform PBKDF2 hash comparison
+        print("Performing hash-based validation");
 
-      final iterations = int.parse(parts[2]); // Number of iterations
-      final salt = _fixBase64(parts[3]); // Decode salt after fixing the padding
-      final storedKey = _fixBase64(parts[4]); // Decode the stored password hash
+        // Parse the stored hash into components
+        final parts = storedPassword.split(r'$');
+        if (parts.length != 5) {
+          print("Invalid hash format");
+          return false;
+        }
 
-      // Derive the key from the provided password using the same parameters
-      final derivedKey =
-          _pbkdf2Sha256(password, salt, iterations, storedKey.length);
+        final iterations = int.parse(parts[2]); // Number of iterations
+        final salt =
+            _fixBase64(parts[3]); // Decode salt after fixing the padding
+        final storedKey =
+            _fixBase64(parts[4]); // Decode the stored password hash
 
-      // Compare the derived key to the stored key
-      if (const ListEquality().equals(derivedKey, storedKey)) {
-        print("Valid user found");
-        return true;
+        // Derive the key from the provided password using the same parameters
+        final derivedKey =
+            _pbkdf2Sha256(password, salt, iterations, storedKey.length);
+
+        // Compare the derived key to the stored key
+        if (const ListEquality().equals(derivedKey, storedKey)) {
+          print("Valid user found");
+          return true;
+        } else {
+          print("No valid user found");
+          return false;
+        }
       } else {
-        print("No valid user found");
-        return false;
+        // Perform direct string comparison (non-hashed password)
+        print("Performing direct string validation");
+        if (storedPassword == password) {
+          print("Valid user found");
+          return true;
+        } else {
+          print("No valid user found");
+          return false;
+        }
       }
     } else {
       print("No valid user found");
@@ -510,10 +530,8 @@ CREATE TABLE IF NOT EXISTS DB_users (
 // Helper function to fix base64 padding
   Uint8List _fixBase64(String base64String) {
     base64String = base64String.replaceAll('.', '+');
-    // Only keep valid Base64 characters (A-Z, a-z, 0-9, +, /)
     base64String = base64String.replaceAll(RegExp(r'[^A-Za-z0-9+/=]'), '');
 
-    // Ensure the length is a multiple of 4 by adding '=' padding if necessary
     switch (base64String.length % 4) {
       case 1:
         base64String += '===';
@@ -525,7 +543,6 @@ CREATE TABLE IF NOT EXISTS DB_users (
         base64String += '=';
         break;
     }
-    print("base64s${base64.decode(base64String)}");
     return base64.decode(base64String);
   }
 
@@ -569,7 +586,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
   // String apiUrl =
   //     'http://143.110.187.133:82/api/method/duplex_dev.api.sales_invoice_item.get_invoice_item_details';
   String apiUrl =
-      "http://143.110.187.133:82/api/resource/Sales%20Invoice?fields=[%22*%22]";
+      "http://143.110.187.133:82/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
 
   // Future<void> postSalesItemsToApi(
   //   List<Map<String, dynamic>> items,
@@ -720,5 +737,18 @@ CREATE TABLE IF NOT EXISTS DB_users (
     }
 
     print("=== Sales Items Post to API Complete ===");
+  }
+
+  Future<int> getOnlineStatus(String companyName) async {
+    final db = await database;
+    var result = await db.rawQuery('''
+      SELECT online FROM DB_company WHERE company_name = ?
+    ''', [companyName]);
+
+    if (result.isNotEmpty) {
+      return result.first['online'] as int;
+    } else {
+      return 2; // Default to offline if no result
+    }
   }
 }

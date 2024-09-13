@@ -3,7 +3,7 @@ class FormData {
   final String? companyName;
   final String? companyId;
   final String? contactNumber;
-  final String? company;
+  // final String? owner;
   final String? emailId;
   final String? username;
   final String? password;
@@ -22,7 +22,7 @@ class FormData {
     this.companyName,
     this.companyId,
     this.contactNumber,
-    this.company,
+    // this.company,
     required this.owner,
     required this.abbr,
     required this.country,
@@ -55,7 +55,7 @@ class FormData {
   @override
   String toString() {
     return 'FormData(companyName: $companyName, companyId: $companyId, contactNumber: $contactNumber, '
-        'company: $company, emailId: $emailId, online: $online, apikey: $apikey, '
+        'emailId: $emailId, online: $online, apikey: $apikey, '
         'secretkey: $secretkey, url: $url, username: $username, password: $password)';
   }
 }

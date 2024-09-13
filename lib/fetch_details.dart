@@ -482,27 +482,6 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
-                      // child: ElevatedButton.icon(
-                      //   onPressed: () {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(builder: (context) => MainPage()),
-                      //     );
-                      //   },
-                      //   style: ElevatedButton.styleFrom(
-                      //     backgroundColor:
-                      //         Colors.green, // Customize the color if needed
-                      //     padding: const EdgeInsets.symmetric(vertical: 20),
-                      //     textStyle: const TextStyle(
-                      //       fontSize: 16,
-                      //       fontWeight: FontWeight.bold,
-                      //     ),
-                      //     foregroundColor: Colors.white,
-                      //   ),
-                      //   label: const Text('Go to MainPage'),
-                      //   icon: const Icon(Icons.arrow_forward, size: 20),
-                      // ),
-
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.push(

@@ -32,4 +32,6 @@ class Company {
   String toString() {
     return 'Company(companyName: $companyName,  phoneNo: $phoneNo, email: $email, company_branch: $companyBranch)';
   }
+
+  static empty() {}
 }

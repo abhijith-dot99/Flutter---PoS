@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_pos_app/CompanyDetailsPage%20.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/login_page.dart';
+import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:sqflite/sqflite.dart';
@@ -41,8 +42,10 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
   final TextEditingController companyNameController = TextEditingController();
   final TextEditingController companyIdController = TextEditingController();
   final TextEditingController contactNumberController = TextEditingController();
-  final TextEditingController companyController = TextEditingController();
+  final TextEditingController ownerController = TextEditingController();
   final TextEditingController emailIdController = TextEditingController();
+  final TextEditingController abbrController = TextEditingController();
+  final TextEditingController countryController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -51,9 +54,9 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
   final TextEditingController urlController = TextEditingController();
 
   List<Company> _companies = [];
-  List<String> _companyNames = [];
 
   Company? _selectedCompany;
+  String? selectedCompanyName;
 
   void _saveFormData() async {
     print("inside save");
@@ -63,20 +66,43 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
     await prefs.setString('secretKey', secretKeyController.text);
     await prefs.setString('url', urlController.text);
 
+    selectedCompanyName = companyNameController.text;
+
+    if (isOnline) {
+      // In online mode, get the selected company name from the dropdown
+      if (_selectedCompany == null) {
+        print("No company name selected.");
+        return;
+      } else {
+        selectedCompanyName = _selectedCompany!.companyName;
+      }
+    } else {
+      // In offline mode, use the text entered in the TextFormField
+      selectedCompanyName = companyNameController.text;
+
+      if (selectedCompanyName == null || selectedCompanyName!.isEmpty) {
+        print("No company name entered.");
+        return;
+      }
+    }
+
+    print("companynaeminsaveform$selectedCompanyName");
+
     // Create FormData instance
     FormData formData = FormData(
-      companyName: companyNameController.text,
+      // companyName: companyNameController.text,
+      companyName: selectedCompanyName,
       companyId: companyIdController.text,
       contactNumber: contactNumberController.text,
-      owner: usernameController.text,
-      abbr: usernameController.text, // New field
-      country: usernameController.text, // New field
+      owner: ownerController.text,
+      abbr: abbrController.text, // New field
+      country: countryController.text, // New field
       vatNumber: usernameController.text, // New field
       emailId: emailIdController.text,
       username: usernameController.text,
       password: passwordController.text,
       website: usernameController.text,
-      online: false,
+      online: isOnline,
       apikey: apiKeyController.text,
       secretkey: secretKeyController.text,
       url: urlController.text,
@@ -197,7 +223,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                   setState(() {
                     isOnline = true;
                   });
-                  print("isOnline $isOnline");
+                  print("isOnlineontoggle  $isOnline");
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
@@ -227,7 +253,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                   setState(() {
                     isOnline = false;
                   });
-                  print("isOnline $isOnline");
+                  print("isOnlineontoggle $isOnline");
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
@@ -286,15 +312,16 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
                         _selectedCompany = newValue;
                       });
                       if (newValue != null) {
-                        print('Selected Company Details:');
-                        print('Names: ${newValue.companyName}');
-                        print('Phone Number: ${newValue.phoneNo}');
-                        print('Email: ${newValue.email}');
+                        // print('Selected Company Details:');
+                        // print('Names: ${newValue.companyName}');
+                        // print('Phone Number: ${newValue.phoneNo}');
+                        // print('Email: ${newValue.email}');
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.setString(
                             'selectedCompanyName', newValue.companyName);
                         await prefs.setString(
                             'selectedCompanyId', newValue.companyId);
+                        await prefs.setBool('isOnline', isOnline);
                         print(
                             'Stored selected company name: ${newValue.companyName}');
                       }
@@ -347,8 +374,10 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
           companyNameController: companyNameController,
           companyIdController: companyIdController,
           contactNumberController: contactNumberController,
-          companyController: companyController,
+          ownerController: ownerController,
           emailIdController: emailIdController,
+          abbrController: abbrController,
+          countryController: countryController,
           usernameController: usernameController,
           passwordController: passwordController,
         ),
@@ -357,17 +386,38 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () async {
-            _saveFormData();
-            if (isOnline && _selectedCompany != null) {
-              final selectedCompany = _selectedCompany!;
+            print("Button pressed, isOnline: $isOnline");
+            // print("selectedcompanyonpressed$selectedCompanyName");
+            if (isOnline) {
+              print("selectdcompany$_selectedCompany");
+              final selectedCompanyName = _selectedCompany!;
+              _saveFormData();
+              print("insdie if");
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => CompanyDetailsPage(
-                    company: selectedCompany,
+                    company: selectedCompanyName,
                     usernameController: usernameController,
                     passwordController: passwordController,
                     companyNameController: companyNameController,
                   ),
+                ),
+              );
+            } else {
+              print("insdie else");
+
+              // final selectedCompany = selectedCompanyName;
+              _saveFormData();
+
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const LoginPage(),
+                  // builder: (context) => CompanyDetailsPage(
+                  //   company: selectedCompany,
+                  //   usernameController: usernameController,
+                  //   passwordController: passwordController,
+                  //   companyNameController: companyNameController,
+                  // ),
                 ),
               );
             }
@@ -389,7 +439,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () async {
-            // _saveFormData();
+            _saveFormData();
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const LoginPage()),
             );
@@ -475,10 +525,12 @@ class OfflineForm extends StatelessWidget {
   final TextEditingController companyNameController;
   final TextEditingController companyIdController;
   final TextEditingController contactNumberController;
-  final TextEditingController companyController;
+  final TextEditingController ownerController;
   final TextEditingController emailIdController;
   final TextEditingController usernameController;
   final TextEditingController passwordController;
+  final TextEditingController abbrController;
+  final TextEditingController countryController;
 
   final _formKey = GlobalKey<FormState>(); // Add this line
 
@@ -487,10 +539,12 @@ class OfflineForm extends StatelessWidget {
     required this.companyNameController,
     required this.companyIdController,
     required this.contactNumberController,
-    required this.companyController,
+    required this.ownerController,
     required this.emailIdController,
     required this.usernameController,
     required this.passwordController,
+    required this.abbrController,
+    required this.countryController,
   });
 
   @override
@@ -508,7 +562,11 @@ class OfflineForm extends StatelessWidget {
           _buildTextField('Contact Number',
               controller: contactNumberController, isNumeric: true),
           const SizedBox(height: 10),
-          _buildTextField('Company', controller: companyController),
+          _buildTextField('Owner', controller: ownerController),
+          const SizedBox(height: 10),
+          _buildTextField('abbr', controller: abbrController),
+          const SizedBox(height: 10),
+          _buildTextField('country', controller: countryController),
           const SizedBox(height: 10),
           _buildTextField('Email ID',
               controller: emailIdController, isEmail: true),

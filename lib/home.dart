@@ -110,20 +110,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Save the current page's ordered items before switching
       if (currentPageIndex == 1) {
         orderedItemsPage1 = List.from(orderedItems);
-        //
-        //_selectedCustomer = _selectedCustomerPage1;
-        _selectedCustomerPage1 = _selectedCustomer;
+
+        _selectedCustomer = _selectedCustomerPage1;
+        // _selectedCustomerPage1 = _selectedCustomer;
 
         print("Saved selected customer for Page 1: $_selectedCustomerPage1");
       } else if (currentPageIndex == 2) {
         orderedItemsPage2 = List.from(orderedItems);
-        // _selectedCustomer = _selectedCustomerPage2;
-        _selectedCustomerPage2 = _selectedCustomer;
+        _selectedCustomer = _selectedCustomerPage2;
+        // _selectedCustomerPage2 = _selectedCustomer;
         print("Saved selected customer for Page 2: $_selectedCustomerPage2");
       } else if (currentPageIndex == 3) {
         orderedItemsPage3 = List.from(orderedItems);
-        // _selectedCustomer = _selectedCustomerPage1;
-        _selectedCustomerPage3 = _selectedCustomer;
+        _selectedCustomer = _selectedCustomerPage1;
+        // _selectedCustomerPage3 = _selectedCustomer;
         print("Saved selected customer for Page 3: $_selectedCustomerPage3");
       }
 
@@ -137,6 +137,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       } else if (currentPageIndex == 2) {
         orderedItems = List.from(orderedItemsPage2);
         _selectedCustomer = _selectedCustomerPage2;
+
         print("Loaded selected customer for Page 2: $_selectedCustomer");
       } else if (currentPageIndex == 3) {
         orderedItems = List.from(orderedItemsPage3);
@@ -997,21 +998,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              // onPressed: () async {
-              //   double subtotal = calculateSubtotal();
-              //   double tax = calculateTax();
-              //   double total = calculateTotal();
-              //   print(
-              //       "ordereditemss$orderedItems$subtotal $tax $total,$_selectedCustomer");
-              //   try {
-              //     final printService = PrintService();
-              //     await printService.printBill(
-              //         orderedItems, subtotal, tax, total, _selectedCustomer!);
-              //     print("Print job started.");
-              //   } catch (e) {
-              //     print("Error occurred while printing: $e");
-              //   }
-              // },
               onPressed: () async {
                 double subtotal = calculateSubtotal();
                 double tax = calculateTax();
@@ -1033,53 +1019,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                   return; // Stop the execution
                 }
-
-                // try {
-                //   // Transfer ordered items to soldItems after printing
-                //   soldItems = orderedItems
-                //       .map((item) => Items(
-                //             itemCode: item.itemCode,
-                //             itemName: item.itemName,
-                //             itemDescription: '',
-                //             itemGroup: '',
-                //             itemImage: item.image,
-                //             itemUom: '',
-                //             baseRate: double.parse(item.price),
-                //             baseAmount:
-                //                 double.parse(item.price) * item.itemCount,
-                //             netRate: double.parse(item.price),
-                //             netAmount:
-                //                 double.parse(item.price) * item.itemCount,
-                //             pricingRules: '',
-                //             isFreeItem: item.itemCount == 0,
-                //             itemTaxRate: item.tax,
-                //             invoice: '',
-                //             customername: _selectedCustomer!,
-                //           ))
-                //       .toList();
-
-                //   // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
-                //   List<Map<String, dynamic>> soldItemsMap =
-                //       soldItems.map((item) => item.toMap()).toList();
-
-                //   // Insert the sold items into the database
-                //   final dbHelper = DatabaseHelper();
-                //   print("selecteddb$_selectedCustomer");
-                //   String invoiceNo = await dbHelper.getNextInvoiceNumber();
-                //   // await dbHelper.insertSalesItems(soldItemsMap, invoiceNo);
-                //   await dbHelper.insertSalesItems(soldItemsMap, invoiceNo);
-                //   // await dbHelper.postSalesItemsToApi(soldItemsMap);
-                //   await dbHelper.postSalesItemsToApi(
-                //       soldItemsMap, apiKey, secretKey);
-                //   print("solditemsmap$soldItemsMap");
-
-                //   final printService = PrintService();
-                //   await printService.printBill(
-                //       orderedItems, subtotal, tax, total, _selectedCustomer!);
-                //   print("Print job started.");
-                // } catch (e) {
-                //   print("Error occurred while printing: $e");
-                // }
 
                 try {
                   // Check if the customer has changed
@@ -1148,7 +1087,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   print("Error occurred while processing sale: $e");
                 }
               },
-
               child: Container(
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(2),
@@ -1250,24 +1188,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // TextField(
-                        //   onChanged: _filterCustomers,
-                        //   style: const TextStyle(
-                        //       color: Colors.black87), // Text field text color
-                        //   decoration: InputDecoration(
-                        //     hintText: 'Search',
-                        //     hintStyle: const TextStyle(
-                        //         color: Colors.black26), // Hint text color
-                        //     border: OutlineInputBorder(
-                        //       borderRadius: BorderRadius.circular(12),
-                        //     ),
-                        //     prefixIcon: const Icon(
-                        //       Icons.search,
-                        //       color: Colors.black38, // Icon color
-                        //     ),
-                        //   ),
-                        // ),
-                        // SizedBox(height: 10),
                         DropdownButton<String>(
                           value: _filteredCustomers.contains(
                                   _getSelectedCustomerForCurrentPage())

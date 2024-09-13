@@ -49,11 +49,14 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var checkOnline = await prefs.getBool('isOnline');
+    print("checkOnline$checkOnline");
+
     bool isValidUser = await DatabaseHelper()
         .validateUser(username, password, selectedCompany!);
     print("isvalide$isValidUser");
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isValidUser', isValidUser);
     await prefs.setString('selectedCompanyName', selectedCompany!);
 
