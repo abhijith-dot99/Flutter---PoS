@@ -5,6 +5,7 @@ import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
 import 'package:flutter_pos_app/model/supplier.dart';
+import 'package:flutter_pos_app/model/tax.dart';
 import 'package:flutter_pos_app/model/userss.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -314,6 +315,63 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
     }
   }
 
+  Future<void> fetchAndStoreTax() async {
+    print("inside fetch tax");
+    String newUrl = trimUrl(url);
+    final String itemsUrl =
+        '${newUrl}tax_template_details.get_tax_template_details?company_name=$selectedCompanyName';
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+    print("itemurlcuddtomer$itemsUrl");
+
+    try {
+      final response = await http.get(
+        Uri.parse(itemsUrl),
+        headers: <String, String>{
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("insdie${response.statusCode}");
+        final List<dynamic> taxList = jsonDecode(response.body)['message'];
+        if (taxList.isNotEmpty) {
+          final dbHelper = DatabaseHelper();
+
+          for (var tax in taxList) {
+            if (tax['company_name'] == selectedCompanyName) {
+              final taxData = Tax(
+                  taxname: tax['tax_name'] ?? '',
+                  chargeType: tax['charge_type'] ?? '',
+                  companyName: tax['company_name'] ?? '',
+                  accountHead: tax['account_head'] ?? '',
+                  description: tax['description'] ?? '',
+                  title: tax['title'] ?? '',
+                  // rate: tax['tax_rate'],
+                  // isInclusive: tax['is_inclusive'];
+
+                  rate: tax['tax_rate'] is double
+                      ? tax['tax_rate']
+                      : double.tryParse(tax['tax_rate'].toString()) ?? 0.0,
+                  isInclusive: (tax['is_inclusive'] == 1) ? 1 : 0);
+
+              await dbHelper.getTax(taxData);
+              print("taxData$taxData");
+            }
+          }
+        } else {
+          print('No customers found for the selected company.');
+        }
+      } else {
+        print('Failed to fetch customers. Response: ${response.body}');
+      }
+    } catch (e, stacktrace) {
+      print('Error fetching customers: $e');
+      print('Stacktrace: $stacktrace');
+    }
+  }
+
   Future<void> fetchAndStoreCustomers() async {
     print("inside fetchandstorecustomer");
     String newUrl = trimUrl(url);
@@ -477,8 +535,8 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                     ),
                   ),
                 ),
-                // if (hasExtraButton) Expanded(child: Container()),
                 if (hasExtraButton)
+                  // if (hasExtraButton) Expanded(child: Container()),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -516,6 +574,25 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                   )
               ],
             ),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton.icon(
+                    onPressed: fetchAndStoreTax,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.local_shipping, size: 20),
+                    label: const Text('fetch Tax'),
+                  ),
+                ),
+              ),
+            ]),
             const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

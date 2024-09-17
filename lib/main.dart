@@ -243,7 +243,7 @@ class _MainPageState extends State<MainPage> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.deepOrangeAccent,
+            color: const Color(0xFF4285F4),
           ),
           child: const Icon(
             Icons.fastfood,
@@ -280,7 +280,7 @@ class _MainPageState extends State<MainPage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               color: pageActive == menu
-                  ? Colors.deepOrangeAccent
+                  ? const Color(0xFF4285F4)
                   : Colors.transparent,
             ),
             duration: const Duration(milliseconds: 300),

@@ -379,7 +379,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Column(
                       children: [
                         _viewCustomerList(context),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 5),
                         Expanded(
                           flex: 2, // Equivalent to Flexible
                           child: _buildOrderedItemsSection(),
@@ -396,9 +396,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
               Positioned(
-                bottom: 45, // Position the buttons at the bottom
+                bottom: 8, // Position the buttons at the bottom
                 left: 0, // Align them to the left
-                right: -280, // Align them to the right
+                right: -440, // Align them to the right
                 child: Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Row(
@@ -423,7 +423,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   children: [
                     ...List.generate(10, (index) {
                       return Padding(
-                        padding: const EdgeInsets.all(1.0),
+                        padding: const EdgeInsets.all(4.0),
                         child: ElevatedButton(
                           onPressed: () {
                             setState(() {
@@ -438,13 +438,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             });
                             _updateItemCount(input);
                           },
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all<Color>(
-                              // Choose your desired color here
-                              Colors.deepOrangeAccent, // Example: blue
-                            ),
-                            foregroundColor: WidgetStateProperty.all<Color>(
-                              Colors.black, // Text color
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(0xFF4285F4), // Set the color here
+                            foregroundColor: Colors.white, // Button text color
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  4.0), // Set border radius here
                             ),
                           ),
                           child: Text(
@@ -470,7 +470,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       style: ElevatedButton.styleFrom(
         shape: const CircleBorder(),
         backgroundColor:
-            _selectedPage == page ? Colors.black26 : Colors.deepOrangeAccent,
+            _selectedPage == page ? Colors.black26 : const Color(0xFF4285F4),
         padding: const EdgeInsets.all(15),
         foregroundColor: _selectedPage == page
             ? Colors.white // Text color for selected page
@@ -847,7 +847,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Calculate the total tax based on tax type
   double calculateTax() {
     double totalTax = 0.0;
+    print("jaba");
     for (var item in orderedItems) {
+      print("ordreditemse$orderedItems");
       double price = double.parse(item.price.replaceAll(' ', ''));
       // int quantity = int.parse(item.itemCount.split(' ')[0]);
       int quantity = item.itemCount;
@@ -986,7 +988,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 const Text('Total',
                     style: TextStyle(
                         fontWeight: FontWeight.bold, color: Colors.black87)),
-                Text('${(total * 1.1).toStringAsFixed(2)}',
+                Text((total).toStringAsFixed(2),
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, color: Colors.black87)),
               ],
@@ -994,7 +996,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
-                backgroundColor: Colors.deepOrange,
+                backgroundColor: const Color(0xFF4285F4),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
@@ -1004,8 +1006,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 double total = calculateTotal();
                 _selectedCustomer = _getSelectedCustomerForCurrentPage();
 
-                print(
-                    "ordereditemss$orderedItems $subtotal $tax $total, $_selectedCustomer");
+                // print(
+                //     "ordereditemss$orderedItems $subtotal $tax $total, $_selectedCustomer");
 
                 // Check if _selectedCustomer is null
                 if (_selectedCustomer == null) {
@@ -1022,67 +1024,98 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                 try {
                   // Check if the customer has changed
-                  if (_selectedCustomer != previousCustomer) {
-                    // Customer has changed, so it's considered a new sale.
-                    print(
-                        "Customer has changed from $previousCustomer to $_selectedCustomer");
+                  // if (_selectedCustomer != previousCustomer) {
+                  // Customer has changed, so it's considered a new sale.
+                  print(
+                      "Customer has changed from $previousCustomer to $_selectedCustomer");
 
-                    // Transfer ordered items to soldItems after printing
-                    soldItems = orderedItems
-                        .map((item) => Items(
-                              itemCode: item.itemCode,
-                              itemName: item.itemName,
-                              itemDescription: '',
-                              itemGroup: '',
-                              itemImage: item.image,
-                              itemUom: '',
-                              baseRate: double.parse(item.price),
-                              baseAmount:
-                                  double.parse(item.price) * item.itemCount,
-                              netRate: double.parse(item.price),
-                              netAmount:
-                                  double.parse(item.price) * item.itemCount,
-                              pricingRules: '',
-                              isFreeItem: item.itemCount == 0,
-                              itemTaxRate: item.tax,
-                              invoice: '',
-                              customername:
-                                  _selectedCustomer!, // Set new customer name
-                            ))
-                        .toList();
+                  // Transfer ordered items to soldItems after printing
+                  soldItems = orderedItems
+                      .map((item) => Items(
+                            itemCode: item.itemCode,
+                            itemName: item.itemName,
+                            itemDescription: '',
+                            // quantity: item.itemCount,
+                            itemGroup: '',
+                            itemImage: item.image,
+                            itemUom: '',
+                            baseRate: double.parse(item.price),
+                            baseAmount:
+                                double.parse(item.price) * item.itemCount,
+                            netRate: double.parse(item.price),
+                            netAmount:
+                                double.parse(item.price) * item.itemCount,
+                            pricingRules: '',
+                            isFreeItem: item.itemCount == 0,
+                            itemTaxRate: item.tax,
+                            invoice: '',
+                            customername:
+                                _selectedCustomer!, // Set new customer name
+                          ))
+                      .toList();
 
-                    // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
-                    List<Map<String, dynamic>> soldItemsMap =
-                        soldItems.map((item) => item.toMap()).toList();
+                  // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
+                  List<Map<String, dynamic>> soldItemsMap =
+                      soldItems.map((item) => item.toMap()).toList();
+                  print("solditemssss$soldItemsMap");
 
-                    // Insert the sold items into the database
-                    final dbHelper = DatabaseHelper();
-                    print("selecteddb $_selectedCustomer");
+                  // Insert the sold items into the database
+                  final dbHelper = DatabaseHelper();
+                  print("selecteddb $_selectedCustomer");
 
-                    // Get next invoice number
-                    String invoiceNo = await dbHelper.getNextInvoiceNumber();
+                  // Get next invoice number
+                  String invoiceNo = await dbHelper.getNextInvoiceNumber();
 
-                    // Insert sales items into DB_sales_items with new customer name
-                    await dbHelper.insertSalesItems(
-                        soldItemsMap, invoiceNo, _selectedCustomer!);
+                  // Insert sales items into DB_sales_items with new customer name
+                  await dbHelper.insertSalesItems(
+                      soldItemsMap, invoiceNo, _selectedCustomer!);
 
-                    // Post sales items to API
-                    await dbHelper.postSalesItemsToApi(
-                        soldItemsMap, apiKey, secretKey);
-                    print("soldItemsMap $soldItemsMap");
+                  Future<void> prepareAndPostSalesItems(
+                    List<Map<String, dynamic>> soldItemsMap,
+                    String selectedCustomer,
+                    String selectedCompanyName,
+                    DatabaseHelper dbHelper,
+                  ) async {
+                    // Fetch API key and secret key from the database
+                    Map<String, String?> keys = await dbHelper
+                        .getApiKeysByCompanyName(selectedCompanyName);
 
-                    // Print bill after inserting and posting
-                    final printService = PrintService();
-                    await printService.printBill(
-                        orderedItems, subtotal, tax, total, _selectedCustomer!);
-                    print("Print job started.");
+                    String? apiKey = keys['apiKey'];
+                    String? secretKey = keys['secretKey'];
 
-                    // Update previousCustomer after the sale is successfully processed
-                    previousCustomer =
-                        _selectedCustomer; // Update to track customer change
-                  } else {
-                    print("Same customer, no need to create new entry.");
+                    // Check if keys were retrieved successfully
+                    if (apiKey == null || secretKey == null) {
+                      print("Error: API Key or Secret Key is missing.");
+                      print("apikeyyy$apiKey");
+                      print("secretkeyyy$secretKey");
+                      return;
+                    }
+
+                    // Call postSalesItemsToApi with the fetched keys
+                    await dbHelper.postSalesItemsToApi(soldItemsMap, apiKey,
+                        secretKey, selectedCustomer, selectedCompanyName);
                   }
+
+                  await prepareAndPostSalesItems(soldItemsMap,
+                      _selectedCustomer!, selectedCompanyName, dbHelper);
+
+                  // print("soldItemsMap $soldItemsMap");
+                  // print("sleccompany$selectedCompanyName");
+                  // print("sleccompany$_selectedCustomer");
+                  // print("ordereditemsss$orderedItems");
+
+                  // Print bill after inserting and posting
+                  final printService = PrintService();
+                  // await printService.printBill(
+                  //     orderedItems, subtotal, tax, total, _selectedCustomer!);
+                  print("Print job started.");
+
+                  // Update previousCustomer after the sale is successfully processed
+                  previousCustomer =
+                      _selectedCustomer; // Update to track customer change
+                  // } else {
+                  //   print("Same customer, no need to create new entry.");
+                  // }
                 } catch (e) {
                   print("Error occurred while processing sale: $e");
                 }
@@ -1152,114 +1185,130 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _viewCustomerList(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.deepOrange,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return Stack(
-              children: [
-                // Add a BackdropFilter to blur the background
-                BackdropFilter(
-                  filter: ImageFilter.blur(
-                      sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
-                  child: Container(
-                    color: Colors.white.withOpacity(
-                        0), // Just to make the BackdropFilter visible
-                  ),
-                ),
-                AlertDialog(
-                  backgroundColor: const Color.fromARGB(
-                      255, 255, 255, 255), // Set background color here
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  title: const Text(
-                    'Select Customer',
-                    style: TextStyle(color: Colors.black87), // Title color
-                  ),
-                  content: Container(
-                    width: MediaQuery.of(context).size.width *
-                        0.8, // Adjust the width as needed
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        DropdownButton<String>(
-                          value: _filteredCustomers.contains(
-                                  _getSelectedCustomerForCurrentPage())
-                              ? _getSelectedCustomerForCurrentPage()
-                              : null,
-                          hint: const Text(
-                            'Select a customer',
-                            style: TextStyle(color: Colors.black38),
-                          ),
-                          isExpanded: true,
-                          dropdownColor: Color.fromARGB(255, 226, 226, 233),
-                          items: _filteredCustomers.map((String customer) {
-                            return DropdownMenuItem<String>(
-                              value: customer,
-                              child: Text(
-                                customer,
-                                style: const TextStyle(color: Colors.black87),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _setSelectedCustomerForCurrentPage(newValue);
-                            });
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
+    return SizedBox(
+      width: double.infinity, // Makes the button take full width
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          // backgroundColor: Colors.deepOrange,
+          backgroundColor: const Color(0xFF4285F4), // Set the color here
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return Stack(
+                children: [
+                  // Add a BackdropFilter to blur the background
+                  BackdropFilter(
+                    filter: ImageFilter.blur(
+                        sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
+                    child: Container(
+                      color: Colors.white.withOpacity(
+                          0), // Just to make the BackdropFilter visible
                     ),
                   ),
-                  actions: <Widget>[
-                    Row(
-                      mainAxisSize: MainAxisSize
-                          .min, // Use min size for the row to wrap its children
-                      children: [
-                        TextButton(
-                          child: const Text(
-                            'Close',
-                            style: TextStyle(
-                                color: Colors
-                                    .redAccent), // Close button text color
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
+                  AlertDialog(
+                    backgroundColor: const Color.fromARGB(
+                        255, 255, 255, 255), // Set background color here
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ],
+                    title: const Text(
+                      'Select Customer',
+                      style: TextStyle(color: Colors.black87), // Title color
+                    ),
+                    content: Container(
+                      width: MediaQuery.of(context).size.width *
+                          0.8, // Adjust the width as needed
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          DropdownButton<String>(
+                            value: _filteredCustomers.contains(
+                                    _getSelectedCustomerForCurrentPage())
+                                ? _getSelectedCustomerForCurrentPage()
+                                : null,
+                            hint: const Text(
+                              'Select a customer',
+                              style: TextStyle(color: Colors.black38),
+                            ),
+                            isExpanded: true,
+                            dropdownColor: Color.fromARGB(255, 226, 226, 233),
+                            items: _filteredCustomers.map((String customer) {
+                              return DropdownMenuItem<String>(
+                                value: customer,
+                                child: Text(
+                                  customer,
+                                  style: const TextStyle(color: Colors.black87),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _setSelectedCustomerForCurrentPage(newValue);
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: <Widget>[
+                      Row(
+                        mainAxisSize: MainAxisSize
+                            .min, // Use min size for the row to wrap its children
+                        children: [
+                          TextButton(
+                            child: const Text(
+                              'Close',
+                              style: TextStyle(
+                                  color: Colors
+                                      .redAccent), // Close button text color
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        child: Row(
+          mainAxisSize:
+              MainAxisSize.max, // Use max to take full available space
+          mainAxisAlignment:
+              MainAxisAlignment.center, // Center the content horizontally
+          crossAxisAlignment:
+              CrossAxisAlignment.center, // Center the content vertically
+          children: [
+            const Icon(
+              Icons.person,
+              color: Colors.white,
+              size: 16, // Icon stays constant
+            ),
+            const SizedBox(width: 8), // Space between the icon and text
+            FittedBox(
+              fit: BoxFit.scaleDown, // Ensures the text scales down if needed
+              alignment:
+                  Alignment.center, // Centers the text inside the FittedBox
+              child: Text(
+                _getSelectedCustomerForCurrentPage() ?? 'Customer',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            );
-          },
-        );
-      },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.person,
-              color: Colors.white, size: 16), // Icon stays constant
-          const SizedBox(width: 8), // Add some space between the icon and text
-
-          FittedBox(
-            child: Text(
-              _getSelectedCustomerForCurrentPage() ?? 'Customer',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

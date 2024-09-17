@@ -7,6 +7,7 @@ import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:flutter_pos_app/model/item.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
 import 'package:flutter_pos_app/model/supplier.dart';
+import 'package:flutter_pos_app/model/tax.dart';
 import 'package:flutter_pos_app/model/users.dart';
 import 'package:flutter_pos_app/model/userss.dart';
 import 'package:sqflite/sqflite.dart';
@@ -367,6 +368,16 @@ CREATE TABLE IF NOT EXISTS DB_users (
     );
   }
 
+  Future<void> getTax(Tax tax) async {
+    print("insde gettax");
+    final db = await database;
+    await db.insert(
+      'DB_sales_tax',
+      tax.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<List<String>> getCustomerByCompany(String companyName) async {
     print("getcustomers");
     final db = await database;
@@ -585,44 +596,6 @@ CREATE TABLE IF NOT EXISTS DB_users (
 // Define your API URL
   // String apiUrl =
   //     'http://143.110.187.133:82/api/method/duplex_dev.api.sales_invoice_item.get_invoice_item_details';
-  String apiUrl =
-      "http://143.110.187.133:82/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
-
-  // Future<void> postSalesItemsToApi(
-  //   List<Map<String, dynamic>> items,
-  //   String apiKey,
-  //   String secretKey,
-  // ) async {
-  //   print("solditemsmap inpost $items");
-  //   // Create Basic Authentication header
-  //   String basicAuth =
-  //       'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
-
-  //   print("basicAuth$basicAuth");
-
-  //   try {
-  //     final response = await http.post(
-  //       Uri.parse(apiUrl),
-  //       headers: {
-  //         'Authorization': basicAuth, // Set Basic Auth header
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body:
-  //           jsonEncode({'message': items}), // Convert the list of maps to JSON
-  //     );
-  //     print("url$apiUrl");
-  //     print(jsonEncode({'messaged': items}));
-
-  //     if (response.statusCode == 200) {
-  //       print("response${response.body}");
-  //       print('Sales items posted to API successfully.');
-  //     } else {
-  //       print('Failed to post sales items to API. ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     print('Error posting sales items to API: $e');
-  //   }
-  // }
 
   Future<String> getNextInvoiceNumber() async {
     final db = await database;
@@ -653,48 +626,200 @@ CREATE TABLE IF NOT EXISTS DB_users (
     return 'ACC-SINV-2024-${nextNumber.toString().padLeft(5, '0')}';
   }
 
-  Future<void> postSalesItemsToApi(
-    List<Map<String, dynamic>> items,
-    String apiKey,
-    String secretKey,
-  ) async {
-    print("=== Initiating Sales Items Post to API ===");
+  Future<int> getOnlineStatus(String companyName) async {
+    final db = await database;
+    var result = await db.rawQuery('''
+      SELECT online FROM DB_company WHERE company_name = ?
+    ''', [companyName]);
 
-    // Step 1: Verify the API URL
-    if (!apiUrl.startsWith("http")) {
-      print("Error: Invalid API URL. The URL should start with http or https.");
-      return;
+    if (result.isNotEmpty) {
+      return result.first['online'] as int;
+    } else {
+      return 2; // Default to offline if no result
     }
-    print("API URL: $apiUrl");
+  }
 
-    // Step 2: Create Basic Authentication header
+  Future<Map<String, String?>> getApiKeysByCompanyName(
+      String companyName) async {
+    final db = await database;
+    // Query to fetch API Key and Secret Key based on company_name
+    List<Map<String, dynamic>> result = await db.query(
+      'DB_company',
+      columns: ['apikey', 'secretkey'],
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+
+    // Check if any result was found
+    if (result.isNotEmpty) {
+      // Extract the API key and Secret key from the result
+      String? apiKey = result[0]['apikey'] as String?;
+      String? secretKey = result[0]['secretkey'] as String?;
+      print('apikeyy$apiKey');
+      print('secretKeyy$secretKey');
+      return {'apiKey': apiKey, 'secretKey': secretKey};
+    } else {
+      // If no result is found, return null values
+      print('Error: No API keys found for the given company name.');
+      return {'apiKey': null, 'secretKey': null};
+    }
+  }
+
+  // Function to get API Key and Secret Key from DB_company using company_name
+
+  String apiUrl =
+      "http://143.110.187.133:82/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
+
+  get taxes => [];
+
+  // Future<void> postSalesItemsToApi(
+  //     List<Map<String, dynamic>> soldItemsMap,
+  //     String apiKey,
+  //     String secretKey,
+  //     String customername, // Pass customername as parameter
+  //     String companyname // Pass companyname as parameter
+  //     ) async {
+  //   // Step 2: Create Basic Authentication header
+  //   String basicAuth =
+  //       'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+
+  //   // Step 3: Transform soldItemsMap into the API expected format
+  //   List<Map<String, dynamic>> items = soldItemsMap.map((item) {
+  //     print("itemcounttttt${item['qty']}");
+  //     return {
+  //       'item_code': item['item_code'],
+  //       'qty': 1, // or item['qty'] if quantity is provided
+  //       // 'qty': item['count'],
+  //       'rate': item['net_rate'],
+  //     };
+  //   }).toList();
+
+  //   print("itemsinpostapi$items");
+  //   // Step 4: Prepare the final payload
+  //   Map<String, dynamic> payloadMap = {
+  //     'naming_series': 'ACC-SINV-.YYYY.-',
+  //     'customer': customername, // Use customername from parameter
+  //     'items': items,
+  //     'taxes': [
+  //       {
+  //         "charge_type": "On Net Total",
+  //         "account_head": "VAT 0% - DS",
+  //         "description": "0%"
+  //       }
+  //     ],
+  //     'company': companyname, // Use companyname from parameter
+  //   };
+
+  //   String payload = jsonEncode(payloadMap);
+  //   print("Payload to be sent: $payload");
+
+  //   try {
+  //     // Step 6: Make the API request
+  //     final response = await http.post(
+  //       Uri.parse(apiUrl),
+  //       headers: {
+  //         'Authorization': basicAuth, // Set Basic Auth header
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: payload,
+  //     );
+
+  //     // Step 7: Check for status code and response
+  //     if (response.statusCode == 200) {
+  //       print("Success: API returned status code 200");
+  //       try {
+  //         final responseBody = jsonDecode(response.body);
+  //         print("Response Body: ${jsonEncode(responseBody)}");
+  //       } catch (e) {
+  //         print("Error parsing API response: $e");
+  //       }
+
+  //       if (response.body.contains('item_code')) {
+  //         print("Item details found in the API response.");
+  //       } else {
+  //         print("Warning: Item details are missing in the API response.");
+  //       }
+  //     } else {
+  //       print("Error: API returned status code ${response.statusCode}");
+  //       print("Response Body: ${response.body}");
+  //     }
+  //   } catch (e) {
+  //     print("Error during API request: $e");
+  //   }
+
+  //   print("=== Sales Items Post to API Complete ===");
+  // }
+
+  Future<List<Map<String, dynamic>>> fetchTaxesFromDB(
+      String companyName) async {
+    final db = await DatabaseHelper._instance.database;
+
+    // Query the DB_sales_tax table for the selected company
+    List<Map<String, dynamic>> result = await db.query(
+      'DB_sales_tax',
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+
+    // Return the list of tax details
+    return result;
+  }
+
+  Future<void> postSalesItemsToApi(
+      List<Map<String, dynamic>> soldItemsMap,
+      String apiKey,
+      String secretKey,
+      String customername, // Pass customername as parameter
+      String companyname // Pass companyname as parameter
+      ) async {
+    // Step 1: Create Basic Authentication header
     String basicAuth =
         'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
-    print("Basic Authentication Header: $basicAuth");
 
-    // Step 3: Prepare the payload
-    // String payload;
-    String payload = jsonEncode({
-      'message': items.map((item) {
-        return {
-          ...item,
-          'base_write_off_amount': 0.0, // Default value
-        };
-      }).toList()
-    });
+    // Step 2: Transform soldItemsMap into the API expected format
+    List<Map<String, dynamic>> items = soldItemsMap.map((item) {
+      return {
+        'item_code': item['item_code'],
+        'qty': 1, // or item['qty'] if quantity is provided
+        'rate': item['net_rate'],
+      };
+    }).toList();
+
+    // Step 3: Fetch taxes for the selected company from the database
+    List<Map<String, dynamic>> taxData = await fetchTaxesFromDB(companyname);
+
+    // Format the taxes into the required structure
+    List<Map<String, dynamic>> taxes = taxData.map((tax) {
+      return {
+        'tax_name': tax['tax_name'],
+        'charge_type': tax['charge_type'],
+        'account_head': tax['account_head'],
+        'description': tax['description'],
+        'rate': tax['rate'],
+        'included_in_print_rate': tax['is_inclusive'],
+      };
+    }).toList();
+
+// Extract 'tax_name' for the 'tax_template'
+    String taxTemplate =
+        taxes.isNotEmpty ? taxes[0]['tax_name'].toString() : '';
+
+    // Step 4: Prepare the final payload
+    Map<String, dynamic> payloadMap = {
+      'naming_series': 'ACC-SINV-.YYYY.-',
+      'customer': customername, // Use customername from parameter
+      'items': items,
+      'taxes': taxes, // Use taxes fetched from DB
+      'tax_template': taxTemplate,
+      'company': companyname, // Use companyname from parameter
+    };
+
+    String payload = jsonEncode(payloadMap);
+    print("Payload to be sent: $payload");
+    print("tax_template$taxTemplate");
+
     try {
-      payload = jsonEncode({'message': items});
-      print("Payload to be sent: $payload");
-    } catch (e) {
-      print("Error encoding payload: $e");
-      return;
-    }
-
-    // Step 4: Measure the response time
-    final stopwatch = Stopwatch()..start();
-
-    try {
-      // Step 5: Make the API request
+      // Step 6: Make the API request
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
@@ -704,10 +829,7 @@ CREATE TABLE IF NOT EXISTS DB_users (
         body: payload,
       );
 
-      stopwatch.stop();
-      print("API request completed in ${stopwatch.elapsedMilliseconds} ms");
-
-      // Step 6: Check for status code and response
+      // Step 7: Check for status code and response
       if (response.statusCode == 200) {
         print("Success: API returned status code 200");
         try {
@@ -717,7 +839,6 @@ CREATE TABLE IF NOT EXISTS DB_users (
           print("Error parsing API response: $e");
         }
 
-        // Step 7: Check for expected data in response (customize based on API)
         if (response.body.contains('item_code')) {
           print("Item details found in the API response.");
         } else {
@@ -730,25 +851,6 @@ CREATE TABLE IF NOT EXISTS DB_users (
     } catch (e) {
       print("Error during API request: $e");
     }
-
-    // Step 8: Check if the request was too slow
-    if (stopwatch.elapsedMilliseconds > 2000) {
-      print("Warning: The API request took more than 2 seconds.");
-    }
-
     print("=== Sales Items Post to API Complete ===");
-  }
-
-  Future<int> getOnlineStatus(String companyName) async {
-    final db = await database;
-    var result = await db.rawQuery('''
-      SELECT online FROM DB_company WHERE company_name = ?
-    ''', [companyName]);
-
-    if (result.isNotEmpty) {
-      return result.first['online'] as int;
-    } else {
-      return 2; // Default to offline if no result
-    }
   }
 }
