@@ -18,6 +18,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  final dbHelper = DatabaseHelper(); // Initialize dbHelper
+  double companyTax = 0.0;
+  double fetchedTax = 0.0;
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
   List<Item> orderedItems = [];
@@ -54,7 +57,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   int? editingItemIndex; // Track the index of the item being edited
   bool isEditing = false;
-  late String selectedCompanyName;
+  // late String selectedCompanyName;
+  late String selectedCompanyName = ""; // Initialize to an empty string
+
   late String secretKey;
   late String apiKey;
 
@@ -64,6 +69,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     searchResults = items;
+    _fetchCompanyTax();
 
     _pageController = PageController(
         initialPage: _selectedPage); // Initialize the PageController
@@ -215,9 +221,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       secretKey = prefs.getString('secretKey') ?? '';
       apiKey = prefs.getString('apiKey') ?? '';
     });
-    print("selectedcoinhomee$selectedCompanyName");
-    print("apikey home $apiKey");
-    print("seceretkey home$secretKey");
   }
 
   Future<void> _loadItemsFromDatabase() async {
@@ -241,7 +244,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
 // Function to add an item to the order
-  void addItemToOrder(Item item) {
+  Future<void> addItemToOrder(Item item) async {
+    final dbHelper = DatabaseHelper();
+    double companyTax =
+        await dbHelper.fetchCompanyTax('Duplex Solutions') as double;
     setState(() {
       // Check if the item is already in the orderedItems list for the current page
       int existingItemIndex = orderedItems
@@ -258,6 +264,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           price: item.price,
           itemCount: 1,
           tax: item.tax,
+          companyTax: companyTax,
           itemCode: item.itemCode,
           itemtaxtype: item.itemtaxtype, // Fresh count for new item
         );
@@ -273,6 +280,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         orderedItemsPage3 = List.from(orderedItems);
       }
     });
+    _fetchCompanyTax();
   }
 
   @override
@@ -818,6 +826,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     itemCode: item.itemCode,
                     price: priceController.text,
                     tax: item.tax,
+                    companyTax: item.companyTax,
                     itemCount: int.parse(quantityController.text),
                     itemtaxtype: item.itemtaxtype,
                   );
@@ -844,17 +853,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return subtotal;
   }
 
-  // Calculate the total tax based on tax type
+  // Fetch company tax asynchronously
+  Future<void> _fetchCompanyTax() async {
+    print("_fetchCompanyTax");
+    print("FetchedselectedCompanyName: $selectedCompanyName");
+    fetchedTax = await dbHelper.getCompanyTax(selectedCompanyName); // Fetch tax
+    setState(() {
+      // Update the state after fetching the tax
+      companyTax = fetchedTax;
+      print("companytex$fetchedTax ");
+    });
+  }
+
+  //Calculate the total tax based on tax type
   double calculateTax() {
+    print("insdie calc$selectedCompanyName");
     double totalTax = 0.0;
-    print("jaba");
     for (var item in orderedItems) {
       print("ordreditemse$orderedItems");
       double price = double.parse(item.price.replaceAll(' ', ''));
-      // int quantity = int.parse(item.itemCount.split(' ')[0]);
-      int quantity = item.itemCount;
 
+      int quantity = item.itemCount;
+      print("item.tax${item.tax}");
       double itemTotal = price * quantity;
+
+      double companyTaxAmount =
+          itemTotal * (companyTax / 100); // Assuming companyTax is a percentage
+      totalTax += companyTaxAmount;
+      print("companytaxx$companyTax");
 
       if (item.tax.toLowerCase() == '') {
         totalTax += itemTotal * 0.10; // 10% tax
@@ -867,6 +893,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           print("Invalid GST amount: ${item.tax}");
         }
       }
+      print("totalTax$totalTax");
     }
     return totalTax;
   }
@@ -895,247 +922,231 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     double tax = calculateTax();
     double total = calculateTotal();
 
-    return Flexible(
-      fit: FlexFit.loose,
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        margin: const EdgeInsets.symmetric(vertical: 1),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color: Color.fromARGB(155, 222, 229, 231),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Sub Total',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black)),
-                Text(' ${subtotal.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black)),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Tax',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black87)),
-                Text(' ${tax.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black87)),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Discount',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black87)),
-                SizedBox(
-                  width: 50, // Adjust the width as needed
-                  child: TextField(
-                    controller:
-                        _discountController, // Replace with your TextEditingController
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Colors.black87),
-                    textAlign: TextAlign.end,
-                    decoration: const InputDecoration(
-                      // border: InputBorder.none, // Remove the underline
-                      contentPadding:
-                          EdgeInsets.all(0), // Adjust padding as needed
-                      hintText: '0.00', // Hint text
-                      hintStyle: TextStyle(
-                        color:
-                            Colors.grey, // Light grey color for the hint text
-                        fontWeight:
-                            FontWeight.normal, // You can adjust the font weight
-                      ),
+    return Container(
+      // fit: FlexFit.loose,
+      // child: Container(
+      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.symmetric(vertical: 1),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: Color.fromARGB(155, 222, 229, 231),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Sub Total',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
+              Text(' ${subtotal.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Tax',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text(' ${tax.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black87)),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Discount',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black87)),
+              SizedBox(
+                width: 50, // Adjust the width as needed
+                child: TextField(
+                  controller:
+                      _discountController, // Replace with your TextEditingController
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.black87),
+                  textAlign: TextAlign.end,
+                  decoration: const InputDecoration(
+                    // border: InputBorder.none, // Remove the underline
+                    contentPadding:
+                        EdgeInsets.all(0), // Adjust padding as needed
+                    hintText: '0.00', // Hint text
+                    hintStyle: TextStyle(
+                      color: Colors.grey, // Light grey color for the hint text
+                      fontWeight:
+                          FontWeight.normal, // You can adjust the font weight
                     ),
-                    keyboardType:
-                        TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      // FilteringTextInputFormatter.digitsOnly, // Allow only digits
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
-                    ],
-                    onChanged: (value) {
-                      // Handle the input change if needed
-                      setState(() {
-                        total = calculateTotal();
-                      });
-                    },
                   ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    // FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
+                  ],
+                  onChanged: (value) {
+                    // Handle the input change if needed
+                    setState(() {
+                      total = calculateTotal();
+                    });
+                  },
                 ),
-              ],
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 1),
-              height: 2,
-              width: double.infinity,
-              color: Colors.black12,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Total',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black87)),
-                Text((total).toStringAsFixed(2),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black87)),
-              ],
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: const Color(0xFF4285F4),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: () async {
-                double subtotal = calculateSubtotal();
-                double tax = calculateTax();
-                double total = calculateTotal();
-                _selectedCustomer = _getSelectedCustomerForCurrentPage();
+            ],
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 1),
+            height: 2,
+            width: double.infinity,
+            color: Colors.black12,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Total',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black87)),
+              Text((total).toStringAsFixed(2),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black87)),
+            ],
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF4285F4),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              _selectedCustomer = _getSelectedCustomerForCurrentPage();
 
-                // print(
-                //     "ordereditemss$orderedItems $subtotal $tax $total, $_selectedCustomer");
+              // Check if _selectedCustomer is null
+              if (_selectedCustomer == null) {
+                print("Error: No customer selected.");
+                // You can show a dialog or a Snackbar to notify the user
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Please select a customer before printing."),
+                  ),
+                );
+                return; // Stop the execution
+              }
+              // Insert the sold items into the database
+              final dbHelper = DatabaseHelper();
+              String invoiceNo = await dbHelper.getNextInvoiceNumber();
 
-                // Check if _selectedCustomer is null
-                if (_selectedCustomer == null) {
-                  print("Error: No customer selected.");
-                  // You can show a dialog or a Snackbar to notify the user
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text("Please select a customer before printing."),
-                    ),
-                  );
-                  return; // Stop the execution
-                }
+              try {
+                // Check if the customer has changed
+                // if (_selectedCustomer != previousCustomer) {
+                // Customer has changed, so it's considered a new sale.
+                print(
+                    "Customer has changed from $previousCustomer to $_selectedCustomer");
 
-                try {
-                  // Check if the customer has changed
-                  // if (_selectedCustomer != previousCustomer) {
-                  // Customer has changed, so it's considered a new sale.
-                  print(
-                      "Customer has changed from $previousCustomer to $_selectedCustomer");
+                // Transfer ordered items to soldItems after printing
+                soldItems = orderedItems
+                    .map((item) => Items(
+                          itemCode: item.itemCode,
+                          itemName: item.itemName,
+                          itemDescription: '',
+                          // quantity: item.itemCount,
+                          itemGroup: '',
+                          itemImage: item.image,
+                          itemUom: '',
+                          baseRate: double.parse(item.price),
+                          baseAmount: double.parse(item.price) * item.itemCount,
+                          netRate: double.parse(item.price),
+                          netAmount: double.parse(item.price) * item.itemCount,
+                          pricingRules: '',
+                          isFreeItem: item.itemCount == 0,
+                          itemTaxRate: item.tax,
+                          invoice: invoiceNo,
+                          customername:
+                              _selectedCustomer!, // Set new customer name
+                        ))
+                    .toList();
 
-                  // Transfer ordered items to soldItems after printing
-                  soldItems = orderedItems
-                      .map((item) => Items(
-                            itemCode: item.itemCode,
-                            itemName: item.itemName,
-                            itemDescription: '',
-                            // quantity: item.itemCount,
-                            itemGroup: '',
-                            itemImage: item.image,
-                            itemUom: '',
-                            baseRate: double.parse(item.price),
-                            baseAmount:
-                                double.parse(item.price) * item.itemCount,
-                            netRate: double.parse(item.price),
-                            netAmount:
-                                double.parse(item.price) * item.itemCount,
-                            pricingRules: '',
-                            isFreeItem: item.itemCount == 0,
-                            itemTaxRate: item.tax,
-                            invoice: '',
-                            customername:
-                                _selectedCustomer!, // Set new customer name
-                          ))
-                      .toList();
+                // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
+                List<Map<String, dynamic>> soldItemsMap =
+                    soldItems.map((item) => item.toMap()).toList();
+                print("solditemssss$soldItemsMap");
 
-                  // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
-                  List<Map<String, dynamic>> soldItemsMap =
-                      soldItems.map((item) => item.toMap()).toList();
-                  print("solditemssss$soldItemsMap");
+                print("selecteddb $_selectedCustomer");
 
-                  // Insert the sold items into the database
-                  final dbHelper = DatabaseHelper();
-                  print("selecteddb $_selectedCustomer");
+                // Get next invoice number
 
-                  // Get next invoice number
-                  String invoiceNo = await dbHelper.getNextInvoiceNumber();
+                // Insert sales items into DB_sales_items with new customer name
+                await dbHelper.insertSalesItems(
+                    soldItemsMap, invoiceNo, _selectedCustomer!);
 
-                  // Insert sales items into DB_sales_items with new customer name
-                  await dbHelper.insertSalesItems(
-                      soldItemsMap, invoiceNo, _selectedCustomer!);
+                Future<void> prepareAndPostSalesItems(
+                  List<Map<String, dynamic>> soldItemsMap,
+                  String selectedCustomer,
+                  String selectedCompanyName,
+                  DatabaseHelper dbHelper,
+                ) async {
+                  // Fetch API key and secret key from the database
+                  Map<String, String?> keys = await dbHelper
+                      .getApiKeysByCompanyName(selectedCompanyName);
 
-                  Future<void> prepareAndPostSalesItems(
-                    List<Map<String, dynamic>> soldItemsMap,
-                    String selectedCustomer,
-                    String selectedCompanyName,
-                    DatabaseHelper dbHelper,
-                  ) async {
-                    // Fetch API key and secret key from the database
-                    Map<String, String?> keys = await dbHelper
-                        .getApiKeysByCompanyName(selectedCompanyName);
+                  String? apiKey = keys['apiKey'];
+                  String? secretKey = keys['secretKey'];
 
-                    String? apiKey = keys['apiKey'];
-                    String? secretKey = keys['secretKey'];
-
-                    // Check if keys were retrieved successfully
-                    if (apiKey == null || secretKey == null) {
-                      print("Error: API Key or Secret Key is missing.");
-                      print("apikeyyy$apiKey");
-                      print("secretkeyyy$secretKey");
-                      return;
-                    }
-
-                    // Call postSalesItemsToApi with the fetched keys
-                    await dbHelper.postSalesItemsToApi(soldItemsMap, apiKey,
-                        secretKey, selectedCustomer, selectedCompanyName);
+                  // Check if keys were retrieved successfully
+                  if (apiKey == null || secretKey == null) {
+                    print("Error: API Key or Secret Key is missing.");
+                    print("apikeyyy$apiKey");
+                    print("secretkeyyy$secretKey");
+                    return;
                   }
 
-                  await prepareAndPostSalesItems(soldItemsMap,
-                      _selectedCustomer!, selectedCompanyName, dbHelper);
-
-                  // print("soldItemsMap $soldItemsMap");
-                  // print("sleccompany$selectedCompanyName");
-                  // print("sleccompany$_selectedCustomer");
-                  // print("ordereditemsss$orderedItems");
-
-                  // Print bill after inserting and posting
-                  final printService = PrintService();
-                  // await printService.printBill(
-                  //     orderedItems, subtotal, tax, total, _selectedCustomer!);
-                  print("Print job started.");
-
-                  // Update previousCustomer after the sale is successfully processed
-                  previousCustomer =
-                      _selectedCustomer; // Update to track customer change
-                  // } else {
-                  //   print("Same customer, no need to create new entry.");
-                  // }
-                } catch (e) {
-                  print("Error occurred while processing sale: $e");
+                  // Call postSalesItemsToApi with the fetched keys
+                  await dbHelper.postSalesItemsToApi(soldItemsMap, apiKey,
+                      secretKey, selectedCustomer, selectedCompanyName);
                 }
-              },
-              child: Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(2),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.print, size: 15),
-                    SizedBox(width: 6),
-                    Text('Print Bills')
-                  ],
-                ),
+
+                await prepareAndPostSalesItems(soldItemsMap, _selectedCustomer!,
+                    selectedCompanyName, dbHelper);
+
+                // Print bill after inserting and posting
+                final printService = PrintService();
+                // await printService.printBill(
+                //     orderedItems, subtotal, tax, total, _selectedCustomer!);
+                print("Print job started.");
+
+                // Update previousCustomer after the sale is successfully processed
+                previousCustomer =
+                    _selectedCustomer; // Update to track customer change
+                // } else {
+                //   print("Same customer, no need to create new entry.");
+                // }
+              } catch (e) {
+                print("Error occurred while processing sale: $e");
+              }
+            },
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(2),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.print, size: 15),
+                  SizedBox(width: 6),
+                  Text('Print Bills')
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+      // ),
     );
   }
 

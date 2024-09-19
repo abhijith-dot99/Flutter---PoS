@@ -5,6 +5,7 @@ class Item {
   int itemCount;
   final String itemCode;
   final String itemName;
+  final double companyTax; // Tax specific to the company
   final String image;
   final String itemtaxtype;
 
@@ -14,6 +15,7 @@ class Item {
     this.itemCount = 1,
     required this.itemCode,
     required this.itemName,
+    required this.companyTax,
     required this.image,
     required this.itemtaxtype,
   });
@@ -25,6 +27,7 @@ class Item {
       image: map['image'] ?? '', // Assuming you store image paths
       price: map['item_price'] ?? '0.00',
       tax: map['item_tax'] ?? '0.00',
+      companyTax: map['rate'] ?? 0.0,
       itemCount: map['item_count'] ?? 1,
       itemtaxtype: map['item_tax_type'],
       // category: map['category'] ?? '',
@@ -33,6 +36,6 @@ class Item {
 
   @override
   String toString() {
-    return 'Item(name: $itemName, count: $itemCount, price: $price)';
+    return 'Item(name: $itemName, count: $itemCount, price: $price, companyTax: $companyTax)';
   }
 }

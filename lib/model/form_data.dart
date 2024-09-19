@@ -54,7 +54,7 @@ class FormData {
 
   @override
   String toString() {
-    return 'FormData(companyName: $companyName, companyId: $companyId, contactNumber: $contactNumber, '
+    return 'FormData(company_name: $companyName, companyId: $companyId, contactNumber: $contactNumber, '
         'emailId: $emailId, online: $online, apikey: $apikey, '
         'secretkey: $secretkey, url: $url, username: $username, password: $password)';
   }

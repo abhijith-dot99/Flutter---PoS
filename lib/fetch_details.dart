@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/login_page.dart';
-import 'package:flutter_pos_app/main.dart';
+// import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
 import 'package:flutter_pos_app/model/supplier.dart';
@@ -11,7 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
 import 'package:flutter_pos_app/model/company.dart';
-import 'package:flutter_pos_app/model/form_data.dart';
+// import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:flutter_pos_app/model/companyy.dart';
 
 class FetchDetailsPage extends StatefulWidget {
@@ -85,6 +85,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
   }
 
   Future<void> _saveItemsToDB(List<dynamic> itemsList) async {
+    print("insdiesaveitemstodb");
     final dbHelper = DatabaseHelper();
 
     for (var item in itemsList) {
@@ -132,6 +133,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
 
       if (response.statusCode == 200) {
         final List<dynamic> itemsList = jsonDecode(response.body)['message'];
+        print("itemslist$itemsList");
         if (itemsList.isNotEmpty) {
           await _saveItemsToDB(itemsList);
         } else {
@@ -235,6 +237,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
         final List<dynamic> usersList = jsonDecode(response.body)['message'];
         if (usersList.isNotEmpty) {
           final dbHelper = DatabaseHelper();
+          print("userlist$usersList");
 
           for (var user in usersList) {
             if (user['company_name'] == selectedCompanyName) {
@@ -248,6 +251,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                 username: user['username'] ?? '',
                 password: user['password'] ?? '',
               );
+              print("userdata${userData.toMap()}");
 
               await dbHelper.insertUser(userData);
             }
@@ -348,16 +352,13 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                   accountHead: tax['account_head'] ?? '',
                   description: tax['description'] ?? '',
                   title: tax['title'] ?? '',
-                  // rate: tax['tax_rate'],
-                  // isInclusive: tax['is_inclusive'];
-
                   rate: tax['tax_rate'] is double
                       ? tax['tax_rate']
                       : double.tryParse(tax['tax_rate'].toString()) ?? 0.0,
                   isInclusive: (tax['is_inclusive'] == 1) ? 1 : 0);
 
-              await dbHelper.getTax(taxData);
               print("taxData$taxData");
+              await dbHelper.getTax(taxData);
             }
           }
         } else {
@@ -594,7 +595,9 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
               ),
             ]),
             const SizedBox(height: 30),
-            Row(
+            SingleChildScrollView(
+  scrollDirection: Axis.horizontal,
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
@@ -688,6 +691,8 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                 ),
               ],
             ),
+
+        ),
           ],
         ),
       ),
