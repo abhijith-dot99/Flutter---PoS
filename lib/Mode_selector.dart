@@ -405,7 +405,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
               );
             } else {
               print("insdie else");
-
               // final selectedCompany = selectedCompanyName;
               _saveFormData();
 
@@ -423,7 +422,6 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
             }
           },
           style: ElevatedButton.styleFrom(
-            // backgroundColor: Colors.deepOrange[400],
             backgroundColor: const Color(0xff4285f4),
             foregroundColor: Color.fromARGB(255, 255, 255, 255),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
