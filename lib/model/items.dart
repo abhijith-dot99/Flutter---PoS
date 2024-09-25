@@ -17,6 +17,7 @@ class Items {
 
   final String invoice;
   final String customername;
+      int itemCount;
 
   Items({
     required this.itemCode,
@@ -35,6 +36,7 @@ class Items {
     required this.itemTaxRate,
     required this.invoice,
     required this.customername,
+    required this.itemCount,
   });
 
   // Method to convert an Item object to a Map
@@ -54,7 +56,8 @@ class Items {
       'is_free_item': isFreeItem ? 1 : 0,
       'item_tax_rate': itemTaxRate,
       'invoice_no': 'ACC-SINV-2024-00058',
-      'customername': customername
+      'customername': customername,
+      'item_count': itemCount,
     };
   }
 }

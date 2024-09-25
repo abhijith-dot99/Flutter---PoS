@@ -36,6 +36,8 @@ class SoftwareModePage extends StatefulWidget {
 }
 
 class _SoftwareModePageState extends State<SoftwareModePage> {
+
+
   bool isOnline = true; // Default state is Online
 
   // Define the TextEditingControllers here to access them in _saveFormData
@@ -411,12 +413,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const LoginPage(),
-                  // builder: (context) => CompanyDetailsPage(
-                  //   company: selectedCompany,
-                  //   usernameController: usernameController,
-                  //   passwordController: passwordController,
-                  //   companyNameController: companyNameController,
-                  // ),
+               
                 ),
               );
             }
@@ -427,7 +424,8 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           ),
           child: const Text(
-            'Next',
+            // 'Next',
+            'Log In',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
         ),

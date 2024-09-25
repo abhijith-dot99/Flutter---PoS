@@ -22,22 +22,22 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:convert'; // for utf8 encoding
 // ignore: depend_on_referenced_packages
 
-  class DatabaseHelper {
-    static final DatabaseHelper _instance = DatabaseHelper._internal();
+class DatabaseHelper {
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
 
-    factory DatabaseHelper() {
-      return _instance;
-    }
+  factory DatabaseHelper() {
+    return _instance;
+  }
 
-    DatabaseHelper._internal();
+  DatabaseHelper._internal();
 
-    static Database? _database;
+  static Database? _database;
 
-    Future<Database> get database async {
-      if (_database != null) return _database!;
-      _database = await _initDatabase();
-      return _database!;
-    }
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDatabase();
+    return _database!;
+  }
 
   Future<Database> _initDatabase() async {
     String path;
@@ -46,14 +46,14 @@ import 'dart:convert'; // for utf8 encoding
       print("insde windows");
       // Desktop: Use sqflite_common_ffi for database initialization
 
-         sqfliteFfiInit();
+      sqfliteFfiInit();
       var databaseFactory = databaseFactoryFfi;
 
       // Get path to the documents directory for desktop platforms
       final directory = await getApplicationDocumentsDirectory();
       path = join(directory.path, 'DB_My.db');
       print("Database Path windows: $path");
-      
+
       // Open the database and create tables
       var db = await databaseFactory.openDatabase(path);
 
@@ -63,23 +63,21 @@ import 'dart:convert'; // for utf8 encoding
       print("insde android");
       // Mobile: Use regular sqflit
       path = join(await getDatabasesPath(), 'DB_My.db');
-        print("Database Path android: $path");
+      print("Database Path android: $path");
       return await openDatabase(path, version: 1, onCreate: _onCreate);
     } else {
       throw Exception('Platform not supported');
     }
   }
 
-
-
-
   Future<void> _onCreate(Database db, int version) async {
     print("inside oncreate");
     // Create the DB_company table
-      // Create DB_company table
-  await db.execute('''
+    // Create DB_company table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_company (
-      company_name TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_name TEXT ,
       owner TEXT,
       abbr TEXT,
       country TEXT,
@@ -95,8 +93,8 @@ import 'dart:convert'; // for utf8 encoding
     )
   ''');
 
-  // Create DB_users table
-  await db.execute('''
+    // Create DB_users table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_users (
       emp_name TEXT,
       phone_no TEXT,
@@ -109,8 +107,8 @@ import 'dart:convert'; // for utf8 encoding
     )
   ''');
 
-  // Create DB_sales_invoice table
-  await db.execute('''
+    // Create DB_sales_invoice table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_sales_invoice (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
@@ -258,8 +256,8 @@ import 'dart:convert'; // for utf8 encoding
     )
   ''');
 
-  // Create DB_suppliers table
-  await db.execute('''
+    // Create DB_suppliers table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_suppliers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       supplier_name TEXT NOT NULL,
@@ -273,8 +271,8 @@ import 'dart:convert'; // for utf8 encoding
     )
   ''');
 
-  // Create DB_customer table
-  await db.execute('''
+    // Create DB_customer table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_customer (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       customer_name TEXT NOT NULL,
@@ -287,8 +285,8 @@ import 'dart:convert'; // for utf8 encoding
     )
   ''');
 
-  // Create DB_sales_items table
-  await db.execute('''
+    // Create DB_sales_items table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_sales_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       item_code TEXT,
@@ -305,12 +303,13 @@ import 'dart:convert'; // for utf8 encoding
       is_free_item INTEGER DEFAULT 0,
       item_tax_rate TEXT,
       invoice_no TEXT,
-      customer_name TEXT
+      customer_name TEXT,
+      item_count INTEGER
     )
   ''');
 
-  // Create DB_items table
-  await db.execute('''
+    // Create DB_items table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_items (
       item_code TEXT PRIMARY KEY,
       item_name TEXT,
@@ -325,8 +324,8 @@ import 'dart:convert'; // for utf8 encoding
     )
   ''');
 
-  // Create DB_sales_tax table
-  await db.execute('''
+    // Create DB_sales_tax table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_sales_tax (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tax_name TEXT NOT NULL,
@@ -340,8 +339,8 @@ import 'dart:convert'; // for utf8 encoding
     )
   ''');
 
-  // Create invoice_counter table
-  await db.execute('''
+    // Create invoice_counter table
+    await db.execute('''
     CREATE TABLE IF NOT EXISTS invoice_counter (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       current_invoice_number INTEGER
@@ -355,8 +354,9 @@ import 'dart:convert'; // for utf8 encoding
           .insert('invoice_counter', {'id': 1, 'current_invoice_number': 1});
     }
 
-  var tables = await db.rawQuery('SELECT name FROM sqlite_master WHERE type="table"');
-  print('Tables created: $tables');
+    var tables =
+        await db.rawQuery('SELECT name FROM sqlite_master WHERE type="table"');
+    print('Tables created: $tables');
   }
 
   Future<int> insertOfflineData(FormData formData) async {
@@ -413,7 +413,7 @@ import 'dart:convert'; // for utf8 encoding
     return await db.query('DB_company');
   }
 
-    Future<List<String>> getCompanyNames() async {
+  Future<List<String>> getCompanyNames() async {
     print("inside getCompany");
 
     final db = await database;
@@ -628,14 +628,40 @@ import 'dart:convert'; // for utf8 encoding
     );
   }
 
+  // Future<void> getTax(Tax tax) async {
+  //   print("insde gettax");
+  //   final db = await database;
+  //   await db.insert(
+  //     'DB_sales_tax',
+  //     tax.toMap(),
+  //     conflictAlgorithm: ConflictAlgorithm.replace,
+  //   );
+  // }
+
   Future<void> getTax(Tax tax) async {
-    print("insde gettax");
+    print("inside getTax");
     final db = await database;
-    await db.insert(
+
+    // Check if the tax record with the same company name already exists
+    var result = await db.query(
       'DB_sales_tax',
-      tax.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'company_name = ?',
+      whereArgs: [
+        tax.companyName
+      ], // assuming 'companyName' is a field in your Tax object
     );
+
+    if (result.isEmpty) {
+      // Insert only if the company name doesn't exist
+      await db.insert(
+        'DB_sales_tax',
+        tax.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      print('New tax data inserted for company: ${tax.companyName}');
+    } else {
+      print('Tax data for this company already exists: ${tax.companyName}');
+    }
   }
 
   Future<List<String>> getCustomerByCompany(String companyName) async {
@@ -690,6 +716,20 @@ import 'dart:convert'; // for utf8 encoding
     print("inside validateUser function");
     print("username $username");
     print("company $company");
+    print("password $password");
+
+    if (username.isEmpty) {
+      print("Username is null or empty");
+      return false;
+    }
+    if (password.isEmpty) {
+      print("Password is null or empty");
+      return false;
+    }
+    if (company.isEmpty) {
+      print("Company is null or empty");
+      return false;
+    }
 
     // Retrieve the stored password from the database
     final db = await database;
@@ -822,6 +862,7 @@ import 'dart:convert'; // for utf8 encoding
     print("Inside insertSalesItems for customer: $customerName");
 
     final db = await database;
+    print("itemsss$orderedItems");
 
     // Iterate over each ordered item and insert into the DB_sales_items table
     for (var item in orderedItems) {
@@ -844,6 +885,7 @@ import 'dart:convert'; // for utf8 encoding
           'invoice_no': invoiceNo, // Invoice number for tracking the sale
           'customer_name':
               customerName, // Add customer name to track sale by customer
+          'item_count': item['item_count'],
         },
         conflictAlgorithm:
             ConflictAlgorithm.abort, // Replace if a conflict occurs
@@ -886,27 +928,26 @@ import 'dart:convert'; // for utf8 encoding
     return 'ACC-SINV-2024-${nextNumber.toString().padLeft(5, '0')}';
   }
 
-Future<int> getOnlineStatus(String companyName) async {
-  try {
-    final db = await database;
+  Future<int> getOnlineStatus(String companyName) async {
+    try {
+      final db = await database;
 
-    // Query to check if the company_name exists in the DB_company table
-    var result = await db.rawQuery('''
+      // Query to check if the company_name exists in the DB_company table
+      var result = await db.rawQuery('''
       SELECT online FROM DB_company WHERE company_name = ?
     ''', [companyName]);
 
-    if (result.isNotEmpty) {
-      return result.first['online'] as int;
-    } else {
-      return 2; // Default to offline if no result
+      if (result.isNotEmpty) {
+        return result.first['online'] as int;
+      } else {
+        return 2; // Default to offline if no result
+      }
+    } catch (e, stacktrace) {
+      print('Error querying online status: $e');
+      print('Stacktrace: $stacktrace');
+      return 2; // Return default value in case of error
     }
-  } catch (e, stacktrace) {
-    print('Error querying online status: $e');
-    print('Stacktrace: $stacktrace');
-    return 2; // Return default value in case of error
   }
-}
-
 
   Future<Map<String, String?>> getApiKeysByCompanyName(
       String companyName) async {
@@ -936,88 +977,7 @@ Future<int> getOnlineStatus(String companyName) async {
 
   // Function to get API Key and Secret Key from DB_company using company_name
 
-  String apiUrl =
-      "http://143.110.187.133:82/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
-
   get taxes => [];
-
-  // Future<void> postSalesItemsToApi(
-  //     List<Map<String, dynamic>> soldItemsMap,
-  //     String apiKey,
-  //     String secretKey,
-  //     String customername, // Pass customername as parameter
-  //     String companyname // Pass companyname as parameter
-  //     ) async {
-  //   // Step 2: Create Basic Authentication header
-  //   String basicAuth =
-  //       'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
-
-  //   // Step 3: Transform soldItemsMap into the API expected format
-  //   List<Map<String, dynamic>> items = soldItemsMap.map((item) {
-  //     print("itemcounttttt${item['qty']}");
-  //     return {
-  //       'item_code': item['item_code'],
-  //       'qty': 1, // or item['qty'] if quantity is provided
-  //       // 'qty': item['count'],
-  //       'rate': item['net_rate'],
-  //     };
-  //   }).toList();
-
-  //   print("itemsinpostapi$items");
-  //   // Step 4: Prepare the final payload
-  //   Map<String, dynamic> payloadMap = {
-  //     'naming_series': 'ACC-SINV-.YYYY.-',
-  //     'customer': customername, // Use customername from parameter
-  //     'items': items,
-  //     'taxes': [
-  //       {
-  //         "charge_type": "On Net Total",
-  //         "account_head": "VAT 0% - DS",
-  //         "description": "0%"
-  //       }
-  //     ],
-  //     'company': companyname, // Use companyname from parameter
-  //   };
-
-  //   String payload = jsonEncode(payloadMap);
-  //   print("Payload to be sent: $payload");
-
-  //   try {
-  //     // Step 6: Make the API request
-  //     final response = await http.post(
-  //       Uri.parse(apiUrl),
-  //       headers: {
-  //         'Authorization': basicAuth, // Set Basic Auth header
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: payload,
-  //     );
-
-  //     // Step 7: Check for status code and response
-  //     if (response.statusCode == 200) {
-  //       print("Success: API returned status code 200");
-  //       try {
-  //         final responseBody = jsonDecode(response.body);
-  //         print("Response Body: ${jsonEncode(responseBody)}");
-  //       } catch (e) {
-  //         print("Error parsing API response: $e");
-  //       }
-
-  //       if (response.body.contains('item_code')) {
-  //         print("Item details found in the API response.");
-  //       } else {
-  //         print("Warning: Item details are missing in the API response.");
-  //       }
-  //     } else {
-  //       print("Error: API returned status code ${response.statusCode}");
-  //       print("Response Body: ${response.body}");
-  //     }
-  //   } catch (e) {
-  //     print("Error during API request: $e");
-  //   }
-
-  //   print("=== Sales Items Post to API Complete ===");
-  // }
 
   Future<List<Map<String, dynamic>>> fetchTaxesFromDB(
       String companyName) async {
@@ -1034,6 +994,9 @@ Future<int> getOnlineStatus(String companyName) async {
     return result;
   }
 
+  String apiUrl =
+      "http://143.110.187.133:80/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
+
   Future<void> postSalesItemsToApi(
       List<Map<String, dynamic>> soldItemsMap,
       String apiKey,
@@ -1049,7 +1012,7 @@ Future<int> getOnlineStatus(String companyName) async {
     List<Map<String, dynamic>> items = soldItemsMap.map((item) {
       return {
         'item_code': item['item_code'],
-        'qty': 1, // or item['qty'] if quantity is provided
+        'qty': item['item_count'],
         'rate': item['net_rate'],
       };
     }).toList();

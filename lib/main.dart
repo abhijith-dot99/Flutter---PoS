@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_pos_app/Mode_selector.dart';
 import 'package:flutter_pos_app/home.dart';
 import 'package:flutter_pos_app/login_page.dart';
@@ -13,8 +14,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart'; // Standard sqflite for mobile
 
 void main() {
-  // sqfliteFfiInit();
-  // databaseFactory = databaseFactoryFfi;
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
@@ -52,8 +51,18 @@ class _AppInitializerState extends State<AppInitializer> {
   void initState() {
     super.initState();
     _checkLoginStatus();
-  }
 
+  }
+    @override
+  Widget build(BuildContext context) {
+    if (_isLoggedIn) {
+      return const MainPage(); // Show the main page if logged in
+    } else {
+      return const SoftwareModePage(); // Show the login page if not logged in
+      // return MainPage();
+    }
+  }
+  
   Future<bool> _checkLoginStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isValidUser = prefs.getBool('isValidUser') ?? false;
@@ -70,15 +79,7 @@ class _AppInitializerState extends State<AppInitializer> {
     return isValidUser;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoggedIn) {
-      return const MainPage(); // Show the main page if logged in
-    } else {
-      return const SoftwareModePage(); // Show the login page if not logged in
-      // return MainPage();
-    }
-  }
+
 }
 
 class MainPage extends StatefulWidget {

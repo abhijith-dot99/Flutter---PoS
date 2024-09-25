@@ -82,14 +82,16 @@ class _CompanyDetailsPageState extends State<CompanyDetailsPage> {
                           FetchDetailsPage(company: widget.company),
                     ),
                   );
-                } else {
-                  print("isonlineinif$isOnline");
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MainPage(),
+                  } else {
+                    print("isonlineinif$isOnline");
+                    Navigator.push(
+                      context,
+
+                         MaterialPageRoute(
+                      builder: (context) =>
+                          FetchDetailsPage(company: widget.company),
                     ),
-                  );
+                    );
                 }
               },
               style: ElevatedButton.styleFrom(

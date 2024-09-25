@@ -9,10 +9,11 @@ class Item {
   final String image;
   final String itemtaxtype;
 
+
   Item({
     required this.price,
     required this.tax,
-    this.itemCount = 1,
+    required this.itemCount,
     required this.itemCode,
     required this.itemName,
     required this.companyTax,
@@ -30,6 +31,7 @@ class Item {
       companyTax: map['rate'] ?? 0.0,
       itemCount: map['item_count'] ?? 1,
       itemtaxtype: map['item_tax_type'],
+     
       // category: map['category'] ?? '',
     );
   }

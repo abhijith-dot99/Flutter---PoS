@@ -199,6 +199,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                 phoneNo: company['phone_no'] ?? '',
                 email: company['email'] ?? '',
                 website: company['website'] ?? '',
+                
               );
               // Insert into the database
               await dbHelper.insertCompany(companyData);

@@ -89,6 +89,7 @@ class _LoginPageState extends State<LoginPage> {
       companyNames = names;
       selectedCompany = null; // No default selection
     });
+    print("companynames $names");
   }
 
   @override
@@ -101,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => SoftwareModePage()),
+              MaterialPageRoute(builder: (context) => const SoftwareModePage()),
             );
           },
         ),

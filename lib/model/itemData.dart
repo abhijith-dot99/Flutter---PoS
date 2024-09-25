@@ -10,6 +10,7 @@ class ItemData {
   final String uom;
   final String itemTaxType;
 
+
   ItemData({
     required this.itemCode,
     required this.itemName,
@@ -39,6 +40,7 @@ class ItemData {
       itemPriceList: json['item_price_list'] ?? '',
       uom: json['uom'] ?? '',
       itemTaxType: json['item_tax_type'] ?? '',
+
     );
   }
 

@@ -35,16 +35,20 @@ class PrintService {
 
   Future<void> printBillAndroid(List<Item> items, double subtotal, double tax,
       double total, String selectedcust) async {
+    print("inside printibll android");
     await requestPermissions();
     final pdfData =
         await generatePdf(items, subtotal, tax, total, selectedcust);
     final filePath = await savePdfToFile(pdfData);
     await openPdfFile(filePath);
     print('Order Details:\n$pdfData');
+
+    
   }
 
   Future<Uint8List> generatePdf(List<Item> items, double subtotal, double tax,
       double total, String selectedcust) async {
+    print("inside generatepdf");
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -104,22 +108,75 @@ class PrintService {
   }
 }
 
+// Future<void> requestPermissions() async {
+//   if (await Permission.storage.request().isGranted) {
+//     // Permissions granted
+//   } else {
+//     // Handle the case where permissions are not granted
+//     throw Exception('Storage permission not granted');
+//   }
+// }
+
 Future<void> requestPermissions() async {
-  if (await Permission.storage.request().isGranted) {
-    // Permissions granted
-  } else {
-    // Handle the case where permissions are not granted
-    throw Exception('Storage permission not granted');
+  print("inside requestpermission");
+  if (Platform.isAndroid) {
+    if (await Permission.manageExternalStorage.request().isGranted ||
+        await Permission.storage.request().isGranted) {
+      // Permissions granted
+    } else {
+      // Handle the case where permissions are not granted
+      throw Exception('Storage permission not granted');
+    }
   }
 }
 
+// Future<String> savePdfToFile(Uint8List pdfData) async {
+//   print("insdie savepdf");
+//   try {
+//     final directory = await getExternalStorageDirectory();
+//     if (directory == null) {
+//       throw Exception('Could not access external storage');
+//     }
+//     final filePath = '${directory!.path}/bill.pdf';
+//     final file = File(filePath);
+//     await file.writeAsBytes(pdfData);
+//     print('Saved PDF to $filePath');
+//     return filePath;
+//   } catch (e) {
+//     print('Error saving PDF: $e');
+//     throw Exception('Error saving PDF');
+//   }
+// }
+
+
 Future<String> savePdfToFile(Uint8List pdfData) async {
+  print("inside savepdf");
   try {
     final directory = await getExternalStorageDirectory();
-    final filePath = '${directory!.path}/bill.pdf';
+    if (directory == null) {
+      throw Exception('Could not access external storage');
+    }
+
+    // Create a base file name
+    String baseFileName = 'bill_';
+    String fileExtension = '.pdf';
+
+    // Initialize a counter
+    int counter = 1;
+    String filePath;
+
+    // Find an available file name
+    do {
+      // Create the full file name
+      filePath = '${directory.path}/$baseFileName$counter$fileExtension';
+      counter++;
+    } while (await File(filePath).exists());
+
+    // Save the PDF file
     final file = File(filePath);
     await file.writeAsBytes(pdfData);
     print('Saved PDF to $filePath');
+
     return filePath;
   } catch (e) {
     print('Error saving PDF: $e');
@@ -131,6 +188,7 @@ Future<void> openPdfFile(String filePath) async {
   final result = await OpenFile.open(filePath);
   if (result.type != ResultType.done) {
     print('Error opening PDF file: ${result.message}');
+    // Prompt the user to install a PDF viewer
   }
 }
 

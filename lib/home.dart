@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,8 @@ import 'model/items.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
+// For UI and BuildContext
 
 class HomePage extends StatefulWidget {
   final bool showImages; // Add this parameter
@@ -69,13 +72,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     searchResults = items;
-    _fetchCompanyTax();
+
 
     _pageController = PageController(
         initialPage: _selectedPage); // Initialize the PageController
 
     _loadPreferences().then((_) {
-      // Ensure preferences are loaded before fetching items
       _loadItemsFromDatabase();
       _loadCustomerForSelectedCompany();
     });
@@ -211,6 +213,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _discountController.dispose();
+    // Reset the preferred orientation to allow normal orientation for other pages
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     super.dispose();
   }
 
@@ -262,7 +271,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           itemName: item.itemName,
           image: item.image,
           price: item.price,
-          itemCount: 1,
+          itemCount: item.itemCount,
           tax: item.tax,
           companyTax: companyTax,
           itemCode: item.itemCode,
@@ -387,12 +396,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Column(
                       children: [
                         _viewCustomerList(context),
-                        const SizedBox(height: 5),
                         Expanded(
                           flex: 2, // Equivalent to Flexible
                           child: _buildOrderedItemsSection(),
                         ),
-                        const SizedBox(height: 2),
                         Expanded(
                           flex:
                               1, // Equivalent to Flexible for the print section
@@ -824,6 +831,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     image: item.image,
                     itemName: item.itemName,
                     itemCode: item.itemCode,
+                    // itemCount: item.itemCount,
                     price: priceController.text,
                     tax: item.tax,
                     companyTax: item.companyTax,
@@ -877,22 +885,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       print("item.tax${item.tax}");
       double itemTotal = price * quantity;
 
-      double companyTaxAmount =
-          itemTotal * (companyTax / 100); // Assuming companyTax is a percentage
+      double companyTaxAmount = itemTotal * (companyTax / 100);
       totalTax += companyTaxAmount;
       print("companytaxx$companyTax");
 
-      if (item.tax.toLowerCase() == '') {
-        totalTax += itemTotal * 0.10; // 10% tax
-      } else {
-        try {
-          // Parse GST amount as double
-          double gstAmount = double.parse(item.tax);
-          totalTax += gstAmount * quantity;
-        } catch (e) {
-          print("Invalid GST amount: ${item.tax}");
-        }
-      }
+      // if (item.tax.toLowerCase() == '') {
+      //   totalTax += itemTotal * 0.10;
+      // } else {
+      //   try {
+      //     // Parse GST amount as double
+      //     double gstAmount = double.parse(item.tax);
+      //     totalTax += gstAmount * quantity;
+      //   } catch (e) {
+      //     print("Invalid GST amount: ${item.tax}");
+      //   }
+      // }
+
       print("totalTax$totalTax");
     }
     return totalTax;
@@ -915,6 +923,91 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       total = 0;
     }
     return total;
+  }
+
+  // Future<void> requestStoragePermission(BuildContext context) async {
+  //   try {
+  //     print("requeststorage");
+
+  //     PermissionStatus status;
+  //     if (Platform.isAndroid) {
+  //       // Request MANAGE_EXTERNAL_STORAGE for Android 10+
+  //       status = await Permission.manageExternalStorage.request();
+  //     } else {
+  //       // Request regular storage permission for lower versions
+  //       status = await Permission.storage.request();
+  //     }
+
+  //     print("status: $status");
+
+  //     if (status.isGranted) {
+  //       print("Storage permission granted.");
+  //     } else if (status.isDenied) {
+  //       print("Permission denied: ${status.isDenied}");
+  //       print(
+  //           "Storage permission denied. Please enable it for proper functionality.");
+  //       // ignore: use_build_context_synchronously
+  //       _showPermissionRationale(context); // Pass context to the dialog
+  //     } else if (status.isPermanentlyDenied) {
+  //       print("Permission permanently denied. Redirecting to app settings.");
+  //       openAppSettings();
+  //     } else {
+  //       print("Storage permission not granted.");
+  //       throw Exception("Storage permission not granted");
+  //     }
+  //   } catch (e) {
+  //     print("Error while requesting storage permission: $e");
+  //   }
+  // }
+
+// // Helper function to show a rationale for the permission
+//   void _showPermissionRationale(BuildContext context) {
+//     showDialog(
+//       context: context,
+//       builder: (BuildContext context) {
+//         return AlertDialog(
+//           title: const Text("Permission Required"),
+//           content: const Text(
+//               "This app requires storage permission to function properly. Please grant the permission."),
+//           actions: [
+//             TextButton(
+//               child: const Text("Cancel"),
+//               onPressed: () {
+//                 Navigator.of(context).pop();
+//               },
+//             ),
+//             TextButton(
+//               child: const Text("Grant Permission"),
+//               onPressed: () {
+//                 Navigator.of(context).pop();
+//                 requestStoragePermission(context); // Request permission again
+//               },
+//             ),
+//           ],
+//         );
+//       },
+//     );
+//   }
+
+  Future<PermissionStatus> requestStoragePermission() async {
+    print("inside request storage");
+    if (Platform.isAndroid) {
+      if (await Permission.manageExternalStorage.isGranted) {
+        print("Storage permission already granted.");
+        return PermissionStatus.granted;
+      } else {
+        PermissionStatus status =
+            await Permission.manageExternalStorage.request();
+        if (status.isGranted) {
+          print("Storage permission granted.");
+        } else if (status.isDenied || status.isPermanentlyDenied) {
+          print("Permission denied.");
+          openAppSettings(); // For permanent denial, redirect to app settings.
+        }
+        return status; // Return the permission status
+      }
+    }
+    return PermissionStatus.denied; // Default return in case it's not Android
   }
 
   Widget _calculateAndPrintSection() {
@@ -1026,109 +1119,135 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () async {
-              _selectedCustomer = _getSelectedCustomerForCurrentPage();
-
-              // Check if _selectedCustomer is null
-              if (_selectedCustomer == null) {
-                print("Error: No customer selected.");
-                // You can show a dialog or a Snackbar to notify the user
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Please select a customer before printing."),
-                  ),
-                );
-                return; // Stop the execution
-              }
-              // Insert the sold items into the database
-              final dbHelper = DatabaseHelper();
-              String invoiceNo = await dbHelper.getNextInvoiceNumber();
-
+              PermissionStatus status = await requestStoragePermission();
               try {
-                // Check if the customer has changed
-                // if (_selectedCustomer != previousCustomer) {
-                // Customer has changed, so it's considered a new sale.
-                print(
-                    "Customer has changed from $previousCustomer to $_selectedCustomer");
+                if (Platform.isAndroid) {
+                  // Check the status after request
+                  // PermissionStatus status =
+                  //     await Permission.manageExternalStorage.status;
 
-                // Transfer ordered items to soldItems after printing
-                soldItems = orderedItems
-                    .map((item) => Items(
-                          itemCode: item.itemCode,
-                          itemName: item.itemName,
-                          itemDescription: '',
-                          // quantity: item.itemCount,
-                          itemGroup: '',
-                          itemImage: item.image,
-                          itemUom: '',
-                          baseRate: double.parse(item.price),
-                          baseAmount: double.parse(item.price) * item.itemCount,
-                          netRate: double.parse(item.price),
-                          netAmount: double.parse(item.price) * item.itemCount,
-                          pricingRules: '',
-                          isFreeItem: item.itemCount == 0,
-                          itemTaxRate: item.tax,
-                          invoice: invoiceNo,
-                          customername:
-                              _selectedCustomer!, // Set new customer name
-                        ))
-                    .toList();
+                  if (!status.isGranted) {
+                    print(
+                        "Storage permission still not granted after request.");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Please grant storage permission to print the bill.",
+                        ),
+                      ),
+                    );
+                    return; // Exit early since permission is not granted
+                  } else if (status.isGranted) {
+                    print("permission granted${status.isGranted}");
+                  }
+                }
+                await Future.delayed(const Duration(milliseconds: 500));
 
-                // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
-                List<Map<String, dynamic>> soldItemsMap =
-                    soldItems.map((item) => item.toMap()).toList();
-                print("solditemssss$soldItemsMap");
+                _selectedCustomer = _getSelectedCustomerForCurrentPage();
 
-                print("selecteddb $_selectedCustomer");
+                // Check if _selectedCustomer is null
+                if (_selectedCustomer == null) {
+                  print("Error: No customer selected.");
+                  // You can show a dialog or a Snackbar to notify the user
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text("Please select a customer before printing."),
+                    ),
+                  );
+                  return; // Stop the execution
+                }
+                // Insert the sold items into the database
+                final dbHelper = DatabaseHelper();
+                String invoiceNo = await dbHelper.getNextInvoiceNumber();
 
-                // Get next invoice number
+                try {
+                  // await requestStoragePermission();
+                  print("changed$previousCustomer to $_selectedCustomer");
+                  // Transfer ordered items to soldItems after printing
+                  soldItems = orderedItems
+                      .map((item) => Items(
+                            itemCode: item.itemCode,
+                            itemName: item.itemName,
+                            itemDescription: '',
+                            itemCount: item.itemCount,
+                            itemGroup: '',
+                            itemImage: item.image,
+                            itemUom: '',
+                            baseRate: double.parse(item.price),
+                            baseAmount:
+                                double.parse(item.price) * item.itemCount,
+                            netRate: double.parse(item.price),
+                            netAmount:
+                                double.parse(item.price) * item.itemCount,
+                            pricingRules: '',
+                            isFreeItem: item.itemCount == 0,
+                            itemTaxRate: item.tax,
+                            invoice: invoiceNo,
+                            customername:
+                                _selectedCustomer!, // Set new customer name
+                          ))
+                      .toList();
 
-                // Insert sales items into DB_sales_items with new customer name
-                await dbHelper.insertSalesItems(
-                    soldItemsMap, invoiceNo, _selectedCustomer!);
+                  // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
+                  List<Map<String, dynamic>> soldItemsMap =
+                      soldItems.map((item) => item.toMap()).toList();
+                  print("solditemssss$soldItemsMap");
 
-                Future<void> prepareAndPostSalesItems(
-                  List<Map<String, dynamic>> soldItemsMap,
-                  String selectedCustomer,
-                  String selectedCompanyName,
-                  DatabaseHelper dbHelper,
-                ) async {
-                  // Fetch API key and secret key from the database
-                  Map<String, String?> keys = await dbHelper
-                      .getApiKeysByCompanyName(selectedCompanyName);
+                  print("selecteddb $_selectedCustomer");
 
-                  String? apiKey = keys['apiKey'];
-                  String? secretKey = keys['secretKey'];
+                  // Get next invoice number
 
-                  // Check if keys were retrieved successfully
-                  if (apiKey == null || secretKey == null) {
-                    print("Error: API Key or Secret Key is missing.");
-                    print("apikeyyy$apiKey");
-                    print("secretkeyyy$secretKey");
-                    return;
+                  // Insert sales items into DB_sales_items with new customer name
+                  await dbHelper.insertSalesItems(
+                      soldItemsMap, invoiceNo, _selectedCustomer!);
+
+                  Future<void> prepareAndPostSalesItems(
+                    List<Map<String, dynamic>> soldItemsMap,
+                    String selectedCustomer,
+                    String selectedCompanyName,
+                    DatabaseHelper dbHelper,
+                  ) async {
+                    // Fetch API key and secret key from the database
+                    Map<String, String?> keys = await dbHelper
+                        .getApiKeysByCompanyName(selectedCompanyName);
+
+                    String? apiKey = keys['apiKey'];
+                    String? secretKey = keys['secretKey'];
+                    print("selectedcompanyy$selectedCompanyName");
+
+                    // Check if keys were retrieved successfully
+                    if (apiKey == null || secretKey == null) {
+                      print("Error: API Key or Secret Key is missing.");
+                      print("apikeyyy$apiKey");
+                      print("secretkeyyy$secretKey");
+                      return;
+                    }
+
+                    // Call postSalesItemsToApi with the fetched keys
+                    await dbHelper.postSalesItemsToApi(soldItemsMap, apiKey,
+                        secretKey, selectedCustomer, selectedCompanyName);
                   }
 
-                  // Call postSalesItemsToApi with the fetched keys
-                  await dbHelper.postSalesItemsToApi(soldItemsMap, apiKey,
-                      secretKey, selectedCustomer, selectedCompanyName);
+                  await prepareAndPostSalesItems(soldItemsMap,
+                      _selectedCustomer!, selectedCompanyName, dbHelper);
+
+                  // Print bill after inserting and posting
+                  final printService = PrintService();
+                  await printService.printBill(
+                      orderedItems, subtotal, tax, total, _selectedCustomer!);
+                  print("Print job started.");
+
+                  // Update previousCustomer after the sale is successfully processed
+                  previousCustomer =
+                      _selectedCustomer; // Update to track customer change
+                } catch (e) {
+                  print("status in catch$status");
+                  print(
+                      "Error occurred while processing sale: ${e.toString()}");
                 }
-
-                await prepareAndPostSalesItems(soldItemsMap, _selectedCustomer!,
-                    selectedCompanyName, dbHelper);
-
-                // Print bill after inserting and posting
-                final printService = PrintService();
-                // await printService.printBill(
-                //     orderedItems, subtotal, tax, total, _selectedCustomer!);
-                print("Print job started.");
-
-                // Update previousCustomer after the sale is successfully processed
-                previousCustomer =
-                    _selectedCustomer; // Update to track customer change
-                // } else {
-                //   print("Same customer, no need to create new entry.");
-                // }
               } catch (e) {
-                print("Error occurred while processing sale: $e");
+                print("Unexpected error: $e");
               }
             },
             child: Container(
@@ -1151,6 +1270,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildOrderedItemsSection() {
+    print("_buildOrderedItemsSection");
     return Container(
       decoration: BoxDecoration(
         color: Color.fromARGB(155, 239, 241, 241),
@@ -1167,7 +1287,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     size: 50,
                     color: Colors.black26,
                   ),
-                  SizedBox(height: 10),
+                  // SizedBox(height: 10),
                   Text(
                     'Cart',
                     style: TextStyle(
