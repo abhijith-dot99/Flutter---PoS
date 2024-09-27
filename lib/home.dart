@@ -34,13 +34,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Item> orderedItemsPage3 = [];
 
   String? _selectedCustomer;
+  Map<String, dynamic>? selectedCustomerforcompany;
 
   String? _selectedCustomerPage1;
   String? _selectedCustomerPage2;
   String? _selectedCustomerPage3;
 
   List<String> customers = [];
-  List<String> _filteredCustomers = [];
+  List<String?> _filteredCustomers = [];
   List<Item> items = [];
 
   late PageController _pageController; // Add a PageController
@@ -72,7 +73,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     searchResults = items;
-
 
     _pageController = PageController(
         initialPage: _selectedPage); // Initialize the PageController
@@ -156,18 +156,59 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  // Future<void> _loadCustomerForSelectedCompany() async {
+  //   print("loadcustomer");
+  //   if (selectedCompanyName.isNotEmpty) {
+  //     final dbHelper = DatabaseHelper();
+
+  //     // Fetch employees from the database
+  //     List<String> customers =
+  //         await dbHelper.getCustomerByCompany(selectedCompanyName);
+  //     setState(() {
+  //       _filteredCustomers = customers.toSet().toList();
+  //     });
+  //   }
+  // }
+
   Future<void> _loadCustomerForSelectedCompany() async {
-    print("loadcustomer");
+    print("insdieloadcustomer");
+
     if (selectedCompanyName.isNotEmpty) {
       final dbHelper = DatabaseHelper();
 
-      // Fetch employees from the database
-      List<String> customers =
-          await dbHelper.getCustomerByCompany(selectedCompanyName);
+      // Fetch customers from the database (all fields, not just names)
+      List<Map<String, dynamic>> customers =
+          (await dbHelper.getCustomerByCompany(selectedCompanyName))
+              .cast<Map<String, dynamic>>();
 
-      setState(() {
-        _filteredCustomers = customers.toSet().toList();
-      });
+      if (customers.isNotEmpty) {
+        Map<String, dynamic> customerData = customers[0];
+
+        // Now you can use the customerData map to access fields and print them in your bill
+        print('Customer Name: ${customerData['customer_name']}');
+        // print('Customer Type: ${customerData['type']}');
+        // print('Customer Email: ${customerData['email']}');
+        // print('Customer Address Type: ${customerData['address_type']}');
+        // print('Customer State: ${customerData['state']}');
+        // print('Customer pincode: ${customerData['pincode']}');
+        // print('Customer city: ${customerData['city']}');
+        // print('Customer address: ${customerData['address_title']}');
+        // print('Customer addtitle2: ${customerData['address_line1']}');
+        // print('Customer Type: ${customerData['address_line2']}');
+        // print('Customer addrescountry: ${customerData['address_country']}');
+        // print('Customer vat_number: ${customerData['vat_number']}');
+        // print('Customer Type: ${customerData['cr_no']}');
+
+        setState(() {
+          // Assuming you want to filter based on customer_name
+          _filteredCustomers = customers
+              .map((customer) => customer['customer_name']?.toString())
+              .toSet()
+              .toList();
+          // Store the selected customer data for future use
+          selectedCustomerforcompany = customerData;
+        });
+      }
     }
   }
 
@@ -230,6 +271,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       secretKey = prefs.getString('secretKey') ?? '';
       apiKey = prefs.getString('apiKey') ?? '';
     });
+    print("apiinsideload$apiKey");
+    print("secretinsideload$secretKey");
   }
 
   Future<void> _loadItemsFromDatabase() async {
@@ -438,40 +481,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   children: [
                     ...List.generate(10, (index) {
                       return Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              if (isEditing) {
-                                input = index
-                                    .toString(); // Start fresh if not editing
-                                isEditing = true; // Mark as editing
-                              } else {
-                                input += index
-                                    .toString(); // Append if already editing
-                              }
-                            });
-                            _updateItemCount(input);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color(0xFF4285F4), // Set the color here
-                            foregroundColor: Colors.white, // Button text color
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  4.0), // Set border radius here
+                        padding: const EdgeInsets.all(2.0),
+                        child: SizedBox(
+                          width: 40, // Set the desired width
+                          height: 30, // Set the desired height
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                if (isEditing) {
+                                  input = index
+                                      .toString(); // Start fresh if not editing
+                                  isEditing = true; // Mark as editing
+                                } else {
+                                  input += index
+                                      .toString(); // Append if already editing
+                                }
+                              });
+                              _updateItemCount(input);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color(0xFF4285F4), // Set the color here
+                              foregroundColor:
+                                  Colors.white, // Button text color
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    4.0), // Set border radius here
+                              ),
+                              padding: EdgeInsets.zero,
                             ),
-                          ),
-                          child: Text(
-                            index.toString(),
-                            style: TextStyle(fontSize: 10),
+                            child: Text(
+                              index.toString(),
+                              style: const TextStyle(fontSize: 7),
+                            ),
                           ),
                         ),
                       );
                     }),
                   ],
                 ),
-              ),
+              )
             ],
           );
         },
@@ -479,19 +528,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  ElevatedButton _buildNavButton(int page) {
-    return ElevatedButton(
-      onPressed: () => _openPage(page),
-      style: ElevatedButton.styleFrom(
-        shape: const CircleBorder(),
-        backgroundColor:
-            _selectedPage == page ? Colors.black26 : const Color(0xFF4285F4),
-        padding: const EdgeInsets.all(15),
-        foregroundColor: _selectedPage == page
-            ? Colors.white // Text color for selected page
-            : Colors.black, // Text color for non-selected pages
+  Widget _buildNavButton(int page) {
+    return SizedBox(
+      width: 40, // Set width of the button
+      height: 30, // Set height of the button
+      child: ElevatedButton(
+        onPressed: () => _openPage(page),
+        style: ElevatedButton.styleFrom(
+          shape: const CircleBorder(),
+          padding: EdgeInsets.zero,
+          backgroundColor:
+              _selectedPage == page ? Colors.black26 : const Color(0xFF4285F4),
+          foregroundColor: _selectedPage == page
+              ? Colors.white // Text color for selected page
+              : Colors.black, // Text color for non-selected pages
+        ),
+        child: Text(
+          '$page',
+          style: const TextStyle(fontSize: 10), // Adjust font size
+        ),
       ),
-      child: Text('$page'),
     );
   }
 
@@ -925,70 +981,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return total;
   }
 
-  // Future<void> requestStoragePermission(BuildContext context) async {
-  //   try {
-  //     print("requeststorage");
-
-  //     PermissionStatus status;
-  //     if (Platform.isAndroid) {
-  //       // Request MANAGE_EXTERNAL_STORAGE for Android 10+
-  //       status = await Permission.manageExternalStorage.request();
-  //     } else {
-  //       // Request regular storage permission for lower versions
-  //       status = await Permission.storage.request();
-  //     }
-
-  //     print("status: $status");
-
-  //     if (status.isGranted) {
-  //       print("Storage permission granted.");
-  //     } else if (status.isDenied) {
-  //       print("Permission denied: ${status.isDenied}");
-  //       print(
-  //           "Storage permission denied. Please enable it for proper functionality.");
-  //       // ignore: use_build_context_synchronously
-  //       _showPermissionRationale(context); // Pass context to the dialog
-  //     } else if (status.isPermanentlyDenied) {
-  //       print("Permission permanently denied. Redirecting to app settings.");
-  //       openAppSettings();
-  //     } else {
-  //       print("Storage permission not granted.");
-  //       throw Exception("Storage permission not granted");
-  //     }
-  //   } catch (e) {
-  //     print("Error while requesting storage permission: $e");
-  //   }
-  // }
-
-// // Helper function to show a rationale for the permission
-//   void _showPermissionRationale(BuildContext context) {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: const Text("Permission Required"),
-//           content: const Text(
-//               "This app requires storage permission to function properly. Please grant the permission."),
-//           actions: [
-//             TextButton(
-//               child: const Text("Cancel"),
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//               },
-//             ),
-//             TextButton(
-//               child: const Text("Grant Permission"),
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//                 requestStoragePermission(context); // Request permission again
-//               },
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
   Future<PermissionStatus> requestStoragePermission() async {
     print("inside request storage");
     if (Platform.isAndroid) {
@@ -1122,33 +1114,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               PermissionStatus status = await requestStoragePermission();
               try {
                 if (Platform.isAndroid) {
-                  // Check the status after request
-                  // PermissionStatus status =
-                  //     await Permission.manageExternalStorage.status;
-
                   if (!status.isGranted) {
                     print(
                         "Storage permission still not granted after request.");
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          "Please grant storage permission to print the bill.",
-                        ),
+                            "Please grant storage permission to print the bill."),
                       ),
                     );
                     return; // Exit early since permission is not granted
                   } else if (status.isGranted) {
-                    print("permission granted${status.isGranted}");
+                    print("Permission granted: ${status.isGranted}");
                   }
                 }
-                await Future.delayed(const Duration(milliseconds: 500));
 
+                await Future.delayed(const Duration(milliseconds: 500));
                 _selectedCustomer = _getSelectedCustomerForCurrentPage();
 
                 // Check if _selectedCustomer is null
                 if (_selectedCustomer == null) {
                   print("Error: No customer selected.");
-                  // You can show a dialog or a Snackbar to notify the user
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content:
@@ -1157,13 +1143,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                   return; // Stop the execution
                 }
-                // Insert the sold items into the database
+
                 final dbHelper = DatabaseHelper();
+                List<Map<String, dynamic>> customers =
+                    await dbHelper.getCustomerByCompany(selectedCompanyName);
+                Map<String, dynamic>? customerData;
+
+                if (customers.isNotEmpty) {
+                  customerData = customers.firstWhere((customer) =>
+                      customer['customer_name'] == _selectedCustomer);
+                }
+
+                if (customerData == null) {
+                  print("Error: Customer data not found.");
+                  return;
+                }
+                // Insert the sold items into the database
+
                 String invoiceNo = await dbHelper.getNextInvoiceNumber();
 
                 try {
-                  // await requestStoragePermission();
-                  print("changed$previousCustomer to $_selectedCustomer");
+                  print("changed $previousCustomer to $_selectedCustomer");
+
                   // Transfer ordered items to soldItems after printing
                   soldItems = orderedItems
                       .map((item) => Items(
@@ -1184,65 +1185,126 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             isFreeItem: item.itemCount == 0,
                             itemTaxRate: item.tax,
                             invoice: invoiceNo,
-                            customername:
-                                _selectedCustomer!, // Set new customer name
+                            customername: _selectedCustomer!,
                           ))
                       .toList();
 
-                  // Convert soldItems (List<Items>) to List<Map<String, dynamic>>
                   List<Map<String, dynamic>> soldItemsMap =
                       soldItems.map((item) => item.toMap()).toList();
-                  print("solditemssss$soldItemsMap");
-
-                  print("selecteddb $_selectedCustomer");
-
-                  // Get next invoice number
+                  print("soldItems: $soldItemsMap");
 
                   // Insert sales items into DB_sales_items with new customer name
                   await dbHelper.insertSalesItems(
                       soldItemsMap, invoiceNo, _selectedCustomer!);
 
-                  Future<void> prepareAndPostSalesItems(
+                  // Declare responseBody here
+                  Map<String, dynamic>? responseBody;
+
+                  Map<String, String?> keys = await dbHelper
+                      .getApiKeysByCompanyName(selectedCompanyName);
+                  // String? apiKey = keys['apiKey'];
+                  // String? secretKey = keys['secretKey'];
+                  String cvatNo = keys['vat_number'] ?? '';
+                  String cAddress = keys['main_address'] ?? '';
+                  String crNo = keys['cr_no'] ?? '';
+                  print("selectedCompany: $selectedCompanyName");
+
+                  Future prepareAndPostSalesItems(
                     List<Map<String, dynamic>> soldItemsMap,
                     String selectedCustomer,
                     String selectedCompanyName,
                     DatabaseHelper dbHelper,
                   ) async {
                     // Fetch API key and secret key from the database
-                    Map<String, String?> keys = await dbHelper
-                        .getApiKeysByCompanyName(selectedCompanyName);
-
-                    String? apiKey = keys['apiKey'];
-                    String? secretKey = keys['secretKey'];
-                    print("selectedcompanyy$selectedCompanyName");
-
-                    // Check if keys were retrieved successfully
-                    if (apiKey == null || secretKey == null) {
-                      print("Error: API Key or Secret Key is missing.");
-                      print("apikeyyy$apiKey");
-                      print("secretkeyyy$secretKey");
-                      return;
-                    }
-
                     // Call postSalesItemsToApi with the fetched keys
-                    await dbHelper.postSalesItemsToApi(soldItemsMap, apiKey,
-                        secretKey, selectedCustomer, selectedCompanyName);
+                    return await dbHelper.postSalesItemsToApi(
+                      soldItemsMap,
+                      apiKey,
+                      secretKey,
+                      selectedCustomer,
+                      selectedCompanyName,
+                    );
                   }
 
-                  await prepareAndPostSalesItems(soldItemsMap,
+                  // Call the function and assign the result to responseBody
+                  responseBody = await prepareAndPostSalesItems(soldItemsMap,
                       _selectedCustomer!, selectedCompanyName, dbHelper);
+
+                  print("Response body in home$responseBody");
+
+                  String? salesInvoice;
+                  if (responseBody != null && responseBody['message'] != null) {
+                    salesInvoice =
+                        responseBody['message']['sales_invoice'] as String?;
+                  }
+
+                  print("salesinvoiceafterextraction$salesInvoice");
+                  String customerName =
+                      customerData['customer_name'] ?? 'Unknown';
+                  String customerType = customerData['type'] ?? 'Unknown';
+                  String customerEmail = customerData['email'] ?? 'Unknown';
+                  String customerAddressType =
+                      customerData['address_type'] ?? 'Unknown';
+                  String customerState = customerData['state'] ?? 'Unknown';
+                  String customerPincode = customerData['pincode'] ?? '00000';
+                  // String customerAddressTitle =
+                  //     (customerData['address_title'] ?? '') +
+                  //         (customerData['address_title1'] ?? '') +
+                  //         (customerData['address_title2'] ?? '') +
+                  //         (customerData['city'] ?? 'Unknown');
+                  String customerAddressTitle =
+                      (customerData['address_title'] ?? '') +
+                          ' ' +
+                          (customerData['address_line1'] ?? '') +
+                          ' ' +
+                          (customerData['address_line2'] ?? '') +
+                          ' ' +
+                          (customerData['city'] ?? 'Unknown');
+
+                  String customerCountry =
+                      customerData['address_country'] ?? 'Unknown';
+                  String customerVatNumber =
+                      customerData['vat_number'] ?? 'Unknown';
+                  String customerCrNo = customerData['cr_no'] ?? 'Unknown';
+
+                  print("addresstitle$customerAddressTitle");
 
                   // Print bill after inserting and posting
                   final printService = PrintService();
-                  await printService.printBill(
-                      orderedItems, subtotal, tax, total, _selectedCustomer!);
-                  print("Print job started.");
+                  if (salesInvoice != null) {
+                    await printService.printBill(
+                        orderedItems,
+                        subtotal,
+                        tax,
+                        total,
+                        _selectedCustomer!,
+                        salesInvoice, // Pass the sales_invoice as a string to printBill
+                        selectedCompanyName,
+                        customerName,
+                        // customerType,
+                        // customerEmail,
+                        // customerAddressType,
+                        // customerState,
+                        // customerPincode,
+                        // customerCity,
+                        customerAddressTitle,
+                        // customerAddTitle2,
+                        // customerAddTitle3,
+                        // customerCountry,
+                        customerVatNumber,
+                        customerCrNo,
+                        cvatNo,
+                        crNo,
+                        cAddress);
+                  } else {
+                    print("Error: salesInvoice is null, cannot print bill.");
+                  }
 
+                  print("Print job started.");
                   // Update previousCustomer after the sale is successfully processed
                   previousCustomer =
                       _selectedCustomer; // Update to track customer change
                 } catch (e) {
-                  print("status in catch$status");
                   print(
                       "Error occurred while processing sale: ${e.toString()}");
                 }
@@ -1368,11 +1430,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                             isExpanded: true,
                             dropdownColor: Color.fromARGB(255, 226, 226, 233),
-                            items: _filteredCustomers.map((String customer) {
+                            items: _filteredCustomers.map((String? customer) {
                               return DropdownMenuItem<String>(
                                 value: customer,
                                 child: Text(
-                                  customer,
+                                  customer!,
                                   style: const TextStyle(color: Colors.black87),
                                 ),
                               );

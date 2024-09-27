@@ -22,16 +22,62 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:convert'; // for utf8 encoding
 // ignore: depend_on_referenced_packages
 
+// class DatabaseHelper {
+//   static final DatabaseHelper _instance = DatabaseHelper._internal();
+
+//   factory DatabaseHelper() {
+//     return _instance;
+//   }
+
+//   DatabaseHelper._internal();
+
+//   static Database? _database;
+
+//   Future<Database> get database async {
+//     if (_database != null) return _database!;
+//     _database = await _initDatabase();
+//     return _database!;
+//   }
+
+//   Future<Database> _initDatabase() async {
+//     String path;
+
+//     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+//       print("insde windows");
+//       // Desktop: Use sqflite_common_ffi for database initialization
+
+//       sqfliteFfiInit();
+//       var databaseFactory = databaseFactoryFfi;
+
+//       // Get path to the documents directory for desktop platforms
+//       final directory = await getApplicationDocumentsDirectory();
+//       path = join(directory.path, 'DB_My.db');
+//       print("Database Path windows: $path");
+
+//       // Open the database and create tables
+//       var db = await databaseFactory.openDatabase(path);
+
+//       await _onCreate(db, 1);
+//       return db;
+//     } else if (Platform.isAndroid || Platform.isIOS) {
+//       print("insde android");
+//       // Mobile: Use regular sqflit
+//       path = join(await getDatabasesPath(), 'DB_My.db');
+//       print("Database Path android: $path");
+//       return await openDatabase(path, version: 1, onCreate: _onCreate);
+//     } else {
+//       throw Exception('Platform not supported');
+//     }
+//   }
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
-
-  factory DatabaseHelper() {
-    return _instance;
-  }
-
+  factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
 
   static Database? _database;
+  static const int _dbVersion = 6; // Update the version number
+  static const String _dbName = 'DB_My.db';
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -43,28 +89,35 @@ class DatabaseHelper {
     String path;
 
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      print("insde windows");
-      // Desktop: Use sqflite_common_ffi for database initialization
+      print("inside windows");
 
       sqfliteFfiInit();
       var databaseFactory = databaseFactoryFfi;
 
-      // Get path to the documents directory for desktop platforms
       final directory = await getApplicationDocumentsDirectory();
-      path = join(directory.path, 'DB_My.db');
+      path = join(directory.path, _dbName);
       print("Database Path windows: $path");
+      print("dbversion$_dbVersion");
 
-      // Open the database and create tables
-      var db = await databaseFactory.openDatabase(path);
-
-      await _onCreate(db, 1);
+      var db = await databaseFactory.openDatabase(
+        path,
+      );
+      await _onCreate(db, 1); // Initialize DB for first-time creation
+      // _onUpgrade;
       return db;
     } else if (Platform.isAndroid || Platform.isIOS) {
-      print("insde android");
-      // Mobile: Use regular sqflit
-      path = join(await getDatabasesPath(), 'DB_My.db');
+      print("inside android");
+
+      path = join(await getDatabasesPath(), _dbName);
       print("Database Path android: $path");
-      return await openDatabase(path, version: 1, onCreate: _onCreate);
+      print("dbversion$_dbVersion");
+
+      return await openDatabase(
+        path,
+        version: _dbVersion,
+        // onUpgrade: _onUpgrade, 
+        onCreate: _onCreate,
+      );
     } else {
       throw Exception('Platform not supported');
     }
@@ -72,8 +125,8 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     print("inside oncreate");
+    // _onUpgrade(db, 7, 8);
     // Create the DB_company table
-    // Create DB_company table
     await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_company (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,7 +142,18 @@ class DatabaseHelper {
       secretkey TEXT,
       url TEXT,
       companyId TEXT,
-      online INTEGER DEFAULT 0
+      online INTEGER DEFAULT 0,
+         cr_no TEXT,
+  address_type TEXT,
+  address_title TEXT,
+    address_line1 TEXT,
+address_line2 TEXT,
+  building_no TEXT,
+   plot_no TEXT,
+    city TEXT,
+   state TEXT,
+    address_country TEXT,
+    pincode TEXT
     )
   ''');
 
@@ -281,7 +345,18 @@ class DatabaseHelper {
       customer_group TEXT,
       vat_number TEXT,
       phone_no TEXT,
-      email TEXT
+      email TEXT,
+         address_type TEXT,
+    address_title TEXT,
+     address_line1 TEXT,
+    address_line2 TEXT,
+  building_no TEXT,
+     plot_no TEXT,
+ city TEXT,
+state TEXT,
+ address_country TEXT,
+    pincode TEXT,
+    cr_no TEXT
     )
   ''');
 
@@ -359,6 +434,44 @@ class DatabaseHelper {
     print('Tables created: $tables');
   }
 
+  // Method to update the schema before onCreate if needed
+Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  print("Inside onUpgrade");
+
+  // Update DB_company table
+  await db.execute('''
+    ALTER TABLE DB_company ADD COLUMN cr_no TEXT;
+    ALTER TABLE DB_company ADD COLUMN address_type TEXT;
+    ALTER TABLE DB_company ADD COLUMN address_title TEXT;
+    ALTER TABLE DB_company ADD COLUMN address_line1 TEXT;
+    ALTER TABLE DB_company ADD COLUMN address_line2 TEXT;
+    ALTER TABLE DB_company ADD COLUMN building_no TEXT;
+    ALTER TABLE DB_company ADD COLUMN plot_no TEXT;
+    ALTER TABLE DB_company ADD COLUMN city TEXT;
+    ALTER TABLE DB_company ADD COLUMN state TEXT;
+    ALTER TABLE DB_company ADD COLUMN address_country TEXT;
+    ALTER TABLE DB_company ADD COLUMN pincode TEXT;
+  ''');
+
+  // Update DB_customer table
+  await db.execute('''
+    ALTER TABLE DB_customer ADD COLUMN address_type TEXT;
+    ALTER TABLE DB_customer ADD COLUMN address_title TEXT;
+    ALTER TABLE DB_customer ADD COLUMN address_line1 TEXT;
+    ALTER TABLE DB_customer ADD COLUMN address_line2 TEXT;
+    ALTER TABLE DB_customer ADD COLUMN building_no TEXT;
+    ALTER TABLE DB_customer ADD COLUMN plot_no TEXT;
+    ALTER TABLE DB_customer ADD COLUMN city TEXT;
+    ALTER TABLE DB_customer ADD COLUMN state TEXT;
+    ALTER TABLE DB_customer ADD COLUMN address_country TEXT;
+    ALTER TABLE DB_customer ADD COLUMN pincode TEXT;
+    ALTER TABLE DB_customer ADD COLUMN cr_no TEXT;
+  ''');
+
+  print("Tables successfully upgraded.");
+}
+
+
   Future<int> insertOfflineData(FormData formData) async {
     print("Inside insertOfflineData");
     try {
@@ -379,9 +492,9 @@ class DatabaseHelper {
         'website':
             formData.website, // Assuming you have this field in your formData
         'online': formData.online ? 1 : 0,
-        'apikey': formData.apikey,
-        'secretkey': formData.secretkey,
-        'url': formData.url,
+        // 'apikey': formData.apikey,
+        // 'secretkey': formData.secretkey,
+        // 'url': formData.url,
         'companyId': formData.companyId,
       };
       print("FormData online value: ${formData.online}");
@@ -550,15 +663,21 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchCustomersByCompanyName(
-      String companyName) async {
-    final db = await database;
-    return await db.query(
-      'DB_customer',
-      where: 'company_name = ?',
-      whereArgs: [companyName],
-    );
-  }
+  // Future<List<Map<String, dynamic>>> fetchCustomersByCompanyName(
+  //     String companyName) async {
+  //   final db = await database;
+  //        List<Map<String, dynamic>> schema = await db.rawQuery("PRAGMA table_info('DB_customer')");
+
+  // for (var column in schema) {
+  //   print('Columnsss: ${column['name']}, Type: ${column['type']}');
+  // }
+    
+  //   return await db.query(
+  //     'DB_customer',
+  //     where: 'company_name = ?',
+  //     whereArgs: [companyName],
+  //   );
+  // }
 
   Future<List<Map<String, dynamic>>> fetchSuppliersByCompanyName(
       String companyName) async {
@@ -618,15 +737,48 @@ class DatabaseHelper {
     });
   }
 
+  // Future<void> insertCustomer(Customer customer) async {
+  //   print("inside insertcustomer");
+  //   final db = await database;
+  //   await db.insert(
+  //     'DB_customer',
+  //     customer.toMap(),
+  //     conflictAlgorithm: ConflictAlgorithm.replace,
+  //   );
+  // }
+
   Future<void> insertCustomer(Customer customer) async {
-    print("inside insertcustomer");
-    final db = await database;
+  print("inside insertCustomer");
+
+  final db = await database;
+
+           List<Map<String, dynamic>> schema = await db.rawQuery("PRAGMA table_info('DB_customer')");
+
+  for (var column in schema) {
+    print('Columnssscustomer: ${column['name']}, Type: ${column['type']}');
+  }
+
+  // Check if the customer with the same name already exists
+  List<Map<String, dynamic>> existingCustomer = await db.query(
+    'DB_customer',
+    where: 'customer_name = ?',
+    whereArgs: [customer.customerName],  // Assuming 'customerName' is the field in your Customer model
+  );
+
+  if (existingCustomer.isEmpty) {
+    // If no existing customer is found, insert the new customer
     await db.insert(
       'DB_customer',
       customer.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    print("Customer inserted");
+  } else {
+    // If customer exists, skip insertion
+    print("Customer already exists, skipping insertion");
   }
+}
+
 
   // Future<void> getTax(Tax tax) async {
   //   print("insde gettax");
@@ -664,19 +816,20 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<String>> getCustomerByCompany(String companyName) async {
+  Future<List<Map<String, dynamic>>> getCustomerByCompany(
+      String companyName) async {
     print("getcustomers");
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
       'DB_customer', // Your table name
-      columns: ['customer_name'], // Specify the columns you need
+     
       where: 'company_name = ?', // Filter by company name
       whereArgs: [companyName], // The argument for the filter
     );
-    print("empnameee$result");
+    print("ressul$result");
 
-    // Convert result to a list of employee names
-    return result.map((row) => row['customer_name'] as String).toList();
+    // return result.map((row) => row['customer_name'] as String).toList();
+    return result;
   }
 
   Future<void> clearItems() async {
@@ -952,10 +1105,20 @@ class DatabaseHelper {
   Future<Map<String, String?>> getApiKeysByCompanyName(
       String companyName) async {
     final db = await database;
+     List<Map<String, dynamic>> schema = await db.rawQuery("PRAGMA table_info('DB_company')");
+
+  for (var column in schema) {
+    print('Columnsss: ${column['name']}, Type: ${column['type']}');
+  }
     // Query to fetch API Key and Secret Key based on company_name
     List<Map<String, dynamic>> result = await db.query(
       'DB_company',
-      columns: ['apikey', 'secretkey'],
+      // columns: [
+      //   // 'apikey', 'secretkey', 
+      //   'address_title', 'vat_number', 'cr_no'],
+       columns: [
+      'address_title', 'address_line1', 'address_line2', 'building_no', 'city', 'state', 'vat_number', 'cr_no'
+    ],
       where: 'company_name = ?',
       whereArgs: [companyName],
     );
@@ -963,11 +1126,37 @@ class DatabaseHelper {
     // Check if any result was found
     if (result.isNotEmpty) {
       // Extract the API key and Secret key from the result
-      String? apiKey = result[0]['apikey'] as String?;
-      String? secretKey = result[0]['secretkey'] as String?;
-      print('apikeyy$apiKey');
-      print('secretKeyy$secretKey');
-      return {'apiKey': apiKey, 'secretKey': secretKey};
+    //   String? apiKey = result[0]['apikey'] as String;
+    //   String? secretKey = result[0]['secretkey'] as String;
+    String? addressTitle = result[0]['address_title'] as String?;
+    String? addressLine1 = result[0]['address_line1'] as String?;
+    String? addressLine2 = result[0]['address_line2'] as String?;
+    String? buildingNo = result[0]['building_no'] as String?;
+    String? city = result[0]['city'] as String?;
+    String? state = result[0]['state'] as String?;
+    String? vatNo = result[0]['vat_number'] as String?;
+    String? crNo = result[0]['cr_no'] as String?;
+
+    // Concatenate the address fields, ignoring null values and trimming extra spaces
+    String mainAddress = [
+      addressTitle, 
+      addressLine1, 
+      addressLine2, 
+      buildingNo, 
+      city, 
+      state
+    ].where((field) => field != null && field!.isNotEmpty).join(', ');
+
+    // Print the concatenated address and other details
+    print('Main Address: $mainAddress');
+    print('VAT No: $vatNo');
+    print('CR No: $crNo');
+
+    return {
+      'main_address': mainAddress,
+      'vat_number': vatNo,
+      'cr_no': crNo
+    };
     } else {
       // If no result is found, return null values
       print('Error: No API keys found for the given company name.');
@@ -998,12 +1187,12 @@ class DatabaseHelper {
       "http://143.110.187.133:80/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
 
   Future<void> postSalesItemsToApi(
-      List<Map<String, dynamic>> soldItemsMap,
-      String apiKey,
-      String secretKey,
-      String customername, // Pass customername as parameter
-      String companyname // Pass companyname as parameter
-      ) async {
+    List<Map<String, dynamic>> soldItemsMap,
+    String apiKey,
+    String secretKey,
+    String customername, // Pass customername as parameter
+    String companyname, // Pass companyname as parameter
+  ) async {
     // Step 1: Create Basic Authentication header
     String basicAuth =
         'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
@@ -1067,6 +1256,8 @@ class DatabaseHelper {
         try {
           final responseBody = jsonDecode(response.body);
           print("Response Body: ${jsonEncode(responseBody)}");
+          print(responseBody);
+          return responseBody;
         } catch (e) {
           print("Error parsing API response: $e");
         }

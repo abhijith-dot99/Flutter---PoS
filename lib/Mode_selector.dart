@@ -112,6 +112,7 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
     // Insert into database
     try {
       int result = await DatabaseHelper().insertOfflineData(formData);
+      
       print("Insert result: $result");
     } catch (e) {
       print("Error inserting data: $e");

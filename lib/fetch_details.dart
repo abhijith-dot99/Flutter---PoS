@@ -189,6 +189,19 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
           print("selected compa$selectedCompanyName");
 
           for (var company in companyList) {
+            // if (company['company_name'] == selectedCompanyName) {
+            //   final companyData = Companyy(
+            //     companyName: company['company_name'] ?? '',
+            //     owner: company['owner'] ?? '',
+            //     abbr: company['abbr'] ?? '',
+            //     country: company['country'] ?? '',
+            //     vatNumber: company['vat_number'] ?? '',
+            //     phoneNo: company['phone_no'] ?? '',
+            //     email: company['email'] ?? '',
+            //     website: company['website'] ?? '',
+
+            //   );
+
             if (company['company_name'] == selectedCompanyName) {
               final companyData = Companyy(
                 companyName: company['company_name'] ?? '',
@@ -199,8 +212,25 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                 phoneNo: company['phone_no'] ?? '',
                 email: company['email'] ?? '',
                 website: company['website'] ?? '',
-                
+                apiKey: company['apikey'] ?? '',
+                secretKey: company['secretkey'] ?? '',
+                url: company['url'] ?? '',
+                companyId: company['companyId'] ?? '',
+                online: company['online'] ??
+                    1, 
+                crNo: company['cr_no'] ?? '',
+                addressType: company['address_type'] ?? '',
+                addressTitle: company['address_title'] ?? '',
+                addressLine1: company['address_line1'] ?? '',
+                addressLine2: company['address_line2'] ?? '',
+                buildingNo: company['building_no'] ?? '',
+                plotNo: company['plot_no'] ?? '',
+                city: company['city'] ?? '',
+                state: company['state'] ?? '',
+                addressCountry: company['address_country'] ?? '',
+                pincode: company['pincode'] ?? '',
               );
+
               // Insert into the database
               await dbHelper.insertCompany(companyData);
             }
@@ -408,9 +438,21 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                 vatNumber: customer['vat_number'] ?? '',
                 phoneNo: customer['phone_no'] ?? '',
                 email: customer['email'] ?? '',
+                addressType: customer['address_type'] ?? '',
+                addressTitle: customer['address_title'] ?? '',
+                addressLine1: customer['address_line1'] ?? '',
+                addressLine2: customer['address_line2'] ?? '',
+                buildingNo: customer['building_no'] ?? '',
+                plotNo: customer['plot_no'] ?? '',
+                city: customer['city'] ?? '',
+                state: customer['state'] ?? '',
+                addressCountry: customer['address_country'] ?? '',
+                pincode: customer['pincode'] ?? '',
+                crno: customer['cr_no'] ?? '',
               );
 
               await dbHelper.insertCustomer(customerData);
+              print("customerdata $customerData");
             }
           }
         } else {
@@ -597,103 +639,102 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
             ]),
             const SizedBox(height: 30),
             SingleChildScrollView(
-  scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    final dbHelper = DatabaseHelper();
-                    await dbHelper.clearItems();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 10),
-                  ),
-                  child: const Text(
-                    'Clear Items',
-                    style: TextStyle(
-                      color: Colors.white, // Set your desired color here
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      final dbHelper = DatabaseHelper();
+                      await dbHelper.clearItems();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 10),
+                    ),
+                    child: const Text(
+                      'Clear Items',
+                      style: TextStyle(
+                        color: Colors.white, // Set your desired color here
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 15),
-                ElevatedButton(
-                  onPressed: () async {
-                    final dbHelper = DatabaseHelper();
-                    await dbHelper.clearCustomers();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 10),
-                  ),
-                  child: const Text(
-                    'Clear Customers',
-                    style: TextStyle(
-                      color: Colors.white, // Set your desired color here
+                  const SizedBox(width: 15),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final dbHelper = DatabaseHelper();
+                      await dbHelper.clearCustomers();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 10),
+                    ),
+                    child: const Text(
+                      'Clear Customers',
+                      style: TextStyle(
+                        color: Colors.white, // Set your desired color here
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 15),
-                ElevatedButton(
-                  onPressed: () async {
-                    final dbHelper = DatabaseHelper();
-                    await dbHelper.clearSuppliers();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 10),
-                  ),
-                  child: const Text(
-                    'Clear Suppliers',
-                    style: TextStyle(
-                      color: Colors.white, // Set your desired color here
+                  const SizedBox(width: 15),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final dbHelper = DatabaseHelper();
+                      await dbHelper.clearSuppliers();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 10),
+                    ),
+                    child: const Text(
+                      'Clear Suppliers',
+                      style: TextStyle(
+                        color: Colors.white, // Set your desired color here
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 15),
-                ElevatedButton(
-                  onPressed: () async {
-                    final dbHelper = DatabaseHelper();
-                    await dbHelper.clearUsers();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 10),
-                  ),
-                  child: const Text(
-                    'Clear Users',
-                    style: TextStyle(
-                      color: Colors.white, // Set your desired color here
+                  const SizedBox(width: 15),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final dbHelper = DatabaseHelper();
+                      await dbHelper.clearUsers();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 10),
+                    ),
+                    child: const Text(
+                      'Clear Users',
+                      style: TextStyle(
+                        color: Colors.white, // Set your desired color here
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 15),
-                ElevatedButton(
-                  onPressed: () async {
-                    final dbHelper = DatabaseHelper();
-                    await dbHelper.clearCompanies();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 10),
-                  ),
-                  child: const Text(
-                    'Clear Companies',
-                    style: TextStyle(
-                      color: Colors.white, // Set your desired color here
+                  const SizedBox(width: 15),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final dbHelper = DatabaseHelper();
+                      await dbHelper.clearCompanies();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 10),
+                    ),
+                    child: const Text(
+                      'Clear Companies',
+                      style: TextStyle(
+                        color: Colors.white, // Set your desired color here
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-
-        ),
           ],
         ),
       ),
