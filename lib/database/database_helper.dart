@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_pos_app/model/SaleItem.dart';
 import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/companyy.dart';
 import 'package:flutter_pos_app/model/customer.dart';
@@ -22,53 +23,6 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:convert'; // for utf8 encoding
 // ignore: depend_on_referenced_packages
 
-// class DatabaseHelper {
-//   static final DatabaseHelper _instance = DatabaseHelper._internal();
-
-//   factory DatabaseHelper() {
-//     return _instance;
-//   }
-
-//   DatabaseHelper._internal();
-
-//   static Database? _database;
-
-//   Future<Database> get database async {
-//     if (_database != null) return _database!;
-//     _database = await _initDatabase();
-//     return _database!;
-//   }
-
-//   Future<Database> _initDatabase() async {
-//     String path;
-
-//     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-//       print("insde windows");
-//       // Desktop: Use sqflite_common_ffi for database initialization
-
-//       sqfliteFfiInit();
-//       var databaseFactory = databaseFactoryFfi;
-
-//       // Get path to the documents directory for desktop platforms
-//       final directory = await getApplicationDocumentsDirectory();
-//       path = join(directory.path, 'DB_My.db');
-//       print("Database Path windows: $path");
-
-//       // Open the database and create tables
-//       var db = await databaseFactory.openDatabase(path);
-
-//       await _onCreate(db, 1);
-//       return db;
-//     } else if (Platform.isAndroid || Platform.isIOS) {
-//       print("insde android");
-//       // Mobile: Use regular sqflit
-//       path = join(await getDatabasesPath(), 'DB_My.db');
-//       print("Database Path android: $path");
-//       return await openDatabase(path, version: 1, onCreate: _onCreate);
-//     } else {
-//       throw Exception('Platform not supported');
-//     }
-//   }
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -115,8 +69,8 @@ class DatabaseHelper {
       return await openDatabase(
         path,
         version: _dbVersion,
-        // onUpgrade: _onUpgrade, 
         onCreate: _onCreate,
+        // onUpgrade: _onUpgrade, 
       );
     } else {
       throw Exception('Platform not supported');
@@ -125,7 +79,7 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     print("inside oncreate");
-    // _onUpgrade(db, 7, 8);
+    // _onUpgrade(db, 10, 11);
     // Create the DB_company table
     await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_company (
@@ -436,7 +390,7 @@ state TEXT,
 
   // Method to update the schema before onCreate if needed
 Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-  print("Inside onUpgrade");
+  // print("Inside onUpgrade");
 
   // Update DB_company table
   await db.execute('''
@@ -559,7 +513,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
       final db = await database;
       double companyTax = await getCompanyTax(selectedCompanyName);
 
-      print("companytax$companyTax");
+      // print("companytax$companyTax");
       // Query the database for items that match the selected company name
       final List<Map<String, dynamic>> result = await db.query(
         'DB_items',
@@ -574,7 +528,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
       // Convert the result into a list of Item objects
       return result.map((map) => Item.fromMap(map)).toList();
     } catch (e) {
-      print("Error fetching items: $e");
+      print("Error fetching items in db: $e");
       return [];
     }
   }
@@ -663,22 +617,6 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     );
   }
 
-  // Future<List<Map<String, dynamic>>> fetchCustomersByCompanyName(
-  //     String companyName) async {
-  //   final db = await database;
-  //        List<Map<String, dynamic>> schema = await db.rawQuery("PRAGMA table_info('DB_customer')");
-
-  // for (var column in schema) {
-  //   print('Columnsss: ${column['name']}, Type: ${column['type']}');
-  // }
-    
-  //   return await db.query(
-  //     'DB_customer',
-  //     where: 'company_name = ?',
-  //     whereArgs: [companyName],
-  //   );
-  // }
-
   Future<List<Map<String, dynamic>>> fetchSuppliersByCompanyName(
       String companyName) async {
     final db = await database;
@@ -737,15 +675,6 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     });
   }
 
-  // Future<void> insertCustomer(Customer customer) async {
-  //   print("inside insertcustomer");
-  //   final db = await database;
-  //   await db.insert(
-  //     'DB_customer',
-  //     customer.toMap(),
-  //     conflictAlgorithm: ConflictAlgorithm.replace,
-  //   );
-  // }
 
   Future<void> insertCustomer(Customer customer) async {
   print("inside insertCustomer");
@@ -779,16 +708,6 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
   }
 }
 
-
-  // Future<void> getTax(Tax tax) async {
-  //   print("insde gettax");
-  //   final db = await database;
-  //   await db.insert(
-  //     'DB_sales_tax',
-  //     tax.toMap(),
-  //     conflictAlgorithm: ConflictAlgorithm.replace,
-  //   );
-  // }
 
   Future<void> getTax(Tax tax) async {
     print("inside getTax");
@@ -837,7 +756,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     await db.delete('DB_items');
     print('Items table cleared.');
   }
-
+ 
   // Similarly, add methods for other tables
   Future<void> clearCustomers() async {
     final db = await database;
@@ -1047,10 +966,6 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
 
     print("Items inserted into DB_sales_items for invoice: $invoiceNo");
   }
-
-// Define your API URL
-  // String apiUrl =
-  //     'http://143.110.187.133:82/api/method/duplex_dev.api.sales_invoice_item.get_invoice_item_details';
 
   Future<String> getNextInvoiceNumber() async {
     final db = await database;
@@ -1315,4 +1230,61 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
       return 0.0; // Default to 0.0 in case of error
     }
   }
+
+// Future<List<SalesItem>> fetchSalesItems() async {
+//     final db = await database;
+//     final List<Map<String, dynamic>> maps = await db.query('DB_sales_items');
+
+//     return List.generate(maps.length, (i) {
+//       return SalesItem(
+//         id: maps[i]['id'],
+//         itemCode: maps[i]['item_code'],
+//         itemName: maps[i]['item_name'],
+//         itemDescription: maps[i]['item_description'],
+//         itemGroup: maps[i]['item_group'],
+//         itemImage: maps[i]['item_image'],
+//         itemUom: maps[i]['item_uom'],
+//         baseRate: maps[i]['base_rate'],
+//         baseAmount: maps[i]['base_amount'],
+//         netRate: maps[i]['net_rate'],
+//         netAmount: maps[i]['net_amount'],
+//         pricingRules: maps[i]['pricing_rules'],
+//         isFreeItem: maps[i]['is_free_item'] == 1, 
+//         itemTaxRate: maps[i]['item_tax_rate'],
+//         invoiceNo: maps[i]['invoice_no'],
+//         customerName: maps[i]['customer_name'],
+//         itemCount: maps[i]['item_count'],
+//       );
+//     });
+//   }
+
+Future<List<SalesItem>> fetchSalesItems() async {
+  final db = await database;
+  final List<Map<String, dynamic>> maps = await db.query('DB_sales_items');
+
+  return List.generate(maps.length, (i) {
+    return SalesItem(
+      id: maps[i]['id'] ?? 0,  // Provide default value for null 'id'
+      itemCode: maps[i]['item_code'] ?? '',  // Ensure a default empty string
+      itemName: maps[i]['item_name'] ?? '',  // Ensure a default empty string
+      itemDescription: maps[i]['item_description'] ?? '',  // Ensure a default empty string
+      itemGroup: maps[i]['item_group'] ?? '',  // Ensure a default empty string
+      itemImage: maps[i]['item_image'] ?? '',  // Ensure a default empty string
+      itemUom: maps[i]['item_uom'] ?? '',  // Ensure a default empty string
+      baseRate: double.tryParse(maps[i]['base_rate']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
+      baseAmount: double.tryParse(maps[i]['base_amount']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
+      netRate: double.tryParse(maps[i]['net_rate']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
+      netAmount: double.tryParse(maps[i]['net_amount']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
+      pricingRules: maps[i]['pricing_rules'] ?? '',  // Ensure a default empty string
+      isFreeItem: maps[i]['is_free_item'] == 1,  // Assuming 1 for true, 0 for false
+      itemTaxRate: double.tryParse(maps[i]['item_tax_rate']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
+      invoiceNo: maps[i]['invoice_no'] ?? '',  // Ensure a default empty string
+      customerName: maps[i]['customer_name'] ?? '',  // Ensure a default empty string
+      itemCount: maps[i]['item_count'] ?? 0,  // Provide default value for null 'item_count'
+    );
+  });
 }
+
+
+}
+

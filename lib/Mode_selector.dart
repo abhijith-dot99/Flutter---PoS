@@ -90,33 +90,33 @@ class _SoftwareModePageState extends State<SoftwareModePage> {
 
     print("companynaeminsaveform$selectedCompanyName");
 
-    // Create FormData instance
-    FormData formData = FormData(
-      // companyName: companyNameController.text,
-      companyName: selectedCompanyName,
-      companyId: companyIdController.text,
-      contactNumber: contactNumberController.text,
-      owner: ownerController.text,
-      abbr: abbrController.text, // New field
-      country: countryController.text, // New field
-      vatNumber: usernameController.text, // New field
-      emailId: emailIdController.text,
-      username: usernameController.text,
-      password: passwordController.text,
-      website: usernameController.text,
-      online: isOnline,
-      apikey: apiKeyController.text,
-      secretkey: secretKeyController.text,
-      url: urlController.text,
-    );
-    // Insert into database
-    try {
-      int result = await DatabaseHelper().insertOfflineData(formData);
+    // // Create FormData instance
+    // FormData formData = FormData(
+    //   // companyName: companyNameController.text,
+    //   companyName: selectedCompanyName,
+    //   companyId: companyIdController.text,
+    //   contactNumber: contactNumberController.text,
+    //   owner: ownerController.text,
+    //   abbr: abbrController.text, // New field
+    //   country: countryController.text, // New field
+    //   vatNumber: usernameController.text, // New field
+    //   emailId: emailIdController.text,
+    //   username: usernameController.text,
+    //   password: passwordController.text,
+    //   website: usernameController.text,
+    //   online: isOnline,
+    //   apikey: apiKeyController.text,
+    //   secretkey: secretKeyController.text,
+    //   url: urlController.text,
+    // );
+    // // Insert into database
+    // try {
+    //   int result = await DatabaseHelper().insertOfflineData(formData);
       
-      print("Insert result: $result");
-    } catch (e) {
-      print("Error inserting data: $e");
-    }
+    //   print("Insert result: $result");
+    // } catch (e) {
+    //   print("Error inserting data: $e");
+    // }
   }
 
   void _fetchCompanyNames() async {

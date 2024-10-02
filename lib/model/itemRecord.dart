@@ -1,4 +1,5 @@
-class ItemData {
+// ignore: file_names
+class ItemRecord {
   final String itemCode;
   final String itemName;
   final double itemPrice;
@@ -10,8 +11,7 @@ class ItemData {
   final String uom;
   final String itemTaxType;
 
-
-  ItemData({
+  ItemRecord({
     required this.itemCode,
     required this.itemName,
     required this.itemPrice,
@@ -24,9 +24,9 @@ class ItemData {
     required this.itemTaxType,
   });
 
-  // Convert a JSON object to an ItemData object
-  factory ItemData.fromJson(Map<String, dynamic> json) {
-    return ItemData(
+  // Convert a JSON object to an ItemRecord object
+  factory ItemRecord.fromJson(Map<String, dynamic> json) {
+    return ItemRecord(
       itemCode: json['item_code'] ?? '',
       itemName: json['item_name'] ?? '',
       itemPrice: json['item_price'] != null
@@ -40,11 +40,10 @@ class ItemData {
       itemPriceList: json['item_price_list'] ?? '',
       uom: json['uom'] ?? '',
       itemTaxType: json['item_tax_type'] ?? '',
-
     );
   }
 
-  // Convert an ItemData object to a Map for database insertion
+  // Convert an ItemRecord object to a Map for database insertion
   Map<String, dynamic> toJson() {
     return {
       'item_code': itemCode,

@@ -5,7 +5,7 @@ class Item {
   int itemCount;
   final String itemCode;
   final String itemName;
-  final double companyTax; // Tax specific to the company
+  final double companyTax;
   final String image;
   final String itemtaxtype;
 
@@ -19,6 +19,7 @@ class Item {
     required this.companyTax,
     required this.image,
     required this.itemtaxtype,
+ 
   });
 
   factory Item.fromMap(Map<String, dynamic> map) {
@@ -31,7 +32,8 @@ class Item {
       companyTax: map['rate'] ?? 0.0,
       itemCount: map['item_count'] ?? 1,
       itemtaxtype: map['item_tax_type'],
-     
+    
+
       // category: map['category'] ?? '',
     );
   }
@@ -39,5 +41,6 @@ class Item {
   @override
   String toString() {
     return 'Item(name: $itemName, count: $itemCount, price: $price, companyTax: $companyTax)';
+    // return 'Item(name: $itemName, count: $itemCount, price: $price, itemTax: $tax)';
   }
 }

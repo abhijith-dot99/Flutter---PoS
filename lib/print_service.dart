@@ -115,6 +115,7 @@ class PrintService {
       String crNo,
       String cAddress) async {
     await requestPermissions();
+
     final pdfData = await generatePdf(
         items,
         subtotal,
@@ -135,316 +136,332 @@ class PrintService {
     // print('Order Details:\n${pdfData.toString()}');
   }
 
+  Future<Uint8List> generatePdf(
+      List<Item> items,
+      double subtotal,
+      double tax,
+      double total,
+      String selectedcust,
+      String salesInvoice,
+      String selectedCompanyName,
+      String customerName,
+      String customerAddressTitle,
+      String customerVatNumber,
+      String customerCrNo,
+      String sellerVatNumber,
+      String sellerCrNo,
+      String sellerAddress) async {
+    final pdf = pw.Document();
 
-Future<Uint8List> generatePdf(
-  List<Item> items,
-  double subtotal,
-  double tax,
-  double total,
-  String selectedcust,
-  String salesInvoice,
-  String selectedCompanyName,
-  String customerName,
-  String customerAddressTitle,
-  String customerVatNumber,
-  String customerCrNo,
-  String sellerVatNumber,
-  String sellerCrNo,
-  String sellerAddress
-) async {
-  final pdf = pw.Document();
-
-  pdf.addPage(
-    pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      build: (pw.Context context) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Invoice Heading
-          pw.Center(
-            child: pw.Text(
-              'TAX INVOICE',
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // Invoice Heading
+            pw.Center(
+              child: pw.Text(
+                'TAX INVOICE',
+                style:
+                    pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+              ),
             ),
-          ),
-          pw.SizedBox(height: 38),
+            pw.SizedBox(height: 38),
 
-          // Invoice number and date
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Invoice No: $salesInvoice', style: pw.TextStyle(fontSize: 10)),
-              pw.Text('Date: ${DateTime.now().toString().substring(0, 10)}', style: pw.TextStyle(fontSize: 10)),
-            ],
-          ),
-          pw.SizedBox(height: 16),
-
-          // Seller and Buyer table with column separation for labels and values
-          pw.Table(
-            columnWidths: {
-              0: pw.FlexColumnWidth(1),
-              1: pw.FlexColumnWidth(1),
-            },
-            border: pw.TableBorder.all(
-                color: PdfColors.black, width: 1), // Outer border for the table
-            children: [
-              // Header Row: Seller & Buyer
-              pw.TableRow(
-                children: [
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Text(
-                      'Seller',
-                      style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold, fontSize: 12),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                  ),
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Text(
-                      'Buyer',
-                      style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold, fontSize: 12),
-                      textAlign: pw.TextAlign.center,
-                    ),
-                  ),
-                ],
+            // Invoice number and date
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Invoice No: $salesInvoice',
+                    style: pw.TextStyle(fontSize: 10)),
+                pw.Text('Date: ${DateTime.now().toString().substring(0, 10)}',
+                    style: pw.TextStyle(fontSize: 10)),
+              ],
+            ),
+            pw.SizedBox(height: 16),
+//buyesr and seller
+            pw.Table(
+              columnWidths: {
+                0: pw.FlexColumnWidth(1),
+                1: pw.FlexColumnWidth(1),
+              },
+              border: pw.TableBorder.all(
+                color: PdfColors.black,
+                width:
+                    1, // Outer border for the entire table (including Seller and Buyer)
               ),
-
-              // Row 1: Name for Seller and Buyer
-              pw.TableRow(
-                children: [
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('Name:'),
-                            pw.Text('$selectedCompanyName'),
-                          ],
+              children: [
+                // Header Row for Seller and Buyer
+                pw.TableRow(
+                  children: [
+                    pw.Padding(
+                      padding: pw.EdgeInsets.all(8),
+                      child: pw.Text(
+                        'Seller',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 12,
                         ),
-                      ],
+                        textAlign: pw.TextAlign.center,
+                      ),
                     ),
-                  ),
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('Name:'),
-                            pw.Text(customerName),
-                          ],
+                    pw.Padding(
+                      padding: pw.EdgeInsets.all(8),
+                      child: pw.Text(
+                        'Buyer',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 12,
                         ),
-                      ],
+                        textAlign: pw.TextAlign.center,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
 
-              // Row 2: Address for Seller and Buyer
-              pw.TableRow(
-                children: [
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('Address:'),
-                            pw.Text(sellerAddress),
-                          ],
+                // Main Table Row containing Seller and Buyer sub-tables
+                pw.TableRow(
+                  children: [
+                    // Seller Table
+                    pw.Padding(
+                      padding: pw.EdgeInsets.all(0),
+                      child: pw.Table(
+                        columnWidths: {
+                          0: pw.FlexColumnWidth(1), // Label column
+                          1: pw.FlexColumnWidth(2), // Data column
+                        },
+                        border: pw.TableBorder.all(
+                          color: PdfColors.black,
+                          width:
+                              1, // Ensure row-wise and column-wise separation within Seller table
                         ),
-                      ],
+                        children: [
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('Name:',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(selectedCompanyName,
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('Address:',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(sellerAddress,
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('VAT No:',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(sellerVatNumber,
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('CR No:',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(sellerCrNo,
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('Address:'),
-                            pw.Text(customerAddressTitle),
-                          ],
+
+                    // Buyer Table
+                    pw.Padding(
+                      padding: pw.EdgeInsets.all(0),
+                      child: pw.Table(
+                        columnWidths: {
+                          0: pw.FlexColumnWidth(1), // Label column
+                          1: pw.FlexColumnWidth(2), // Data column
+                        },
+                        border: pw.TableBorder.all(
+                          color: PdfColors.black,
+                          width:
+                              1, // Ensure row-wise and column-wise separation within Buyer table
                         ),
-                      ],
+                        children: [                         
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text('Name:',
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text(customerName,
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                              ],
+                            ),                          
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text('Address:',
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text(customerAddressTitle,
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                              ],
+                            ),               
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text('VAT No:',
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text(customerVatNumber,
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                              ],
+                            ),                   
+                            pw.TableRow(
+                              children: [
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text('CR No:',
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.only(
+                                      top: 10, bottom: 10, left: 5),
+                                  child: pw.Text(customerCrNo,
+                                      style: pw.TextStyle(fontSize: 10)),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
+            ),
 
-              // Row 3: VAT No for Seller and Buyer
-              pw.TableRow(
-                children: [
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('VAT No:'),
-                            pw.Text(sellerVatNumber),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('VAT No:'),
-                            pw.Text(customerVatNumber),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            pw.SizedBox(height: 20),
 
-              // Row 4: CR No for Seller and Buyer
-              pw.TableRow(
-                children: [
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('CR No:'),
-                            pw.Text(sellerCrNo),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  pw.Padding(
-                    padding: pw.EdgeInsets.all(8),
-                    child: pw.Table(
-                      columnWidths: {
-                        0: pw.FlexColumnWidth(1),
-                        1: pw.FlexColumnWidth(2),
-                      },
-                      children: [
-                        pw.TableRow(
-                          children: [
-                            pw.Text('CR No:'),
-                            pw.Text(customerCrNo),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            // Table for items with 'S.No' column and center-aligned content
+            pw.Table.fromTextArray(
+              headers: [
+                'S.No',
+                'Particulars',
+                'Unit Price',
+                'Quantity',
+                'Tax',
+                'Total'
+              ],
+              data: items.asMap().entries.map((entry) {
+                int index = entry.key + 1; // Serial number (1-based index)
+                Item item = entry.value;
+                double price = double.tryParse(item.price) ??
+                    0.0; // Default to 0.0 if parsing fails
+                int quantity = item.itemCount;
+                double itemTotal = price * quantity;
+                return [
+                  index.toString(), // S.No column
+                  item.itemName,
+                  item.price,
+                  item.itemCount,
+                  tax,
+                  itemTotal.toStringAsFixed(2),
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              cellAlignment: pw.Alignment.center, // Center-align table cells
+            ),
 
-          pw.SizedBox(height: 20),
+            pw.SizedBox(height: 20),
+            pw.Spacer(),
 
-          // Table for items with 'S.No' column and center-aligned content
-          pw.Table.fromTextArray(
-            headers: [
-              'S.No',
-              'Particulars',
-              'Unit Price',
-              'Quantity',
-              'Tax',
-              'Total'
-            ],
-            data: items.asMap().entries.map((entry) {
-              int index = entry.key + 1; // Serial number (1-based index)
-              Item item = entry.value;
-                double price = double.tryParse(item.price) ?? 0.0; // Default to 0.0 if parsing fails
-  int quantity = item.itemCount; 
-          double itemTotal = price * quantity; 
-              return [
-                index.toString(), // S.No column
-                item.itemName,
-                item.price,
-                item.itemCount,
-                tax,
-                 itemTotal.toStringAsFixed(2),
-              ];
-            }).toList(),
-            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-            cellAlignment: pw.Alignment.center, // Center-align table cells
-          ),
-
-          pw.SizedBox(height: 20),
-          pw.Spacer(),
-
-          // Subtotal, Tax, and Total rows
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Subtotal:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.Text('${subtotal.toStringAsFixed(2)}'),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Tax:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.Text('${tax.toStringAsFixed(2)}'),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Total:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
-              pw.Text('${total.toStringAsFixed(2)}'),
-            ],
-          ),
-        ],
+            // Subtotal, Tax, and Total rows
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Subtotal:',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text('${subtotal.toStringAsFixed(2)}'),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Tax:',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text('${tax.toStringAsFixed(2)}'),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Total:',
+                    style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                pw.Text('${total.toStringAsFixed(2)}'),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
 
-  return pdf.save();
+    return pdf.save();
+  }
 }
-
-
-}
-
-
-
 
 Future<void> requestPermissions() async {
   print("inside requestpermission");

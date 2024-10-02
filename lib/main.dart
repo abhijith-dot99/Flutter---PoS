@@ -178,13 +178,13 @@ class _MainPageState extends State<MainPage> {
               menu: 'Sales',
               icon: Icons.assignment,
               onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //       builder: (context) => SalesReport(
-                //             items: items,
-                //           )),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => SalesReport(
+                            // items: items,
+                          )),
+                );
               },
             ),
             _itemMenu(

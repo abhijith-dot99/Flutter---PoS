@@ -4,6 +4,7 @@ import 'package:flutter_pos_app/login_page.dart';
 // import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
+import 'package:flutter_pos_app/model/itemRecord.dart';
 import 'package:flutter_pos_app/model/supplier.dart';
 import 'package:flutter_pos_app/model/tax.dart';
 import 'package:flutter_pos_app/model/userss.dart';
@@ -48,6 +49,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
       selectedCompanyId = prefs.getString('selectedCompanyId') ?? '';
     });
     print(apiKey);
+    print("url$url");
     print("selectedco$selectedCompanyName");
     print(secretKey);
     _fetchCompanyDetails(); // Fetch company details after loading preferences
@@ -216,8 +218,7 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                 secretKey: company['secretkey'] ?? '',
                 url: company['url'] ?? '',
                 companyId: company['companyId'] ?? '',
-                online: company['online'] ??
-                    1, 
+                online: company['online'] ?? 1,
                 crNo: company['cr_no'] ?? '',
                 addressType: company['address_type'] ?? '',
                 addressTitle: company['address_title'] ?? '',
