@@ -20,10 +20,11 @@ class PrintService {
       String customerName,
       String customerAddressTitle,
       String customerVatNumber,
-      String customerCrNo,
-      String cvatNo,
-      String crNo,
-      String cAddress) async {
+      String customercompanyCrNo,
+      String companyVatNo,
+      String companyCrNo,
+      String companyAddress,
+      double discount) async {
     if (Platform.isWindows) {
       await printBillWindows(
           items,
@@ -36,10 +37,11 @@ class PrintService {
           customerName,
           customerAddressTitle,
           customerVatNumber,
-          customerCrNo,
-          cvatNo,
-          crNo,
-          cAddress);
+          customercompanyCrNo,
+          companyVatNo,
+          companyCrNo,
+          companyAddress,
+          discount);
     } else if (Platform.isAndroid) {
       await printBillAndroid(
           items,
@@ -52,10 +54,11 @@ class PrintService {
           customerName,
           customerAddressTitle,
           customerVatNumber,
-          customerCrNo,
-          cvatNo,
-          crNo,
-          cAddress);
+          customercompanyCrNo,
+          companyVatNo,
+          companyCrNo,
+          companyAddress,
+          discount);
     } else {
       throw UnsupportedError('Unsupported platform');
     }
@@ -72,10 +75,11 @@ class PrintService {
       String customerName,
       String customerAddressTitle,
       String customerVatNumber,
-      String customerCrNo,
-      String cvatNo,
-      String crNo,
-      String cAddress) async {
+      String customercompanyCrNo,
+      String companyVatNo,
+      String companyCrNo,
+      String companyAddress,
+      discount) async {
     final pdfData = await generatePdf(
         items,
         subtotal,
@@ -87,10 +91,11 @@ class PrintService {
         customerName,
         customerAddressTitle,
         customerVatNumber,
-        customerCrNo,
-        cvatNo,
-        crNo,
-        cAddress);
+        customercompanyCrNo,
+        companyVatNo,
+        companyCrNo,
+        companyAddress,
+        discount);
 
     await Printing.directPrintPdf(
       printer: await _getDefaultPrinter(),
@@ -110,10 +115,11 @@ class PrintService {
       String customerName,
       String customerAddressTitle,
       String customerVatNumber,
-      String customerCrNo,
-      String cvatNo,
-      String crNo,
-      String cAddress) async {
+      String customercompanyCrNo,
+      String companyVatNo,
+      String companyCrNo,
+      String companyAddress,
+      discount) async {
     await requestPermissions();
 
     final pdfData = await generatePdf(
@@ -127,10 +133,11 @@ class PrintService {
         customerName,
         customerAddressTitle,
         customerVatNumber,
-        customerCrNo,
-        cvatNo,
-        crNo,
-        cAddress);
+        customercompanyCrNo,
+        companyVatNo,
+        companyCrNo,
+        companyAddress,
+        discount);
     final filePath = await savePdfToFile(pdfData);
     await openPdfFile(filePath);
     // print('Order Details:\n${pdfData.toString()}');
@@ -147,10 +154,11 @@ class PrintService {
       String customerName,
       String customerAddressTitle,
       String customerVatNumber,
-      String customerCrNo,
+      String customercompanyCrNo,
       String sellerVatNumber,
-      String sellerCrNo,
-      String sellerAddress) async {
+      String sellercompanyCrNo,
+      String sellerAddress,
+      discount) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -296,7 +304,7 @@ class PrintService {
                               pw.Padding(
                                 padding: pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
-                                child: pw.Text(sellerCrNo,
+                                child: pw.Text(sellercompanyCrNo,
                                     style: pw.TextStyle(fontSize: 10)),
                               ),
                             ],
@@ -378,7 +386,7 @@ class PrintService {
                                 pw.Padding(
                                   padding: pw.EdgeInsets.only(
                                       top: 10, bottom: 10, left: 5),
-                                  child: pw.Text(customerCrNo,
+                                  child: pw.Text(customercompanyCrNo,
                                       style: pw.TextStyle(fontSize: 10)),
                                 ),
                               ],
@@ -400,7 +408,7 @@ class PrintService {
                 'Particulars',
                 'Unit Price',
                 'Quantity',
-                'Tax',
+                // 'Tax',
                 'Total'
               ],
               data: items.asMap().entries.map((entry) {
@@ -415,7 +423,7 @@ class PrintService {
                   item.itemName,
                   item.price,
                   item.itemCount,
-                  tax,
+                  // tax,
                   itemTotal.toStringAsFixed(2),
                 ];
               }).toList(),
@@ -442,6 +450,15 @@ class PrintService {
                 pw.Text('Tax:',
                     style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 pw.Text('${tax.toStringAsFixed(2)}'),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+              pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Discount:',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text('${discount.toStringAsFixed(2)}'),
               ],
             ),
             pw.SizedBox(height: 8),

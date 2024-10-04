@@ -16,6 +16,8 @@ class SalesItem {
   String invoiceNo;
   String customerName;
   int itemCount;
+  String date;
+  double discount;
 
   SalesItem({
     required this.id,
@@ -35,6 +37,8 @@ class SalesItem {
     required this.invoiceNo,
     required this.customerName,
     required this.itemCount,
+    required this.date,
+    required this.discount,
   });
 
   // Convert a SalesItem object into a Map object to store in the database
@@ -52,11 +56,13 @@ class SalesItem {
       'net_rate': netRate,
       'net_amount': netAmount,
       'pricing_rules': pricingRules,
-      'is_free_item': isFreeItem ? 1 : 0,  // Boolean is stored as an int
+      'is_free_item': isFreeItem ? 1 : 0, // Boolean is stored as an int
       'item_tax_rate': itemTaxRate,
       'invoice_no': invoiceNo,
       'customer_name': customerName,
       'item_count': itemCount,
+      'date': date, // Store date
+      'discount': discount,
     };
   }
 
@@ -75,11 +81,13 @@ class SalesItem {
       netRate: map['net_rate'],
       netAmount: map['net_amount'],
       pricingRules: map['pricing_rules'],
-      isFreeItem: map['is_free_item'] == 1,  // Convert int to bool
+      isFreeItem: map['is_free_item'] == 1, // Convert int to bool
       itemTaxRate: map['item_tax_rate'],
       invoiceNo: map['invoice_no'],
       customerName: map['customer_name'],
       itemCount: map['item_count'],
+      date: map['date'], // Retrieve date
+      discount: map['discount']
     );
   }
 }

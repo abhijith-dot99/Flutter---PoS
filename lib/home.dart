@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final dbHelper = DatabaseHelper(); // Initialize dbHelper
   double companyTax = 0.0;
   double fetchedTax = 0.0;
+  String fetchVat = '';
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
   List<Item> orderedItems = [];
@@ -298,8 +299,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 // Function to add an item to the order
   Future<void> addItemToOrder(Item item) async {
     final dbHelper = DatabaseHelper();
-    double companyTax =
-        await dbHelper.fetchCompanyTax('Duplex Solutions') as double;
+    double companyTax = await dbHelper.fetchCompanyTax(selectedCompanyName);
     setState(() {
       // Check if the item is already in the orderedItems list for the current page
       int existingItemIndex = orderedItems
@@ -922,6 +922,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     print("_fetchCompanyTax");
     print("FetchedselectedCompanyName: $selectedCompanyName");
     fetchedTax = await dbHelper.getCompanyTax(selectedCompanyName); // Fetch tax
+    fetchVat = (await dbHelper.getCompanyVat(selectedCompanyName));
     setState(() {
       // Update the state after fetching the tax
       companyTax = fetchedTax;
@@ -929,42 +930,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  //Calculate the total tax based on tax type
-  double calculateTax() {
-    print("insdie calc$selectedCompanyName");
+  double calculateTax(double discount) {
     double totalTax = 0.0;
-    for (var item in orderedItems) {
-      print("ordreditemse$orderedItems");
-      double price = double.parse(item.price.replaceAll(' ', ''));
 
+    for (var item in orderedItems) {
+      double price = double.parse(item.price.replaceAll(' ', ''));
       int quantity = item.itemCount;
-      print("item.tax${item.tax}");
       double itemTotal = price * quantity;
 
+      // Calculate company tax before discount
       double companyTaxAmount = itemTotal * (companyTax / 100);
-      totalTax += companyTaxAmount;
-      print("companytaxx$companyTax");
 
-      // if (item.tax.toLowerCase() == '') {
-      //   totalTax += itemTotal * 0.10;
-      // } else {
-      //   try {
-      //     // Parse GST amount as double
-      //     double gstAmount = double.parse(item.tax);
-      //     totalTax += gstAmount * quantity;
-      //   } catch (e) {
-      //     print("Invalid GST amount: ${item.tax}");
-      //   }
-      // }
+      // Calculate the taxable amount after applying discount proportionally
+      double discountProportion = discount / calculateSubtotal();
+      double discountedCompanyTax = companyTaxAmount * (1 - discountProportion);
 
-      print("totalTax$totalTax");
+      // Add discounted tax to the total
+      totalTax += discountedCompanyTax;
     }
+
     return totalTax;
   }
 
-  // Calculate the total amount including tax
+// Calculate the total amount including tax and discount
   double calculateTotal() {
-    double total = calculateSubtotal() + calculateTax();
+    double subtotal = calculateSubtotal();
     double discount = 0.0;
 
     // Check if discount is not empty and parse it
@@ -972,12 +962,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       discount = double.parse(_discountController.text);
     }
 
-    // Subtract the discount from the total
-    total = total - discount;
+    // Calculate tax after applying discount
+    double totalTax = calculateTax(discount);
 
+    // Subtract the discount from the subtotal
+    double total = subtotal + totalTax - discount;
+
+    // Ensure total doesn't go below zero
     if (total < 0) {
       total = 0;
     }
+
     return total;
   }
 
@@ -1003,8 +998,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _calculateAndPrintSection() {
+    double discount = 0.0;
+    if (_discountController.text.isNotEmpty) {
+      discount = double.parse(_discountController.text);
+    }
     double subtotal = calculateSubtotal();
-    double tax = calculateTax();
+    double tax = calculateTax(discount);
     double total = calculateTotal();
 
     return Container(
@@ -1189,13 +1188,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ))
                       .toList();
 
+                  double discountamount = 0.0;
+
+                  if (_discountController.text.isNotEmpty) {
+                    discountamount = double.parse(_discountController.text);
+                  }
                   List<Map<String, dynamic>> soldItemsMap =
                       soldItems.map((item) => item.toMap()).toList();
                   print("soldItems: $soldItemsMap");
 
+                  int fullcount = soldItemsMap.fold(
+                      0, (sum, item) => sum + (item['item_count'] as int));
+                  print("fullcount$fullcount");
+
                   // Insert sales items into DB_sales_items with new customer name
-                  await dbHelper.insertSalesItems(
-                      soldItemsMap, invoiceNo, _selectedCustomer!);
+                  await dbHelper.insertSalesItems(soldItemsMap, invoiceNo,
+                      _selectedCustomer!, discountamount);
 
                   // Declare responseBody here
                   Map<String, dynamic>? responseBody;
@@ -1204,9 +1212,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       .getApiKeysByCompanyName(selectedCompanyName);
                   // String? apiKey = keys['apiKey'];
                   // String? secretKey = keys['secretKey'];
-                  String cvatNo = keys['vat_number'] ?? '';
-                  String cAddress = keys['main_address'] ?? '';
-                  String crNo = keys['cr_no'] ?? '';
+                  String companyVatNo = keys['vat_number'] ?? '';
+                  String companyAddress = keys['main_address'] ?? '';
+                  String companyCrNo = keys['cr_no'] ?? '';
                   print("selectedCompany: $selectedCompanyName");
 
                   Future prepareAndPostSalesItems(
@@ -1214,6 +1222,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     String selectedCustomer,
                     String selectedCompanyName,
                     DatabaseHelper dbHelper,
+                    double discount,
                   ) async {
                     // Fetch API key and secret key from the database
                     // Call postSalesItemsToApi with the fetched keys
@@ -1223,12 +1232,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       secretKey,
                       selectedCustomer,
                       selectedCompanyName,
+                      discount,
                     );
                   }
 
                   // Call the function and assign the result to responseBody
-                  responseBody = await prepareAndPostSalesItems(soldItemsMap,
-                      _selectedCustomer!, selectedCompanyName, dbHelper);
+                  responseBody = await prepareAndPostSalesItems(
+                      soldItemsMap,
+                      _selectedCustomer!,
+                      selectedCompanyName,
+                      dbHelper,
+                      discount);
 
                   print("Response body in home$responseBody");
 
@@ -1247,11 +1261,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       customerData['address_type'] ?? 'Unknown';
                   String customerState = customerData['state'] ?? 'Unknown';
                   String customerPincode = customerData['pincode'] ?? '00000';
-                  // String customerAddressTitle =
-                  //     (customerData['address_title'] ?? '') +
-                  //         (customerData['address_title1'] ?? '') +
-                  //         (customerData['address_title2'] ?? '') +
-                  //         (customerData['city'] ?? 'Unknown');
+
                   String customerAddressTitle =
                       (customerData['address_title'] ?? '') +
                           ' ' +
@@ -1265,37 +1275,48 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       customerData['address_country'] ?? 'Unknown';
                   String customerVatNumber =
                       customerData['vat_number'] ?? 'Unknown';
-                  String customerCrNo = customerData['cr_no'] ?? 'Unknown';
+                  String customercompanyCrNo =
+                      customerData['cr_no'] ?? 'Unknown';
 
                   print("addresstitle$customerAddressTitle");
+
+                  //DB_sales_invoice
+                  await dbHelper.insertSalesInvoice(
+                    salesInvoice: salesInvoice,
+                    companyName: selectedCompanyName,
+                    customerName: customerName,
+                    customerAddressTitle: customerAddressTitle,
+                    companyAddress: companyAddress,
+                    discountAmount: discountamount,
+                    subtotal: subtotal,
+                    totaltax: tax,
+                    total: total,
+                    totalQuantity: fullcount,
+                    taxID: fetchVat,
+                  );
+                  print("fullcount$fullcount");
+                  print("fetchVat$fetchVat");
 
                   // Print bill after inserting and posting
                   final printService = PrintService();
                   if (salesInvoice != null) {
                     await printService.printBill(
-                        orderedItems,
-                        subtotal,
-                        tax,
-                        total,
-                        _selectedCustomer!,
-                        salesInvoice, // Pass the sales_invoice as a string to printBill
-                        selectedCompanyName,
-                        customerName,
-                        // customerType,
-                        // customerEmail,
-                        // customerAddressType,
-                        // customerState,
-                        // customerPincode,
-                        // customerCity,
-                        customerAddressTitle,
-                        // customerAddTitle2,
-                        // customerAddTitle3,
-                        // customerCountry,
-                        customerVatNumber,
-                        customerCrNo,
-                        cvatNo,
-                        crNo,
-                        cAddress);
+                      orderedItems,
+                      subtotal,
+                      tax,
+                      total,
+                      _selectedCustomer!,
+                      salesInvoice, // Pass the sales_invoice as a string to printBill
+                      selectedCompanyName,
+                      customerName,
+                      customerAddressTitle,
+                      customerVatNumber,
+                      customercompanyCrNo,
+                      companyVatNo,
+                      companyCrNo,
+                      companyAddress,
+                      discountamount,
+                    );
                   } else {
                     print("Error: salesInvoice is null, cannot print bill.");
                   }

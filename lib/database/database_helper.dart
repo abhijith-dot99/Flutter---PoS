@@ -21,8 +21,9 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert'; // for utf8 encoding
-// ignore: depend_on_referenced_packages
+import 'package:intl/intl.dart';
 
+// ignore: depend_on_referenced_packages
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -30,7 +31,7 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static Database? _database;
-  static const int _dbVersion = 6; // Update the version number
+  static const int _dbVersion = 20; // Update the version number
   static const String _dbName = 'DB_My.db';
 
   Future<Database> get database async {
@@ -70,7 +71,7 @@ class DatabaseHelper {
         path,
         version: _dbVersion,
         onCreate: _onCreate,
-        // onUpgrade: _onUpgrade, 
+        onUpgrade: _onUpgrade,
       );
     } else {
       throw Exception('Platform not supported');
@@ -79,7 +80,6 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     print("inside oncreate");
-    // _onUpgrade(db, 10, 11);
     // Create the DB_company table
     await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_company (
@@ -97,17 +97,17 @@ class DatabaseHelper {
       url TEXT,
       companyId TEXT,
       online INTEGER DEFAULT 0,
-         cr_no TEXT,
-  address_type TEXT,
-  address_title TEXT,
-    address_line1 TEXT,
-address_line2 TEXT,
-  building_no TEXT,
-   plot_no TEXT,
-    city TEXT,
-   state TEXT,
-    address_country TEXT,
-    pincode TEXT
+      cr_no TEXT,
+      address_type TEXT,
+      address_title TEXT,
+      address_line1 TEXT,
+      address_line2 TEXT,
+      building_no TEXT,
+      plot_no TEXT,
+      city TEXT,
+      state TEXT,
+      address_country TEXT,
+      pincode TEXT
     )
   ''');
 
@@ -128,149 +128,21 @@ address_line2 TEXT,
     // Create DB_sales_invoice table
     await db.execute('''
     CREATE TABLE IF NOT EXISTS DB_sales_invoice (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      owner TEXT,
-      creation TEXT,
-      modified TEXT,
-      modified_by TEXT,
-      docstatus INTEGER,
-      idx INTEGER,
-      ksa_einv_qr TEXT,
-      title TEXT,
-      custom_invoice_type TEXT,
-      naming_series TEXT,
-      customer TEXT,
-      customer_name TEXT,
-      customer_name_in_arabic TEXT,
-      tax_id TEXT,
-      company TEXT,
-      company_tax_id TEXT,
-      posting_date TEXT,
-      posting_time TEXT,
-      set_posting_time INTEGER,
-      due_date TEXT,
-      is_pos INTEGER,
-      pos_profile TEXT,
-      is_consolidated INTEGER,
-      is_return INTEGER,
-      return_against TEXT,
-      update_outstanding_for_self INTEGER,
-      update_billed_amount_in_sales_order INTEGER,
-      update_billed_amount_in_delivery_note INTEGER,
-      is_debit_note INTEGER,
-      amended_from TEXT,
-      cost_center TEXT,
-      project TEXT,
-      currency TEXT,
-      conversion_rate REAL,
-      selling_price_list TEXT,
-      price_list_currency TEXT,
-      plc_conversion_rate REAL,
-      ignore_pricing_rule INTEGER,
-      scan_barcode TEXT,
-      update_stock INTEGER,
-      set_warehouse TEXT,
-      set_target_warehouse TEXT,
-      total_qty INTEGER,
-      total_net_weight REAL,
-      base_total REAL,
-      base_net_total REAL,
-      total REAL,
-      net_total REAL,
-      tax_category TEXT,
-      taxes_and_charges TEXT,
-      shipping_rule TEXT,
-      incoterm TEXT,
-      named_place TEXT,
-      base_total_taxes_and_charges REAL,
-      total_taxes_and_charges REAL,
-      base_grand_total REAL,
-      base_rounding_adjustment REAL,
-      base_rounded_total REAL,
-      base_in_words TEXT,
-      grand_total REAL,
-      rounding_adjustment REAL,
-      use_company_roundoff_cost_center INTEGER,
-      rounded_total REAL,
-      in_words TEXT,
-      total_advance REAL,
-      outstanding_amount REAL,
-      disable_rounded_total INTEGER,
-      apply_discount_on TEXT,
-      base_discount_amount REAL,
-      is_cash_or_non_trade_discount INTEGER,
-      additional_discount_account TEXT,
-      additional_discount_percentage REAL,
-      discount_amount REAL,
-      other_charges_calculation TEXT,
-      total_billing_hours REAL,
-      total_billing_amount REAL,
-      cash_bank_account TEXT,
-      base_paid_amount REAL,
-      paid_amount REAL,
-      base_change_amount REAL,
-      change_amount REAL,
-      account_for_change_amount TEXT,
-      allocate_advances_automatically INTEGER,
-      only_include_allocated_payments INTEGER,
-      write_off_amount REAL,
-      base_write_off_amount REAL,
-      write_off_outstanding_amount_automatically INTEGER,
-      write_off_account TEXT,
-      write_off_cost_center TEXT,
-      redeem_loyalty_points INTEGER,
-      loyalty_points REAL,
-      loyalty_amount REAL,
-      loyalty_program TEXT,
-      loyalty_redemption_account TEXT,
-      loyalty_redemption_cost_center TEXT,
-      customer_address TEXT,
-      address_display TEXT,
-      contact_person TEXT,
-      contact_display TEXT,
-      contact_mobile TEXT,
-      contact_email TEXT,
-      territory TEXT,
-      shipping_address_name TEXT,
-      shipping_address TEXT,
-      dispatch_address_name TEXT,
-      dispatch_address TEXT,
-      company_address TEXT,
-      company_trn TEXT,
-      company_address_display TEXT,
-      ignore_default_payment_terms_template INTEGER,
-      payment_terms_template TEXT,
-      tc_name TEXT,
-      terms TEXT,
-      po_no TEXT,
-      po_date TEXT,
-      debit_to TEXT,
-      party_account_currency TEXT,
-      is_opening TEXT,
-      unrealized_profit_loss_account TEXT,
-      against_income_account TEXT,
-      sales_partner TEXT,
-      amount_eligible_for_commission REAL,
-      commission_rate REAL,
-      total_commission REAL,
-      letter_head TEXT,
-      group_same_items INTEGER,
-      select_print_heading TEXT,
-      language TEXT,
-      subscription TEXT,
-      from_date TEXT,
-      auto_repeat TEXT,
-      to_date TEXT,
-      status TEXT,
-      inter_company_invoice_reference TEXT,
-      campaign TEXT,
-      represents_company TEXT,
-      source TEXT,
-      customer_group TEXT,
-      is_internal_customer INTEGER,
-      is_discounted INTEGER,
-      remarks TEXT
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sales_invoice TEXT,
+    company_name TEXT,
+    customer_name TEXT,
+    tax_name TEXT,
+    tax_amount TEXT,
+    date TEXT,
+    grandtotal DOUBLE,
+    nettotal DOUBLE,
+    discount DOUBLE,
+    customer_address TEXT,
+    company_address TEXT,
+    total_tax DOUBLE,
+    totalquantity INTEGER,
+    tax_id TEXT
     )
   ''');
 
@@ -333,7 +205,9 @@ state TEXT,
       item_tax_rate TEXT,
       invoice_no TEXT,
       customer_name TEXT,
-      item_count INTEGER
+      item_count INTEGER,
+      date TEXT,
+      discount TEXT
     )
   ''');
 
@@ -383,48 +257,32 @@ state TEXT,
           .insert('invoice_counter', {'id': 1, 'current_invoice_number': 1});
     }
 
+    //  _onUpgrade(db, 17, 18);
+
     var tables =
         await db.rawQuery('SELECT name FROM sqlite_master WHERE type="table"');
     print('Tables created: $tables');
   }
 
-  // Method to update the schema before onCreate if needed
-Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-  // print("Inside onUpgrade");
+// Method to update the schema before onCreate if needed
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    print("Inside onUpgrade");
 
-  // Update DB_company table
-  await db.execute('''
-    ALTER TABLE DB_company ADD COLUMN cr_no TEXT;
-    ALTER TABLE DB_company ADD COLUMN address_type TEXT;
-    ALTER TABLE DB_company ADD COLUMN address_title TEXT;
-    ALTER TABLE DB_company ADD COLUMN address_line1 TEXT;
-    ALTER TABLE DB_company ADD COLUMN address_line2 TEXT;
-    ALTER TABLE DB_company ADD COLUMN building_no TEXT;
-    ALTER TABLE DB_company ADD COLUMN plot_no TEXT;
-    ALTER TABLE DB_company ADD COLUMN city TEXT;
-    ALTER TABLE DB_company ADD COLUMN state TEXT;
-    ALTER TABLE DB_company ADD COLUMN address_country TEXT;
-    ALTER TABLE DB_company ADD COLUMN pincode TEXT;
-  ''');
+    // Check if the sales items table exists
+    // var tables = await db.rawQuery(
+    //   "SELECT name FROM sqlite_master WHERE type='table' AND name='DB_sales_items'"
+    // );
 
-  // Update DB_customer table
-  await db.execute('''
-    ALTER TABLE DB_customer ADD COLUMN address_type TEXT;
-    ALTER TABLE DB_customer ADD COLUMN address_title TEXT;
-    ALTER TABLE DB_customer ADD COLUMN address_line1 TEXT;
-    ALTER TABLE DB_customer ADD COLUMN address_line2 TEXT;
-    ALTER TABLE DB_customer ADD COLUMN building_no TEXT;
-    ALTER TABLE DB_customer ADD COLUMN plot_no TEXT;
-    ALTER TABLE DB_customer ADD COLUMN city TEXT;
-    ALTER TABLE DB_customer ADD COLUMN state TEXT;
-    ALTER TABLE DB_customer ADD COLUMN address_country TEXT;
-    ALTER TABLE DB_customer ADD COLUMN pincode TEXT;
-    ALTER TABLE DB_customer ADD COLUMN cr_no TEXT;
-  ''');
+    // if (tables.isNotEmpty) {
+    //   // Alter the table by adding the new columns one by one
+    //   await db.execute('ALTER TABLE DB_sales_items ADD COLUMN date TEXT;');
+    //   await db.execute('ALTER TABLE DB_sales_items ADD COLUMN discount TEXT;');
 
-  print("Tables successfully upgraded.");
-}
-
+    //   print("Tables successfully upgraded.");
+    // } else {
+    //   print("DB_sales_items table does not exist.");
+    // }
+  }
 
   Future<int> insertOfflineData(FormData formData) async {
     print("Inside insertOfflineData");
@@ -675,39 +533,40 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     });
   }
 
-
   Future<void> insertCustomer(Customer customer) async {
-  print("inside insertCustomer");
+    print("inside insertCustomer");
 
-  final db = await database;
+    final db = await database;
 
-           List<Map<String, dynamic>> schema = await db.rawQuery("PRAGMA table_info('DB_customer')");
+    List<Map<String, dynamic>> schema =
+        await db.rawQuery("PRAGMA table_info('DB_customer')");
 
-  for (var column in schema) {
-    print('Columnssscustomer: ${column['name']}, Type: ${column['type']}');
-  }
+    for (var column in schema) {
+      print('Columnssscustomer: ${column['name']}, Type: ${column['type']}');
+    }
 
-  // Check if the customer with the same name already exists
-  List<Map<String, dynamic>> existingCustomer = await db.query(
-    'DB_customer',
-    where: 'customer_name = ?',
-    whereArgs: [customer.customerName],  // Assuming 'customerName' is the field in your Customer model
-  );
-
-  if (existingCustomer.isEmpty) {
-    // If no existing customer is found, insert the new customer
-    await db.insert(
+    // Check if the customer with the same name already exists
+    List<Map<String, dynamic>> existingCustomer = await db.query(
       'DB_customer',
-      customer.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'customer_name = ?',
+      whereArgs: [
+        customer.customerName
+      ], // Assuming 'customerName' is the field in your Customer model
     );
-    print("Customer inserted");
-  } else {
-    // If customer exists, skip insertion
-    print("Customer already exists, skipping insertion");
-  }
-}
 
+    if (existingCustomer.isEmpty) {
+      // If no existing customer is found, insert the new customer
+      await db.insert(
+        'DB_customer',
+        customer.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      print("Customer inserted");
+    } else {
+      // If customer exists, skip insertion
+      print("Customer already exists, skipping insertion");
+    }
+  }
 
   Future<void> getTax(Tax tax) async {
     print("inside getTax");
@@ -741,7 +600,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
       'DB_customer', // Your table name
-     
+
       where: 'company_name = ?', // Filter by company name
       whereArgs: [companyName], // The argument for the filter
     );
@@ -756,7 +615,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     await db.delete('DB_items');
     print('Items table cleared.');
   }
- 
+
   // Similarly, add methods for other tables
   Future<void> clearCustomers() async {
     final db = await database;
@@ -930,11 +789,12 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
   }
 
   Future<void> insertSalesItems(List<Map<String, dynamic>> orderedItems,
-      String invoiceNo, String customerName) async {
+      String invoiceNo, String customerName, double discountamount) async {
     print("Inside insertSalesItems for customer: $customerName");
 
     final db = await database;
     print("itemsss$orderedItems");
+    String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     // Iterate over each ordered item and insert into the DB_sales_items table
     for (var item in orderedItems) {
@@ -958,6 +818,8 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
           'customer_name':
               customerName, // Add customer name to track sale by customer
           'item_count': item['item_count'],
+          'date': currentDate, // Add the current date
+          'discount': discountamount,
         },
         conflictAlgorithm:
             ConflictAlgorithm.abort, // Replace if a conflict occurs
@@ -965,6 +827,68 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     }
 
     print("Items inserted into DB_sales_items for invoice: $invoiceNo");
+  }
+
+  Future<String?> getTaxName(companyName) async {
+    final db = await database;
+    print("inside gettaxname");
+    print("companyname$companyName");
+
+    // Query to retrieve the tax_name based on the taxId
+    final result = await db.query(
+      'DB_sales_tax',
+      where: 'company_name = ?',
+      whereArgs: [companyName],
+    );
+
+    // Check if a result is found, and return the tax_name
+    if (result.isNotEmpty) {
+      print("resulttaxname${result.first['tax_name']}");
+      return result.first['tax_name'] as String?;
+    } else {
+      print("got nothing");
+      return null; // Return null if no tax_name is found
+    }
+  }
+
+  Future<void> insertSalesInvoice({
+    required String? salesInvoice,
+    required String? companyName,
+    required String? customerName,
+    required String? customerAddressTitle,
+    required String? companyAddress,
+    required double? discountAmount,
+    required double? subtotal,
+    required double? totaltax,
+    required double? total,
+    required int? totalQuantity,
+    required String? taxID,
+  }) async {
+    final db = await database;
+    String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    // Fetch the tax name from the DB_sales_tax table based on the company name
+    String? taxName = await getTaxName(companyName);
+
+    await db.insert(
+      'DB_sales_invoice',
+      {
+        'sales_invoice': salesInvoice ?? '',
+        'company_name': companyName ?? '',
+        'customer_name': customerName ?? '',
+        'customer_address': customerAddressTitle ?? '',
+        'company_address': companyAddress ?? '',
+        'discount': discountAmount ?? 0.0, // DOUBLE
+        'nettotal': subtotal ?? 0.0, // DOUBLE
+        'total_tax': totaltax ?? 0.0, // DOUBLE
+        'grandtotal': total ?? 0.0, // DOUBLE
+        'tax_name': taxName ?? '',
+        'totalquantity': totalQuantity ?? 0, // INTEGER
+        'tax_id': taxID ?? '',
+        'date': currentDate
+      },
+      conflictAlgorithm: ConflictAlgorithm.abort,
+    );
   }
 
   Future<String> getNextInvoiceNumber() async {
@@ -1020,20 +944,28 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
   Future<Map<String, String?>> getApiKeysByCompanyName(
       String companyName) async {
     final db = await database;
-     List<Map<String, dynamic>> schema = await db.rawQuery("PRAGMA table_info('DB_company')");
+    List<Map<String, dynamic>> schema =
+        await db.rawQuery("PRAGMA table_info('DB_company')");
 
-  for (var column in schema) {
-    print('Columnsss: ${column['name']}, Type: ${column['type']}');
-  }
+    for (var column in schema) {
+      print('Columnsss: ${column['name']}, Type: ${column['type']}');
+    }
     // Query to fetch API Key and Secret Key based on company_name
     List<Map<String, dynamic>> result = await db.query(
       'DB_company',
       // columns: [
-      //   // 'apikey', 'secretkey', 
+      //   // 'apikey', 'secretkey',
       //   'address_title', 'vat_number', 'cr_no'],
-       columns: [
-      'address_title', 'address_line1', 'address_line2', 'building_no', 'city', 'state', 'vat_number', 'cr_no'
-    ],
+      columns: [
+        'address_title',
+        'address_line1',
+        'address_line2',
+        'building_no',
+        'city',
+        'state',
+        'vat_number',
+        'cr_no'
+      ],
       where: 'company_name = ?',
       whereArgs: [companyName],
     );
@@ -1041,37 +973,33 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // Check if any result was found
     if (result.isNotEmpty) {
       // Extract the API key and Secret key from the result
-    //   String? apiKey = result[0]['apikey'] as String;
-    //   String? secretKey = result[0]['secretkey'] as String;
-    String? addressTitle = result[0]['address_title'] as String?;
-    String? addressLine1 = result[0]['address_line1'] as String?;
-    String? addressLine2 = result[0]['address_line2'] as String?;
-    String? buildingNo = result[0]['building_no'] as String?;
-    String? city = result[0]['city'] as String?;
-    String? state = result[0]['state'] as String?;
-    String? vatNo = result[0]['vat_number'] as String?;
-    String? crNo = result[0]['cr_no'] as String?;
+      //   String? apiKey = result[0]['apikey'] as String;
+      //   String? secretKey = result[0]['secretkey'] as String;
+      String? addressTitle = result[0]['address_title'] as String?;
+      String? addressLine1 = result[0]['address_line1'] as String?;
+      String? addressLine2 = result[0]['address_line2'] as String?;
+      String? buildingNo = result[0]['building_no'] as String?;
+      String? city = result[0]['city'] as String?;
+      String? state = result[0]['state'] as String?;
+      String? vatNo = result[0]['vat_number'] as String?;
+      String? crNo = result[0]['cr_no'] as String?;
 
-    // Concatenate the address fields, ignoring null values and trimming extra spaces
-    String mainAddress = [
-      addressTitle, 
-      addressLine1, 
-      addressLine2, 
-      buildingNo, 
-      city, 
-      state
-    ].where((field) => field != null && field!.isNotEmpty).join(', ');
+      // Concatenate the address fields, ignoring null values and trimming extra spaces
+      String mainAddress = [
+        addressTitle,
+        addressLine1,
+        addressLine2,
+        buildingNo,
+        city,
+        state
+      ].where((field) => field != null && field!.isNotEmpty).join(', ');
 
-    // Print the concatenated address and other details
-    print('Main Address: $mainAddress');
-    print('VAT No: $vatNo');
-    print('CR No: $crNo');
+      // Print the concatenated address and other details
+      print('Main Address: $mainAddress');
+      print('VAT No: $vatNo');
+      print('CR No: $crNo');
 
-    return {
-      'main_address': mainAddress,
-      'vat_number': vatNo,
-      'cr_no': crNo
-    };
+      return {'main_address': mainAddress, 'vat_number': vatNo, 'cr_no': crNo};
     } else {
       // If no result is found, return null values
       print('Error: No API keys found for the given company name.');
@@ -1107,6 +1035,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     String secretKey,
     String customername, // Pass customername as parameter
     String companyname, // Pass companyname as parameter
+    double discount,
   ) async {
     // Step 1: Create Basic Authentication header
     String basicAuth =
@@ -1148,6 +1077,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
       'taxes': taxes, // Use taxes fetched from DB
       'tax_template': taxTemplate,
       'company': companyname, // Use companyname from parameter
+      'discount_amount': discount,
     };
 
     String payload = jsonEncode(payloadMap);
@@ -1220,7 +1150,7 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
       print("result$result");
       if (result.isNotEmpty) {
         // Get the tax rate (assuming the first result is correct)
-        print("resultt${result.first['rate']}");
+        print("resultrate${result.first['rate']}");
         return result.first['rate'] ?? 0.0;
       } else {
         return 0.0; // No tax for this company
@@ -1231,60 +1161,70 @@ Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     }
   }
 
-// Future<List<SalesItem>> fetchSalesItems() async {
-//     final db = await database;
-//     final List<Map<String, dynamic>> maps = await db.query('DB_sales_items');
+  Future<String> getCompanyVat(String companyName) async {
+    print("getcompanytax$companyName");
+    try {
+      final db = await database;
 
-//     return List.generate(maps.length, (i) {
-//       return SalesItem(
-//         id: maps[i]['id'],
-//         itemCode: maps[i]['item_code'],
-//         itemName: maps[i]['item_name'],
-//         itemDescription: maps[i]['item_description'],
-//         itemGroup: maps[i]['item_group'],
-//         itemImage: maps[i]['item_image'],
-//         itemUom: maps[i]['item_uom'],
-//         baseRate: maps[i]['base_rate'],
-//         baseAmount: maps[i]['base_amount'],
-//         netRate: maps[i]['net_rate'],
-//         netAmount: maps[i]['net_amount'],
-//         pricingRules: maps[i]['pricing_rules'],
-//         isFreeItem: maps[i]['is_free_item'] == 1, 
-//         itemTaxRate: maps[i]['item_tax_rate'],
-//         invoiceNo: maps[i]['invoice_no'],
-//         customerName: maps[i]['customer_name'],
-//         itemCount: maps[i]['item_count'],
-//       );
-//     });
-//   }
+      // Query the database for the tax associated with the company
+      final List<Map<String, dynamic>> result = await db.query(
+        'DB_company',
+        where: 'company_name = ?',
+        whereArgs: [companyName],
+      );
+      print("fullresult$result");
+      if (result.isNotEmpty) {
+        // Get the tax rate (assuming the first result is correct)
+        print("resultvat${result.first['vat_number']}");
+        return result.first['vat_number'] ?? '';
+      } else {
+        return ''; // No tax for this company
+      }
+    } catch (e) {
+      print("Error fetching company tax: $e");
+      return ''; // Default to 0.0 in case of error
+    }
+  }
 
-Future<List<SalesItem>> fetchSalesItems() async {
-  final db = await database;
-  final List<Map<String, dynamic>> maps = await db.query('DB_sales_items');
+  Future<List<SalesItem>> fetchSalesItems() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('DB_sales_items');
 
-  return List.generate(maps.length, (i) {
-    return SalesItem(
-      id: maps[i]['id'] ?? 0,  // Provide default value for null 'id'
-      itemCode: maps[i]['item_code'] ?? '',  // Ensure a default empty string
-      itemName: maps[i]['item_name'] ?? '',  // Ensure a default empty string
-      itemDescription: maps[i]['item_description'] ?? '',  // Ensure a default empty string
-      itemGroup: maps[i]['item_group'] ?? '',  // Ensure a default empty string
-      itemImage: maps[i]['item_image'] ?? '',  // Ensure a default empty string
-      itemUom: maps[i]['item_uom'] ?? '',  // Ensure a default empty string
-      baseRate: double.tryParse(maps[i]['base_rate']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
-      baseAmount: double.tryParse(maps[i]['base_amount']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
-      netRate: double.tryParse(maps[i]['net_rate']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
-      netAmount: double.tryParse(maps[i]['net_amount']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
-      pricingRules: maps[i]['pricing_rules'] ?? '',  // Ensure a default empty string
-      isFreeItem: maps[i]['is_free_item'] == 1,  // Assuming 1 for true, 0 for false
-      itemTaxRate: double.tryParse(maps[i]['item_tax_rate']?.toString() ?? '0.0') ?? 0.0,  // Handle null safely
-      invoiceNo: maps[i]['invoice_no'] ?? '',  // Ensure a default empty string
-      customerName: maps[i]['customer_name'] ?? '',  // Ensure a default empty string
-      itemCount: maps[i]['item_count'] ?? 0,  // Provide default value for null 'item_count'
-    );
-  });
+    return List.generate(maps.length, (i) {
+      return SalesItem(
+        id: maps[i]['id'] ?? 0, // Provide default value for null 'id'
+        itemCode: maps[i]['item_code'] ?? '', // Ensure a default empty string
+        itemName: maps[i]['item_name'] ?? '', // Ensure a default empty string
+        itemDescription:
+            maps[i]['item_description'] ?? '', // Ensure a default empty string
+        itemGroup: maps[i]['item_group'] ?? '', // Ensure a default empty string
+        itemImage: maps[i]['item_image'] ?? '', // Ensure a default empty string
+        itemUom: maps[i]['item_uom'] ?? '', // Ensure a default empty string
+        baseRate: double.tryParse(maps[i]['base_rate']?.toString() ?? '0.0') ??
+            0.0, // Handle null safely
+        baseAmount:
+            double.tryParse(maps[i]['base_amount']?.toString() ?? '0.0') ??
+                0.0, // Handle null safely
+        netRate: double.tryParse(maps[i]['net_rate']?.toString() ?? '0.0') ??
+            0.0, // Handle null safely
+        netAmount:
+            double.tryParse(maps[i]['net_amount']?.toString() ?? '0.0') ??
+                0.0, // Handle null safely
+        pricingRules:
+            maps[i]['pricing_rules'] ?? '', // Ensure a default empty string
+        isFreeItem:
+            maps[i]['is_free_item'] == 1, // Assuming 1 for true, 0 for false
+        itemTaxRate:
+            double.tryParse(maps[i]['item_tax_rate']?.toString() ?? '0.0') ??
+                0.0, // Handle null safely
+        invoiceNo: maps[i]['invoice_no'] ?? '', // Ensure a default empty string
+        customerName:
+            maps[i]['customer_name'] ?? '', // Ensure a default empty string
+        itemCount: maps[i]['item_count'] ??
+            0, // Provide default value for null 'item_count'
+        date: maps[i]['date'] ?? '10-10-2024',
+        discount: double.tryParse(maps[i]['discount'].toString()) ?? 0.0,
+      );
+    });
+  }
 }
-
-
-}
-
