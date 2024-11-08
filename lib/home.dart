@@ -96,14 +96,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _clearFields() {
     setState(() {
       // Clear each widget's controller or variable
-      // customerController.clear();
       _discountController.clear();
       paidAmountController.clear();
       selectedMode = null;
       orderedItems.clear();
-      // _filteredCustomers = null;
+      _selectedCustomer = null;
+      paidAmount = 0;
+      _getSelectedCustomerForCurrentPage();
     });
   }
+
+  void _clearSelectedCustomerForCurrentPage() {
+  setState(() {
+    if (currentPageIndex == 1) {
+      _selectedCustomerPage1 = null;
+    } else if (currentPageIndex == 2) {
+      _selectedCustomerPage2 = null;
+    } else if (currentPageIndex == 3) {
+      _selectedCustomerPage3 = null;
+    }
+  });
+}
+
 
   String? _getSelectedCustomerForCurrentPage() {
     if (currentPageIndex == 1) {
@@ -1361,6 +1375,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   previousCustomer =
                       _selectedCustomer; // Update to track customer change
                   _clearFields();
+                  _clearSelectedCustomerForCurrentPage();
                 } catch (e) {
                   print(
                       "Error occurred while processing sale: ${e.toString()}");
