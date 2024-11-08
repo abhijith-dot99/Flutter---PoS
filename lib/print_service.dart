@@ -1,5 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -24,7 +30,9 @@ class PrintService {
       String companyVatNo,
       String companyCrNo,
       String companyAddress,
-      double discount) async {
+      double discount,
+       File  qrData,
+       ) async {
     if (Platform.isWindows) {
       await printBillWindows(
           items,
@@ -41,7 +49,9 @@ class PrintService {
           companyVatNo,
           companyCrNo,
           companyAddress,
-          discount);
+          discount,
+          qrData
+          );
     } else if (Platform.isAndroid) {
       await printBillAndroid(
           items,
@@ -58,7 +68,8 @@ class PrintService {
           companyVatNo,
           companyCrNo,
           companyAddress,
-          discount);
+          discount,
+          qrData);
     } else {
       throw UnsupportedError('Unsupported platform');
     }
@@ -79,7 +90,8 @@ class PrintService {
       String companyVatNo,
       String companyCrNo,
       String companyAddress,
-      discount) async {
+      discount,
+      qrData) async {
     final pdfData = await generatePdf(
         items,
         subtotal,
@@ -95,7 +107,8 @@ class PrintService {
         companyVatNo,
         companyCrNo,
         companyAddress,
-        discount);
+        discount,
+        qrData);
 
     await Printing.directPrintPdf(
       printer: await _getDefaultPrinter(),
@@ -119,7 +132,8 @@ class PrintService {
       String companyVatNo,
       String companyCrNo,
       String companyAddress,
-      discount) async {
+      discount,
+      qrData) async {
     await requestPermissions();
 
     final pdfData = await generatePdf(
@@ -137,7 +151,8 @@ class PrintService {
         companyVatNo,
         companyCrNo,
         companyAddress,
-        discount);
+        discount,
+        qrData);
     final filePath = await savePdfToFile(pdfData);
     await openPdfFile(filePath);
     // print('Order Details:\n${pdfData.toString()}');
@@ -158,9 +173,10 @@ class PrintService {
       String sellerVatNumber,
       String sellercompanyCrNo,
       String sellerAddress,
-      discount) async {
+      discount,
+      qrData) async {
     final pdf = pw.Document();
-
+final imageBytes = await qrData.readAsBytes();
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -176,23 +192,40 @@ class PrintService {
               ),
             ),
             pw.SizedBox(height: 38),
+          //   pw.Center(
+          //   child: pw.Image(
+          //     pw.MemoryImage(
+          //       base64Decode(qrData), // Decode the base64 QR data
+          //     ),
+          //     width: 100,
+          //     height: 100,
+          //   ),
+          // ),
+
+          pw.Center(
+            child: pw.Image(
+               pw.MemoryImage(imageBytes),// Use qrFile for image from file
+              width: 100,
+              height: 100,
+            ),
+          ),
 
             // Invoice number and date
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text('Invoice No: $salesInvoice',
-                    style: pw.TextStyle(fontSize: 10)),
+                    style: const pw.TextStyle(fontSize: 10)),
                 pw.Text('Date: ${DateTime.now().toString().substring(0, 10)}',
-                    style: pw.TextStyle(fontSize: 10)),
+                    style: const pw.TextStyle(fontSize: 10)),
               ],
             ),
             pw.SizedBox(height: 16),
 //buyesr and seller
             pw.Table(
               columnWidths: {
-                0: pw.FlexColumnWidth(1),
-                1: pw.FlexColumnWidth(1),
+                0: const pw.FlexColumnWidth(1),
+                1: const pw.FlexColumnWidth(1),
               },
               border: pw.TableBorder.all(
                 color: PdfColors.black,

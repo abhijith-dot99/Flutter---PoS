@@ -1,14 +1,20 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
+import 'generate_3_in.dart';
 import 'model/item.dart';
 import 'model/items.dart';
 import 'package:intl/intl.dart';
 import 'print_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:qr/qr.dart';
+import 'package:path_provider/path_provider.dart';
 // For UI and BuildContext
 
 class HomePage extends StatefulWidget {
@@ -25,9 +31,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double companyTax = 0.0;
   double fetchedTax = 0.0;
   String fetchVat = '';
+  // String qrData = 'afpc';
 
   String? selectedMode;
-  // get selectedMode => [];
+  double paidAmount = 0;
+  double vatPercent = 0.15;
+
+  String? selectedModePage1, selectedModePage2, selectedModePage3;
+  double paidAmountPage1 = 0, paidAmountPage2 = 0, paidAmountPage3 = 0;
 
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
@@ -45,6 +56,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String? _selectedCustomerPage2;
   String? _selectedCustomerPage3;
 
+  double discountPage1 = 0.0;
+  double discountPage2 = 0.0;
+  double discountPage3 = 0.0;
+
   List<String> customers = [];
   List<String?> _filteredCustomers = [];
   List<Item> items = [];
@@ -54,7 +69,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController paidAmountController = TextEditingController();
 
-  double paidAmount = 0;
   int _selectedPage = 1; // Track the selected page
   Map<int, List<Item>> pageOrderedItems = {};
 
@@ -98,36 +112,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Clear each widget's controller or variable
       _discountController.clear();
       paidAmountController.clear();
-      selectedMode = null;
+      // selectedMode = null;
       orderedItems.clear();
-      _selectedCustomer = null;
-      paidAmount = 0;
+      // _selectedCustomer = null;
+      // paidAmount = 0;
       _getSelectedCustomerForCurrentPage();
     });
   }
 
   void _clearSelectedCustomerForCurrentPage() {
-  setState(() {
-    if (currentPageIndex == 1) {
-      _selectedCustomerPage1 = null;
-    } else if (currentPageIndex == 2) {
-      _selectedCustomerPage2 = null;
-    } else if (currentPageIndex == 3) {
-      _selectedCustomerPage3 = null;
-    }
-  });
-}
-
+    setState(() {
+      if (currentPageIndex == 1) {
+        _selectedCustomerPage1 = null;
+      } else if (currentPageIndex == 2) {
+        _selectedCustomerPage2 = null;
+      } else if (currentPageIndex == 3) {
+        _selectedCustomerPage3 = null;
+      }
+    });
+  }
 
   String? _getSelectedCustomerForCurrentPage() {
     if (currentPageIndex == 1) {
-      print("getcust$_selectedCustomerPage1");
+      // print("getcust$_selectedCustomerPage1");
 
       return _selectedCustomerPage1;
     } else if (currentPageIndex == 2) {
       return _selectedCustomerPage2;
     } else if (currentPageIndex == 3) {
-      print("getcust$_selectedCustomerPage3");
+      // print("getcust$_selectedCustomerPage3");
       return _selectedCustomerPage3;
     }
     return null;
@@ -149,27 +162,110 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+// Getter for selectedMode
+  String? _getSelectedModeForCurrentPage() {
+    if (currentPageIndex == 1) {
+      return selectedModePage1;
+    } else if (currentPageIndex == 2) {
+      return selectedModePage2;
+    } else if (currentPageIndex == 3) {
+      return selectedModePage3;
+    }
+    return null;
+  }
+
+// Setter for selectedMode
+  void _setSelectedModeForCurrentPage(String? mode) {
+    setState(() {
+      if (currentPageIndex == 1) {
+        selectedModePage1 = mode;
+        selectedMode = selectedModePage1;
+      } else if (currentPageIndex == 2) {
+        selectedModePage2 = mode;
+        selectedMode = selectedModePage2;
+      } else if (currentPageIndex == 3) {
+        selectedModePage3 = mode;
+        selectedMode = selectedModePage3;
+      }
+    });
+  }
+
+// Getter for paidAmount
+  double _getPaidAmountForCurrentPage() {
+    if (currentPageIndex == 1) {
+      // print("paidamount$paidAmountPage1");
+      return paidAmountPage1;
+    } else if (currentPageIndex == 2) {
+      // print("paidamount$paidAmountPage1");
+      return paidAmountPage2;
+    } else if (currentPageIndex == 3) {
+      // print("paidamount$paidAmountPage1");
+      return paidAmountPage3;
+    }
+    return 0.0;
+  }
+
+// Setter for paidAmount
+  void _setPaidAmountForCurrentPage(double amount) {
+    setState(() {
+      if (currentPageIndex == 1) {
+        paidAmountPage1 = amount;
+        paidAmount = paidAmountPage1;
+      } else if (currentPageIndex == 2) {
+        paidAmountPage2 = amount;
+        paidAmount = paidAmountPage2;
+      } else if (currentPageIndex == 3) {
+        paidAmountPage3 = amount;
+        paidAmount = paidAmountPage3;
+      }
+    });
+  }
+
+  double _getDiscountForCurrentPage() {
+    if (currentPageIndex == 1) {
+      return discountPage1;
+    } else if (currentPageIndex == 2) {
+      return discountPage2;
+    } else if (currentPageIndex == 3) {
+      return discountPage3;
+    }
+    return 0.0;
+  }
+
+  void _setDiscountForCurrentPage(double discount) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        if (currentPageIndex == 1) {
+          discountPage1 = discount;
+        } else if (currentPageIndex == 2) {
+          discountPage2 = discount;
+        } else if (currentPageIndex == 3) {
+          discountPage3 = discount;
+        }
+      });
+    });
+  }
+
   void _openPage(int pageIndex) {
     setState(() {
-      // Save the current page's ordered items before switching
-      if (currentPageIndex == 1) {
-        orderedItemsPage1 = List.from(orderedItems);
+      // Save the current page's ordered items and paidAmount before switching
+      // if (currentPageIndex == 1) {
+      //   orderedItemsPage1 = List.from(orderedItems);
 
-        _selectedCustomer = _selectedCustomerPage1;
-        // _selectedCustomerPage1 = _selectedCustomer;
-
-        print("Saved selected customer for Page 1: $_selectedCustomerPage1");
-      } else if (currentPageIndex == 2) {
-        orderedItemsPage2 = List.from(orderedItems);
-        _selectedCustomer = _selectedCustomerPage2;
-        // _selectedCustomerPage2 = _selectedCustomer;
-        print("Saved selected customer for Page 2: $_selectedCustomerPage2");
-      } else if (currentPageIndex == 3) {
-        orderedItemsPage3 = List.from(orderedItems);
-        _selectedCustomer = _selectedCustomerPage1;
-        // _selectedCustomerPage3 = _selectedCustomer;
-        print("Saved selected customer for Page 3: $_selectedCustomerPage3");
-      }
+      //   _selectedCustomer = _selectedCustomerPage1;
+      //   paidAmountPage1 = double.tryParse(paidAmountController.text) ?? 0;
+      //   print("Saved selected customer and paid amount for Page 1");
+      // } else if (currentPageIndex == 2) {
+      //   orderedItemsPage2 = List.from(orderedItems);
+      //   _selectedCustomer = _selectedCustomerPage2;
+      //   paidAmountPage2 = double.tryParse(paidAmountController.text) ?? 0;
+      //   print("Saved selected customer and paid amount for Page 2");
+      // } else if (currentPageIndex == 3) {
+      //   orderedItemsPage3 = List.from(orderedItems);
+      //   _selectedCustomer = _selectedCustomerPage3;
+      //   paidAmountPage3 = double.tryParse(paidAmountController.text) ?? 0;
+      //   print("Saved selected customer and paid amount for Page 3");
+      // }
 
       // Switch to the new page and load its items
       currentPageIndex = pageIndex;
@@ -177,17 +273,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (currentPageIndex == 1) {
         orderedItems = List.from(orderedItemsPage1);
         _selectedCustomer = _selectedCustomerPage1;
-        print("Loaded selected customer for Page 1: $_selectedCustomer");
+        paidAmountController.text = paidAmountPage1.toString();
+        _discountController.text = _getDiscountForCurrentPage().toString();
+        print("Loaded selected customer and paid amount for Page 1");
       } else if (currentPageIndex == 2) {
         orderedItems = List.from(orderedItemsPage2);
         _selectedCustomer = _selectedCustomerPage2;
-
-        print("Loaded selected customer for Page 2: $_selectedCustomer");
+        paidAmountController.text = paidAmountPage2.toString();
+        _discountController.text = _getDiscountForCurrentPage().toString();
+        print("Loaded selected customer and paid amount for Page 2");
       } else if (currentPageIndex == 3) {
         orderedItems = List.from(orderedItemsPage3);
         _selectedCustomer = _selectedCustomerPage3;
-        print("Loaded selected customer for Page 3: $_selectedCustomer");
+        paidAmountController.text = paidAmountPage3.toString();
+        _discountController.text = _getDiscountForCurrentPage().toString();
+        print("Loaded selected customer and paid amount for Page 3");
       }
+
       _selectedPage = pageIndex; // Update the selected page
     });
   }
@@ -278,7 +380,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _discountController.dispose();
+    // _discountController.dispose();
     // Reset the preferred orientation to allow normal orientation for other pages
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -362,6 +464,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // print("inide main widget");
     final screenWidth = MediaQuery.of(context).size.width;
 
     if (screenWidth < 1405) {
@@ -396,34 +499,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           title: 'Lorem Restaurant',
                           action: _search(),
                         ),
-                        Container(
-                          height: 70,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: const [
-                              // _itemTab(
-                              //   icon: 'assets/icons/samplepic.jpg',
-                              //   title: 'All',
-                              //   isActive: selectedCategory == 'All',
-                              //   // onTap: () => filterItems('All'),
-                              // ),
-                              // _itemTab(
-                              //   icon: 'assets/items/1.png',
-                              //   title: 'Burger',
-                              //   isActive: selectedCategory == 'Burger',
-                              //   onTap: () => filterItems('Burger'),
-                              // ),
-                              // _itemTab(
-                              //   icon: 'assets/icons/icon-noodles.png',
-                              //   title: 'Noodles',
-                              //   isActive: selectedCategory == 'Noodles',
-                              //   onTap: () => filterItems('Noodles'),
-                              // ),
-                              // Add more item tabs here
-                            ],
-                          ),
-                        ),
+                        // Container(
+                        //   // height: 70,
+                        //   padding: const EdgeInsets.symmetric(vertical: 8),
+                        //   child: ListView(
+                        //     scrollDirection: Axis.horizontal,
+                        //     children: const [
+                        //       // _itemTab(
+                        //       //   icon: 'assets/icons/samplepic.jpg',
+                        //       //   title: 'All',
+                        //       //   isActive: selectedCategory == 'All',
+                        //       //   // onTap: () => filterItems('All'),
+                        //       // ),
+                       
+                         
+                        //       // Add more item tabs here
+                        //     ],
+                        //   ),
+                        // ),
                         Expanded(
                           child: LayoutBuilder(
                             key: ValueKey('$itemWidth-$itemHeight'),
@@ -987,14 +1080,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     // Check if discount is not empty and parse it
     if (_discountController.text.isNotEmpty) {
-      discount = double.parse(_discountController.text);
+      // discount = double.parse(_discountController.text);
+      discount = double.tryParse(_discountController.text) ?? 0;
+      _setDiscountForCurrentPage(discount);
     }
+
+    double vatAmount =
+        subtotal - discount * vatPercent;
 
     // Calculate tax after applying discount
     double totalTax = calculateTax(discount);
 
     // Subtract the discount from the subtotal
-    double total = subtotal + totalTax - discount - paidAmount;
+    double total =
+        subtotal + totalTax - discount - _getPaidAmountForCurrentPage();
 
     // Ensure total doesn't go below zero
     if (total < 0) {
@@ -1002,6 +1101,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     return total;
+  }
+
+  double calculateVatAmount(){
+    double subtotal = calculateSubtotal();
+        double discount = 0.0;
+
+    // Check if discount is not empty and parse it
+    if (_discountController.text.isNotEmpty) {
+      // discount = double.parse(_discountController.text);
+      discount = double.tryParse(_discountController.text) ?? 0;
+      _setDiscountForCurrentPage(discount);
+    }
+        double vatAmount =
+        subtotal - discount * vatPercent;
+
+        return vatAmount;
   }
 
   Future<PermissionStatus> requestStoragePermission() async {
@@ -1025,10 +1140,74 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return PermissionStatus.denied; // Default return in case it's not Android
   }
 
+  Future<File> generateQR(String companyName, String vatRegNum) async {
+    BytesBuilder bytesBuilder = BytesBuilder();
+
+    // Seller name
+    bytesBuilder.addByte(1);
+    List<int> sellerNameBytes = utf8.encode(companyName);
+    bytesBuilder.addByte(sellerNameBytes.length);
+    bytesBuilder.add(sellerNameBytes);
+
+    // VAT registration number
+    bytesBuilder.addByte(2);
+    List<int> vatRegNumBytes = utf8.encode(vatRegNum);
+    bytesBuilder.addByte(vatRegNumBytes.length);
+    bytesBuilder.add(vatRegNumBytes);
+
+    // Timestamp
+    bytesBuilder.addByte(3);
+    List<int> timeStampBytes = utf8
+        .encode(DateFormat('yyyy-MM-ddTHH:mm:ss').format(DateTime.now()) + 'Z');
+    bytesBuilder.addByte(timeStampBytes.length);
+    bytesBuilder.add(timeStampBytes);
+
+    // Invoice total with VAT
+    bytesBuilder.addByte(4);
+    List<int> invTotalBytes = utf8.encode(calculateTotal.toString());
+    bytesBuilder.addByte(invTotalBytes.length);
+    bytesBuilder.add(invTotalBytes);
+
+    // VAT total
+    bytesBuilder.addByte(5);
+    List<int> totalVatBytes =
+        utf8.encode(calculateVatAmount.toString()); // Or update with VAT total
+    bytesBuilder.addByte(totalVatBytes.length);
+    bytesBuilder.add(totalVatBytes);
+
+    // Generate QR code using QrPainter
+    final qrCodeData = base64Encode(bytesBuilder.toBytes());
+    final qrPainter = QrPainter(
+      data: qrCodeData,
+      version: QrVersions.auto,
+      gapless: true,
+      color: const Color(0xFF000000),
+      emptyColor: const Color(0xFFFFFFFF),
+    );
+
+    // Convert QrPainter to Image
+    final ui.Image image = await qrPainter.toImage(200); // 200x200 size
+    final ByteData? byteData =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    // Get the directory to store the image
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/qr_code.png';
+    final file = File(filePath);
+
+    // Write the bytes to a file
+    await file.writeAsBytes(pngBytes);
+
+    return file;
+  }
+
   Widget _calculateAndPrintSection() {
     double discount = 0.0;
     if (_discountController.text.isNotEmpty) {
-      discount = double.parse(_discountController.text);
+      // discount = double.parse(_discountController.text);
+      discount = double.tryParse(_discountController.text) ?? 0;
+      _setDiscountForCurrentPage(discount);
     }
     double subtotal = calculateSubtotal();
     double tax = calculateTax(discount);
@@ -1056,7 +1235,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 width: 50, // Adjust the width as needed
               ),
               Text(
-                paidAmount.toStringAsFixed(2), // Show the selected amount here
+                // paidAmount.toStringAsFixed(2),
+                _getPaidAmountForCurrentPage().toString(),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -1236,7 +1416,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   double discountamount = 0.0;
 
                   if (_discountController.text.isNotEmpty) {
-                    discountamount = double.parse(_discountController.text);
+                    // discountamount = double.parse(_discountController.text);
+                    discountamount =
+                        double.tryParse(_discountController.text) ?? 0;
+                    _setDiscountForCurrentPage(discount);
                   }
                   List<Map<String, dynamic>> soldItemsMap =
                       soldItems.map((item) => item.toMap()).toList();
@@ -1258,7 +1441,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   String companyAddress = keys['main_address'] ?? '';
                   String companyCrNo = keys['cr_no'] ?? '';
                   print("selectedCompany: $selectedCompanyName");
-                  print("selectmode$selectedMode");
+                  // print("selectmode$selectedMode");
 
                   Future prepareAndPostSalesItems(
                     List<Map<String, dynamic>> soldItemsMap,
@@ -1267,7 +1450,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     DatabaseHelper dbHelper,
                     double discount,
                   ) async {
-                    // Fetch API key and secret key from the database
+                    print("selectedModeasync$selectedMode");
+                    print("paidamountinasync$paidAmount");
                     // Call postSalesItemsToApi with the fetched keys
                     return await dbHelper.postSalesItemsToApi(
                       soldItemsMap,
@@ -1348,24 +1532,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                   // Print bill after inserting and posting
                   final printService = PrintService();
+                  final generatePDF = GeneratePDF();
+
+                  // String qrData = await generateQR(selectedCompanyName, fetchVat);
+                  // Uint8List qrData = await generateQR(selectedCompanyName, fetchVat);
+                  // String base64QrData = base64Encode(qrData);
+                  File qrFile = await generateQR(selectedCompanyName, fetchVat);
                   if (salesInvoice != null) {
-                    await printService.printBill(
-                      orderedItems,
-                      subtotal,
-                      tax,
-                      total,
-                      _selectedCustomer!,
-                      salesInvoice, // Pass the sales_invoice as a string to printBill
-                      selectedCompanyName,
-                      customerName,
-                      customerAddressTitle,
-                      customerVatNumber,
-                      customercompanyCrNo,
-                      companyVatNo,
-                      companyCrNo,
-                      companyAddress,
-                      discountamount,
-                    );
+                    // await printService.printBill(
+                     await generatePDF.generate3inch(
+                        orderedItems,
+                        subtotal,
+                        tax,
+                        total,
+                        _selectedCustomer!,
+                        salesInvoice, // Pass the sales_invoice as a string to printBill
+                        selectedCompanyName,
+                        customerName,
+                        customerAddressTitle,
+                        customerVatNumber,
+                        customercompanyCrNo,
+                        companyVatNo,
+                        companyCrNo,
+                        companyAddress,
+                        discountamount,
+                        qrFile);
                   } else {
                     print("Error: salesInvoice is null, cannot print bill.");
                   }
@@ -1399,12 +1590,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         ],
       ),
-      // ),
     );
   }
 
   Widget _buildOrderedItemsSection() {
-    print("_buildOrderedItemsSection");
     return Container(
       decoration: BoxDecoration(
         color: Color.fromARGB(155, 239, 241, 241),
@@ -1449,34 +1638,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _modeSelector() {
-    return Container(
-      width: double.infinity, // Set the width to full
-      padding: const EdgeInsets.symmetric(horizontal: 16), // Optional padding
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: const Color.fromARGB(155, 222, 229, 231),
-      ),
-      child: DropdownButton<String>(
-        isExpanded: true, // This makes the dropdown itself take the full width
-        hint: const Text("Mode Of Payment"),
-        value: selectedMode,
-        items: modesOfPayments.map((mode) {
-          return DropdownMenuItem<String>(
-            value: mode['mode_name'],
-            child: Text(mode['mode_name'] ?? ''),
-          );
-        }).toList(),
-        onChanged: (selected) {
-          setState(() {
-            selectedMode = selected!;
-          });
-          print("selectedMode$selectedMode");
-        },
-      ),
-    );
-  }
-
   Widget _paidAmount() {
     return Container(
       width: double.infinity,
@@ -1487,7 +1648,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
       child: Column(
         children: [
-          // Row containing TextField and ElevatedButton
           Row(
             children: [
               Expanded(
@@ -1499,7 +1659,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         .digitsOnly, // Only numbers allowed
                   ],
                   decoration: const InputDecoration(
-                    labelText: 'Paying Amount ',
+                    labelText: 'Paying Amount',
                     border: InputBorder.none,
                   ),
                 ),
@@ -1507,41 +1667,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ElevatedButton(
                 onPressed: () {
                   setState(() {
-                    paidAmount =
+                    double paidAmount =
                         double.tryParse(paidAmountController.text) ?? 0;
+                    _setPaidAmountForCurrentPage(paidAmount);
+                    print(
+                        "Entered amount for Page $currentPageIndex: $paidAmount");
                   });
-                  print("Entered number: $paidAmount");
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFF4285F4), // Light green background color
-                  foregroundColor:
-                      Colors.white, // Text color (white for contrast)
+                  backgroundColor: const Color(0xFF4285F4),
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10, horizontal: 15), // Padding
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
                 ),
-                // child: const Text('OK'),
-
                 child: const Row(
-                  mainAxisSize: MainAxisSize
-                      .min, // Ensures the Row takes only as much space as needed
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons
-                          .check, // You can replace this with any icon you want
-                      color: Colors.white, // Icon color
+                      Icons.check,
+                      color: Colors.white,
                       size: 15,
                     ),
-                    SizedBox(width: 3), // Space between icon and text
+                    SizedBox(width: 3),
                     Text(
                       'OK',
                       style: TextStyle(
-                        fontSize: 12, // Text size
-                        fontWeight: FontWeight.bold, // Text weight
-                        letterSpacing: 1.2, // Spacing between letters
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ],
@@ -1550,6 +1706,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _modeSelector() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: const Color.fromARGB(155, 222, 229, 231),
+      ),
+      child: DropdownButton<String>(
+        isExpanded: true,
+        hint: const Text("Mode Of Payment"),
+        value: _getSelectedModeForCurrentPage(),
+        items: modesOfPayments.map((mode) {
+          return DropdownMenuItem<String>(
+            value: mode['mode_name'],
+            child: Text(mode['mode_name'] ?? ''),
+          );
+        }).toList(),
+        onChanged: (selected) {
+          _setSelectedModeForCurrentPage(selected);
+          print("Selected Mode for Page $currentPageIndex: $selected");
+        },
       ),
     );
   }

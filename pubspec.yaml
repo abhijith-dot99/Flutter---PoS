@@ -63,6 +63,8 @@ dev_dependencies:
   # pbkdf2: ^0.2.0
   encrypt: ^5.0.3
   device_info_plus: ^10.1.2
+  qr_flutter: ^4.1.0
+  qr: ^3.0.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
