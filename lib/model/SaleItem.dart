@@ -1,5 +1,4 @@
 class SalesItem {
-  int id;
   String itemCode;
   String itemName;
   String itemDescription;
@@ -20,7 +19,6 @@ class SalesItem {
   double discount;
 
   SalesItem({
-    required this.id,
     required this.itemCode,
     required this.itemName,
     required this.itemDescription,
@@ -44,7 +42,6 @@ class SalesItem {
   // Convert a SalesItem object into a Map object to store in the database
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'item_code': itemCode,
       'item_name': itemName,
       'item_description': itemDescription,
@@ -69,7 +66,6 @@ class SalesItem {
   // Convert a Map object from the database into a SalesItem object
   factory SalesItem.fromMap(Map<String, dynamic> map) {
     return SalesItem(
-      id: map['id'],
       itemCode: map['item_code'],
       itemName: map['item_name'],
       itemDescription: map['item_description'],

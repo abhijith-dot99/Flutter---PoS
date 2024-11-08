@@ -233,11 +233,11 @@ class PrintService {
                   children: [
                     // Seller Table
                     pw.Padding(
-                      padding: pw.EdgeInsets.all(0),
+                      padding: const pw.EdgeInsets.all(0),
                       child: pw.Table(
                         columnWidths: {
-                          0: pw.FlexColumnWidth(1), // Label column
-                          1: pw.FlexColumnWidth(2), // Data column
+                          0: const pw.FlexColumnWidth(1), // Label column
+                          1: const pw.FlexColumnWidth(2), // Data column
                         },
                         border: pw.TableBorder.all(
                           color: PdfColors.black,
@@ -248,16 +248,16 @@ class PrintService {
                           pw.TableRow(
                             children: [
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('Name:',
-                                    style: pw.TextStyle(fontSize: 10)),
+                                    style: const pw.TextStyle(fontSize: 10)),
                               ),
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(selectedCompanyName,
-                                    style: pw.TextStyle(fontSize: 10)),
+                                    style: const pw.TextStyle(fontSize: 10)),
                               ),
                             ],
                           ),
@@ -267,26 +267,26 @@ class PrintService {
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('Address:',
-                                    style: pw.TextStyle(fontSize: 10)),
+                                    style: const pw.TextStyle(fontSize: 10)),
                               ),
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(sellerAddress,
-                                    style: pw.TextStyle(fontSize: 10)),
+                                    style: const pw.TextStyle(fontSize: 10)),
                               ),
                             ],
                           ),
                           pw.TableRow(
                             children: [
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('VAT No:',
-                                    style: pw.TextStyle(fontSize: 10)),
+                                    style: const pw.TextStyle(fontSize: 10)),
                               ),
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(sellerVatNumber,
                                     style: pw.TextStyle(fontSize: 10)),
@@ -362,13 +362,13 @@ class PrintService {
                             pw.TableRow(
                               children: [
                                 pw.Padding(
-                                  padding: pw.EdgeInsets.only(
+                                  padding: const pw.EdgeInsets.only(
                                       top: 10, bottom: 10, left: 5),
                                   child: pw.Text('VAT No:',
                                       style: pw.TextStyle(fontSize: 10)),
                                 ),
                                 pw.Padding(
-                                  padding: pw.EdgeInsets.only(
+                                  padding: const pw.EdgeInsets.only(
                                       top: 10, bottom: 10, left: 5),
                                   child: pw.Text(customerVatNumber,
                                       style: pw.TextStyle(fontSize: 10)),
@@ -378,16 +378,16 @@ class PrintService {
                             pw.TableRow(
                               children: [
                                 pw.Padding(
-                                  padding: pw.EdgeInsets.only(
+                                  padding: const pw.EdgeInsets.only(
                                       top: 10, bottom: 10, left: 5),
                                   child: pw.Text('CR No:',
-                                      style: pw.TextStyle(fontSize: 10)),
+                                      style: const pw.TextStyle(fontSize: 10)),
                                 ),
                                 pw.Padding(
-                                  padding: pw.EdgeInsets.only(
+                                  padding: const pw.EdgeInsets.only(
                                       top: 10, bottom: 10, left: 5),
                                   child: pw.Text(customercompanyCrNo,
-                                      style: pw.TextStyle(fontSize: 10)),
+                                      style: const pw.TextStyle(fontSize: 10)),
                                 ),
                               ],
                             ),
@@ -440,7 +440,7 @@ class PrintService {
               children: [
                 pw.Text('Subtotal:',
                     style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                pw.Text('${subtotal.toStringAsFixed(2)}'),
+                pw.Text(subtotal.toStringAsFixed(2)),
               ],
             ),
             pw.SizedBox(height: 8),
@@ -449,7 +449,7 @@ class PrintService {
               children: [
                 pw.Text('Tax:',
                     style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                pw.Text('${tax.toStringAsFixed(2)}'),
+                pw.Text(tax.toStringAsFixed(2)),
               ],
             ),
             pw.SizedBox(height: 8),
@@ -468,7 +468,7 @@ class PrintService {
                 pw.Text('Total:',
                     style: pw.TextStyle(
                         fontWeight: pw.FontWeight.bold, fontSize: 16)),
-                pw.Text('${total.toStringAsFixed(2)}'),
+                pw.Text(total.toStringAsFixed(2)),
               ],
             ),
           ],

@@ -25,6 +25,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double companyTax = 0.0;
   double fetchedTax = 0.0;
   String fetchVat = '';
+
+  String? selectedMode;
+  // get selectedMode => [];
+
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
   List<Item> orderedItems = [];
@@ -47,10 +51,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   late PageController _pageController; // Add a PageController
 
-  TextEditingController _discountController = TextEditingController();
+  final TextEditingController _discountController = TextEditingController();
+  final TextEditingController paidAmountController = TextEditingController();
 
+  double paidAmount = 0;
   int _selectedPage = 1; // Track the selected page
   Map<int, List<Item>> pageOrderedItems = {};
+
+  List<Map<String, dynamic>> modesOfPayments = [];
   int currentPageIndex = 1;
   int pageIndex = 1;
 
@@ -81,6 +89,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _loadPreferences().then((_) {
       _loadItemsFromDatabase();
       _loadCustomerForSelectedCompany();
+      _loadModesFromDB();
+    });
+  }
+
+  void _clearFields() {
+    setState(() {
+      // Clear each widget's controller or variable
+      // customerController.clear();
+      _discountController.clear();
+      paidAmountController.clear();
+      selectedMode = null;
+      orderedItems.clear();
+      // _filteredCustomers = null;
     });
   }
 
@@ -157,19 +178,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  // Future<void> _loadCustomerForSelectedCompany() async {
-  //   print("loadcustomer");
-  //   if (selectedCompanyName.isNotEmpty) {
-  //     final dbHelper = DatabaseHelper();
+  Future<void> _loadModesFromDB() async {
+    print("inside loadmode");
+    final dbHelper = DatabaseHelper();
 
-  //     // Fetch employees from the database
-  //     List<String> customers =
-  //         await dbHelper.getCustomerByCompany(selectedCompanyName);
-  //     setState(() {
-  //       _filteredCustomers = customers.toSet().toList();
-  //     });
-  //   }
-  // }
+    List<Map<String, dynamic>> modes = await dbHelper.getModesPayment();
+
+    print("modes $modes");
+
+    // Store the fetched data in a state variable for displaying in the dropdown
+    setState(() {
+      modesOfPayments = modes;
+      print("modesofpayment$modesOfPayments");
+    });
+  }
 
   Future<void> _loadCustomerForSelectedCompany() async {
     print("insdieloadcustomer");
@@ -187,18 +209,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         // Now you can use the customerData map to access fields and print them in your bill
         print('Customer Name: ${customerData['customer_name']}');
-        // print('Customer Type: ${customerData['type']}');
-        // print('Customer Email: ${customerData['email']}');
-        // print('Customer Address Type: ${customerData['address_type']}');
-        // print('Customer State: ${customerData['state']}');
-        // print('Customer pincode: ${customerData['pincode']}');
-        // print('Customer city: ${customerData['city']}');
-        // print('Customer address: ${customerData['address_title']}');
-        // print('Customer addtitle2: ${customerData['address_line1']}');
-        // print('Customer Type: ${customerData['address_line2']}');
-        // print('Customer addrescountry: ${customerData['address_country']}');
-        // print('Customer vat_number: ${customerData['vat_number']}');
-        // print('Customer Type: ${customerData['cr_no']}');
 
         setState(() {
           // Assuming you want to filter based on customer_name
@@ -314,6 +324,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           itemName: item.itemName,
           image: item.image,
           price: item.price,
+          itemDesciption: item.itemDesciption,
           itemCount: item.itemCount,
           tax: item.tax,
           companyTax: companyTax,
@@ -439,15 +450,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     child: Column(
                       children: [
                         _viewCustomerList(context),
+                        const SizedBox(height: 2),
                         Expanded(
                           flex: 2, // Equivalent to Flexible
                           child: _buildOrderedItemsSection(),
                         ),
-                        Expanded(
-                          flex:
-                              1, // Equivalent to Flexible for the print section
-                          child: _calculateAndPrintSection(),
-                        ),
+                        const SizedBox(height: 5),
+                        _modeSelector(),
+                        const SizedBox(height: 5),
+                        _paidAmount(),
+                        const SizedBox(height: 5),
+                        _calculateAndPrintSection(),
+                        const SizedBox(height: 5),
                       ],
                     ),
                   ),
@@ -458,7 +472,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 left: 0, // Align them to the left
                 right: -440, // Align them to the right
                 child: Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Row(
                     mainAxisAlignment:
                         MainAxisAlignment.center, // Center the buttons
@@ -887,7 +901,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     image: item.image,
                     itemName: item.itemName,
                     itemCode: item.itemCode,
-                    // itemCount: item.itemCount,
+                    itemDesciption: item.itemDesciption,
                     price: priceController.text,
                     tax: item.tax,
                     companyTax: item.companyTax,
@@ -966,7 +980,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     double totalTax = calculateTax(discount);
 
     // Subtract the discount from the subtotal
-    double total = subtotal + totalTax - discount;
+    double total = subtotal + totalTax - discount - paidAmount;
 
     // Ensure total doesn't go below zero
     if (total < 0) {
@@ -1007,8 +1021,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     double total = calculateTotal();
 
     return Container(
-      // fit: FlexFit.loose,
-      // child: Container(
       padding: const EdgeInsets.all(15),
       margin: const EdgeInsets.symmetric(vertical: 1),
       decoration: BoxDecoration(
@@ -1020,6 +1032,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Paid Amount',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black87)),
+              const SizedBox(
+                width: 50, // Adjust the width as needed
+              ),
+              Text(
+                paidAmount.toStringAsFixed(2), // Show the selected amount here
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              )
+            ],
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1069,7 +1099,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           FontWeight.normal, // You can adjust the font weight
                     ),
                   ),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     // FilteringTextInputFormatter.digitsOnly, // Allow only digits
                     FilteringTextInputFormatter.allow(
@@ -1159,7 +1190,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 }
                 // Insert the sold items into the database
 
-                String invoiceNo = await dbHelper.getNextInvoiceNumber();
+                // String invoiceNo = await dbHelper.getNextInvoiceNumber();
 
                 try {
                   print("changed $previousCustomer to $_selectedCustomer");
@@ -1169,7 +1200,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       .map((item) => Items(
                             itemCode: item.itemCode,
                             itemName: item.itemName,
-                            itemDescription: '',
+                            itemDescription: item.itemDesciption,
                             itemCount: item.itemCount,
                             itemGroup: '',
                             itemImage: item.image,
@@ -1183,7 +1214,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             pricingRules: '',
                             isFreeItem: item.itemCount == 0,
                             itemTaxRate: item.tax,
-                            invoice: invoiceNo,
+                            // invoice: invoiceNo,
                             customername: _selectedCustomer!,
                           ))
                       .toList();
@@ -1202,11 +1233,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   print("fullcount$fullcount");
 
                   // Insert sales items into DB_sales_items with new customer name
-                  await dbHelper.insertSalesItems(soldItemsMap, invoiceNo,
-                      _selectedCustomer!, discountamount);
 
                   // Declare responseBody here
-                  Map<String, dynamic>? responseBody;
 
                   Map<String, String?> keys = await dbHelper
                       .getApiKeysByCompanyName(selectedCompanyName);
@@ -1216,6 +1244,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   String companyAddress = keys['main_address'] ?? '';
                   String companyCrNo = keys['cr_no'] ?? '';
                   print("selectedCompany: $selectedCompanyName");
+                  print("selectmode$selectedMode");
 
                   Future prepareAndPostSalesItems(
                     List<Map<String, dynamic>> soldItemsMap,
@@ -1233,9 +1262,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       selectedCustomer,
                       selectedCompanyName,
                       discount,
+                      selectedMode!,
+                      paidAmount,
                     );
                   }
 
+                  Map<String, dynamic>? responseBody;
                   // Call the function and assign the result to responseBody
                   responseBody = await prepareAndPostSalesItems(
                       soldItemsMap,
@@ -1251,6 +1283,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     salesInvoice =
                         responseBody['message']['sales_invoice'] as String?;
                   }
+
+                  await dbHelper.insertSalesItems(soldItemsMap, salesInvoice,
+                      _selectedCustomer!, discountamount);
 
                   print("salesinvoiceafterextraction$salesInvoice");
                   String customerName =
@@ -1325,6 +1360,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   // Update previousCustomer after the sale is successfully processed
                   previousCustomer =
                       _selectedCustomer; // Update to track customer change
+                  _clearFields();
                 } catch (e) {
                   print(
                       "Error occurred while processing sale: ${e.toString()}");
@@ -1398,12 +1434,116 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  Widget _modeSelector() {
+    return Container(
+      width: double.infinity, // Set the width to full
+      padding: const EdgeInsets.symmetric(horizontal: 16), // Optional padding
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: const Color.fromARGB(155, 222, 229, 231),
+      ),
+      child: DropdownButton<String>(
+        isExpanded: true, // This makes the dropdown itself take the full width
+        hint: const Text("Mode Of Payment"),
+        value: selectedMode,
+        items: modesOfPayments.map((mode) {
+          return DropdownMenuItem<String>(
+            value: mode['mode_name'],
+            child: Text(mode['mode_name'] ?? ''),
+          );
+        }).toList(),
+        onChanged: (selected) {
+          setState(() {
+            selectedMode = selected!;
+          });
+          print("selectedMode$selectedMode");
+        },
+      ),
+    );
+  }
+
+  Widget _paidAmount() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(7),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: const Color.fromARGB(155, 222, 229, 231),
+      ),
+      child: Column(
+        children: [
+          // Row containing TextField and ElevatedButton
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: paidAmountController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter
+                        .digitsOnly, // Only numbers allowed
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Paying Amount ',
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    paidAmount =
+                        double.tryParse(paidAmountController.text) ?? 0;
+                  });
+                  print("Entered number: $paidAmount");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      const Color(0xFF4285F4), // Light green background color
+                  foregroundColor:
+                      Colors.white, // Text color (white for contrast)
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 10, horizontal: 15), // Padding
+                ),
+                // child: const Text('OK'),
+
+                child: const Row(
+                  mainAxisSize: MainAxisSize
+                      .min, // Ensures the Row takes only as much space as needed
+                  children: [
+                    Icon(
+                      Icons
+                          .check, // You can replace this with any icon you want
+                      color: Colors.white, // Icon color
+                      size: 15,
+                    ),
+                    SizedBox(width: 3), // Space between icon and text
+                    Text(
+                      'OK',
+                      style: TextStyle(
+                        fontSize: 12, // Text size
+                        fontWeight: FontWeight.bold, // Text weight
+                        letterSpacing: 1.2, // Spacing between letters
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _viewCustomerList(BuildContext context) {
     return SizedBox(
-      width: double.infinity, // Makes the button take full width
+      width: double.infinity, // Makes the bfutton take full width
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          // backgroundColor: Colors.deepOrange,
           backgroundColor: const Color(0xFF4285F4), // Set the color here
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),

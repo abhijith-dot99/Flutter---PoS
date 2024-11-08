@@ -4,6 +4,7 @@ import 'package:flutter_pos_app/login_page.dart';
 // import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
+import 'package:flutter_pos_app/model/modeData.dart';
 import 'package:flutter_pos_app/model/itemRecord.dart';
 import 'package:flutter_pos_app/model/supplier.dart';
 import 'package:flutter_pos_app/model/tax.dart';
@@ -55,6 +56,22 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
     _fetchCompanyDetails(); // Fetch company details after loading preferences
   }
 
+  String trimUrl(String fullUrl) {
+    String baseUrl = '';
+
+    // Find the position of the 'duplex_dev.api.' part in the full URL
+    int index = fullUrl.indexOf('duplex_dev.api.');
+
+    if (index != -1) {
+      // Trim the URL to include only up to 'duplex_dev.api.'
+      baseUrl = fullUrl.substring(0, index + 'duplex_dev.api.'.length);
+    } else {
+      // If not found, return the original URL (or handle as needed)
+      baseUrl = fullUrl;
+    }
+    return baseUrl;
+  }
+
   Future<void> _fetchCompanyDetails() async {
     final detailsUrl = '$url/company_details?company_name=$selectedCompanyName';
     String basicAuth =
@@ -86,31 +103,50 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
     }
   }
 
-  Future<void> _saveItemsToDB(List<dynamic> itemsList) async {
+  Future<void> _fetchModeSelector() async {
+    String newUrl = trimUrl(url);
+    final String itemsUrl = '${newUrl}payment_modes.get_payment_modes';
+    String basicAuth =
+        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+    print("itemurlcuddtomermode$itemsUrl");
+    final dbHelper = DatabaseHelper();
+    try {
+      final response = await http.get(
+        Uri.parse(itemsUrl),
+        headers: <String, String>{
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> itemsList = jsonDecode(response.body)['message'];
+        print("itemslist$itemsList");
+        if (itemsList.isNotEmpty) {
+          await _saveModesToDB(itemsList);
+        } else {
+          print('No items found for the selected company.');
+        }
+      } else {
+        print('Failed to fetch items. Response: ${response.body}');
+      }
+    } catch (e, stacktrace) {
+      print('Error fetching modes $e');
+      print('Stacktrace: $stacktrace');
+    }
+  }
+
+  Future<void> _saveModesToDB(List<dynamic> modesList) async {
     print("insdiesaveitemstodb");
     final dbHelper = DatabaseHelper();
 
-    for (var item in itemsList) {
-      if (item['company_name'] == selectedCompanyName) {
-        final itemData = ItemData(
-          itemCode: item['item_code'] ?? '',
-          itemName: item['item_name'] ?? '',
-          itemPrice: item['item_price'] != null
-              ? (item['item_price'] as num).toDouble()
-              : 0.0,
-          itemTax: item['item_tax'] != null
-              ? (item['item_tax'] as num).toDouble()
-              : 0.0,
-          itemGroup: item['item_group'] ?? '',
-          companyName: item['company_name'] ?? '',
-          warehouse: item['warehouse'] ?? '',
-          itemPriceList: item['item_price_list'] ?? '',
-          uom: item['uom'] ?? '',
-          itemTaxType: item['item_tax_type'] ?? '',
+      for (var item in modesList) {
+        final modeData = ModeData(
+          modeName: item['mode_name'] ?? '',
+          modeType: item['mode_type'] ?? '',
         );
-
-        await dbHelper.insertItem(itemData);
-      }
+        print("modesList$item");
+    await dbHelper.insertMode(modeData);
     }
   }
 
@@ -150,20 +186,32 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
     }
   }
 
-  String trimUrl(String fullUrl) {
-    String baseUrl = '';
+  Future<void> _saveItemsToDB(List<dynamic> itemsList) async {
+    print("insdiesaveitemstodb");
+    final dbHelper = DatabaseHelper();
 
-    // Find the position of the 'duplex_dev.api.' part in the full URL
-    int index = fullUrl.indexOf('duplex_dev.api.');
+    for (var item in itemsList) {
+      if (item['company_name'] == selectedCompanyName) {
+        final itemData = ItemData(
+          itemCode: item['item_code'] ?? '',
+          itemName: item['item_name'] ?? '',
+          itemPrice: item['item_price'] != null
+              ? (item['item_price'] as num).toDouble()
+              : 0.0,
+          itemTax: item['item_tax'] != null
+              ? (item['item_tax'] as num).toDouble()
+              : 0.0,
+          itemGroup: item['item_group'] ?? '',
+          companyName: item['company_name'] ?? '',
+          warehouse: item['warehouse'] ?? '',
+          itemPriceList: item['item_price_list'] ?? '',
+          uom: item['uom'] ?? '',
+          itemTaxType: item['item_tax_type'] ?? '',
+        );
 
-    if (index != -1) {
-      // Trim the URL to include only up to 'duplex_dev.api.'
-      baseUrl = fullUrl.substring(0, index + 'duplex_dev.api.'.length);
-    } else {
-      // If not found, return the original URL (or handle as needed)
-      baseUrl = fullUrl;
+        await dbHelper.insertItem(itemData);
+      }
     }
-    return baseUrl;
   }
 
   Future<void> fetchAndStoreCompanies() async {
@@ -191,19 +239,6 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
           print("selected compa$selectedCompanyName");
 
           for (var company in companyList) {
-            // if (company['company_name'] == selectedCompanyName) {
-            //   final companyData = Companyy(
-            //     companyName: company['company_name'] ?? '',
-            //     owner: company['owner'] ?? '',
-            //     abbr: company['abbr'] ?? '',
-            //     country: company['country'] ?? '',
-            //     vatNumber: company['vat_number'] ?? '',
-            //     phoneNo: company['phone_no'] ?? '',
-            //     email: company['email'] ?? '',
-            //     website: company['website'] ?? '',
-
-            //   );
-
             if (company['company_name'] == selectedCompanyName) {
               final companyData = Companyy(
                 companyName: company['company_name'] ?? '',
@@ -634,6 +669,23 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                     ),
                     icon: const Icon(Icons.local_shipping, size: 20),
                     label: const Text('fetch Tax'),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton.icon(
+                    onPressed: _fetchModeSelector,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.local_shipping, size: 20),
+                    label: const Text('fetch Modes'),
                   ),
                 ),
               ),

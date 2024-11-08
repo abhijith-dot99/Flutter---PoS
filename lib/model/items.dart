@@ -14,8 +14,6 @@ class Items {
   // final Map<String, dynamic> itemTaxList
   // <Map<String, dynamic>> itemsRate;
   final String itemTaxRate;
-
-  final String invoice;
   final String customername;
   int itemCount;
 
@@ -35,7 +33,6 @@ class Items {
     required this.isFreeItem,
     // required this.itemTaxRate,
     required this.itemTaxRate,
-    required this.invoice,
     required this.customername,
     required this.itemCount,
 
@@ -57,7 +54,6 @@ class Items {
       'pricing_rules': pricingRules,
       'is_free_item': isFreeItem ? 1 : 0,
       'item_tax_rate': itemTaxRate,
-      'invoice_no': 'ACC-SINV-2024-00058',
       'customername': customername,
       'item_count': itemCount,
   

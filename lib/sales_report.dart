@@ -19,6 +19,9 @@ class _SalesReportState extends State<SalesReport> {
   bool isLoading = true; // Flag to control loading state
   bool showNothingHere = false; // Flag to show "Nothing here" after 5 seconds
 
+  final TextEditingController searchController =
+      TextEditingController(); // Search bar controller
+
   @override
   void initState() {
     super.initState();
@@ -87,22 +90,21 @@ class _SalesReportState extends State<SalesReport> {
 
   // Function to filter sales items between fromDate and toDate
   void _filterSalesItems() {
-    if (fromDate != null && toDate != null) {
-      setState(() {
-        filteredSalesItems = salesItems.where((item) {
-          DateTime saleDate =
-              DateTime.parse(item.date); // Parse item.date as DateTime
-          return saleDate
-                  .isAfter(fromDate!.subtract(const Duration(days: 1))) &&
-              saleDate.isBefore(toDate!.add(const Duration(days: 1)));
-        }).toList();
-      });
-    } else {
-      // If no filtering is applied, show all items
-      setState(() {
-        filteredSalesItems = salesItems;
-      });
-    }
+    setState(() {
+      filteredSalesItems = salesItems.where((item) {
+        final DateTime saleDate = DateTime.parse(item.date);
+        final bool isInRange = fromDate != null && toDate != null
+            ? saleDate.isAfter(fromDate!.subtract(const Duration(days: 1))) &&
+                saleDate.isBefore(toDate!.add(const Duration(days: 1)))
+            : true;
+
+        final bool matchesSearch = item.customerName
+            .toLowerCase()
+            .contains(searchController.text.toLowerCase());
+
+        return isInRange && matchesSearch;
+      }).toList();
+    });
   }
 
   @override
@@ -131,11 +133,11 @@ class _SalesReportState extends State<SalesReport> {
                           BorderRadius.circular(10), // Rounded corners
                     ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16), // Padding
+                        horizontal: 10, vertical: 10), // Padding
                   ),
                   child: Text(
                     fromDate == null
-                        ? 'Select From Date'
+                        ? 'Select From'
                         : 'From: ${DateFormat('yyyy-MM-dd').format(fromDate!)}',
                     style: const TextStyle(
                       fontSize: 16, // Font size
@@ -154,11 +156,11 @@ class _SalesReportState extends State<SalesReport> {
                           BorderRadius.circular(10), // Rounded corners
                     ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16), // Padding
+                        horizontal: 10, vertical: 10), // Padding
                   ),
                   child: Text(
                     toDate == null
-                        ? 'Select To Date'
+                        ? 'Select To'
                         : 'To: ${DateFormat('yyyy-MM-dd').format(toDate!)}',
                     style: const TextStyle(
                       fontSize: 16, // Font size
@@ -170,7 +172,32 @@ class _SalesReportState extends State<SalesReport> {
             ),
           ),
 
-          // // Sales report table or message
+          // Search Bar with Padding and Adjustable Width
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 16.0), // Add vertical padding to create space
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width *
+                  0.92, // Adjust the width (90% of screen width)
+              child: TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  labelText: 'Search by Customer Name',
+                  labelStyle: const TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                onChanged: (value) {
+                  _filterSalesItems(); // Filter the table when search text changes
+                },
+              ),
+            ),
+          ),
+
+          // Sales report table or message
           Expanded(
             child: isLoading
                 ? const Center(
@@ -206,21 +233,19 @@ class _SalesReportState extends State<SalesReport> {
                             ),
                             columns: const [
                               DataColumn(
-                                  label:
-                                      Text('ID', textAlign: TextAlign.center)),
-                              DataColumn(
                                   label: Text('Item Code',
+                                      textAlign: TextAlign.center)),
+                              DataColumn(
+                                  label: Text('Item Name',
                                       textAlign: TextAlign.center)),
                               DataColumn(
                                   label: Text('Description',
                                       textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Group',
-                                      textAlign: TextAlign.center)),
-                              // DataColumn(label: Text('Image', textAlign: TextAlign.center)),
-                              // DataColumn(label: Text('UOM', textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Item Name',
+                              // DataColumn(
+                              //     label: Text('Group',
+                              //         textAlign: TextAlign.center)),
+                                         DataColumn(
+                                  label: Text('Count',
                                       textAlign: TextAlign.center)),
                               DataColumn(
                                   label: Text('Base Rate',
@@ -234,7 +259,6 @@ class _SalesReportState extends State<SalesReport> {
                               DataColumn(
                                   label: Text('Net Amount',
                                       textAlign: TextAlign.center)),
-                              // DataColumn(label: Text('Pricing Rules', textAlign: TextAlign.center)),
                               DataColumn(
                                   label: Text('Is Free Item',
                                       textAlign: TextAlign.center)),
@@ -248,40 +272,38 @@ class _SalesReportState extends State<SalesReport> {
                                   label: Text('Customer Name',
                                       textAlign: TextAlign.center)),
                               DataColumn(
-                                  label: Text('Count',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
                                   label: Text('Date',
                                       textAlign: TextAlign.center)),
-                              DataColumn(
+                                          DataColumn(
                                   label: Text('Discount',
-                                      textAlign: TextAlign.center)),
+                                      textAlign: TextAlign.center))
                             ],
-                            rows: filteredSalesItems.map((item) {
-                              String formattedDate = DateFormat('yyyy-MM-dd')
-                                  .format(DateTime.parse(item.date));
-                              return DataRow(cells: [
-                                DataCell(Text(item.id.toString())),
-                                DataCell(Text(item.itemCode)),
-                                DataCell(Text(item.itemName)),
-                                DataCell(Text(item.baseRate.toString())),
-                                DataCell(Text(item.baseAmount.toString())),
-                                DataCell(Text(item.itemDescription)),
-                                DataCell(Text(item.itemGroup)),
-                                // DataCell(Text(item.itemImage)),
-                                // DataCell(Text(item.itemUom)),
-                                DataCell(Text(item.netRate.toString())),
-                                DataCell(Text(item.netAmount.toString())),
-                                // DataCell(Text(item.pricingRules)),
-                                DataCell(Text(item.isFreeItem ? 'Yes' : 'No')),
-                                DataCell(Text(item.itemTaxRate.toString())),
-                                DataCell(Text(item.invoiceNo)),
-                                DataCell(Text(item.customerName)),
-                                DataCell(Text(item.itemCount.toString())),
-                                DataCell(Text(formattedDate)),
-                                DataCell(Text(item.discount.toString())),
-                              ]);
-                            }).toList(),
+                            rows: filteredSalesItems
+                                .map(
+                                  (item) => DataRow(
+                                    cells: [
+                                      DataCell(Text(item.itemCode)),
+                                      DataCell(Text(item.itemName)),
+                                      DataCell(Text(item.itemDescription)),
+                                      // DataCell(Text(item.itemGroup)),
+                                      DataCell(Text(item.itemCount.toString())),
+                                      DataCell(Text(item.baseRate.toString())),
+                                      DataCell(
+                                          Text(item.baseAmount.toString())),
+                                      DataCell(Text(item.netRate.toString())),
+                                      DataCell(Text(item.netAmount.toString())),
+                                      DataCell(
+                                          Text(item.isFreeItem ? 'Yes' : 'No')),
+                                      DataCell(
+                                          Text(item.itemTaxRate.toString())),
+                                      DataCell(Text(item.invoiceNo)),
+                                      DataCell(Text(item.customerName)),
+                                      DataCell(Text(item.date)),
+                                       DataCell(Text(item.discount.toString())),
+                                    ],
+                                  ),
+                                )
+                                .toList(),
                           ),
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
+// import 'package:flutter_pos_app/model/ModeData.dart';
 import 'package:flutter_pos_app/model/SaleItem.dart';
 import 'package:flutter_pos_app/model/company.dart';
 import 'package:flutter_pos_app/model/companyy.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_pos_app/model/customer.dart';
 import 'package:flutter_pos_app/model/form_data.dart';
 import 'package:flutter_pos_app/model/item.dart';
 import 'package:flutter_pos_app/model/itemData.dart';
+import 'package:flutter_pos_app/model/modeData.dart';
 import 'package:flutter_pos_app/model/supplier.dart';
 import 'package:flutter_pos_app/model/tax.dart';
 import 'package:flutter_pos_app/model/users.dart';
@@ -58,7 +60,7 @@ class DatabaseHelper {
         path,
       );
       await _onCreate(db, 1); // Initialize DB for first-time creation
-      // _onUpgrade;
+      _onUpgrade;
       return db;
     } else if (Platform.isAndroid || Platform.isIOS) {
       print("inside android");
@@ -71,7 +73,7 @@ class DatabaseHelper {
         path,
         version: _dbVersion,
         onCreate: _onCreate,
-        onUpgrade: _onUpgrade,
+        // onUpgrade: _onUpgrade,
       );
     } else {
       throw Exception('Platform not supported');
@@ -79,6 +81,8 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    _onUpgrade(db, 21, 22);
+
     print("inside oncreate");
     // Create the DB_company table
     await db.execute('''
@@ -242,23 +246,12 @@ state TEXT,
     )
   ''');
 
-    // Create invoice_counter table
     await db.execute('''
-    CREATE TABLE IF NOT EXISTS invoice_counter (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      current_invoice_number INTEGER
-    )
-  ''');
-
-    // Initialize the invoice counter if it's empty
-    var result = await db.query('invoice_counter');
-    if (result.isEmpty) {
-      await db
-          .insert('invoice_counter', {'id': 1, 'current_invoice_number': 1});
-    }
-
-    //  _onUpgrade(db, 17, 18);
-
+CREATE TABLE IF NOT EXISTS  DB_mode_selector(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+      mode_name TEXT NOT NULL,
+      mode_type TEXT NOT NULL
+)''');
     var tables =
         await db.rawQuery('SELECT name FROM sqlite_master WHERE type="table"');
     print('Tables created: $tables');
@@ -492,6 +485,39 @@ state TEXT,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  // Future<int> insertMode(ModeData mode) async {
+  //      print("insdie insertMode");
+  //   final db = await database;
+  //   return await db.insert('DB_mode_selector', mode.toJson(),
+  //       conflictAlgorithm: ConflictAlgorithm.replace);
+  // }
+
+  Future<int> insertMode(ModeData mode) async {
+    print("inside insertMode");
+
+    final db = await database;
+
+    // Check for duplicate entry by mode_name
+    final List<Map<String, dynamic>> existingEntries = await db.query(
+      'DB_mode_selector',
+      where: 'mode_name = ?',
+      whereArgs: [mode.modeName],
+    );
+
+    // If an entry with the same mode_name exists, skip the insert
+    if (existingEntries.isNotEmpty) {
+      print("Duplicate entry found for mode_name: ${mode.modeName}");
+      return 0; // Return 0 to indicate no insertion was made
+    }
+
+    // Insert new entry if no duplicate is found
+    return await db.insert(
+      'DB_mode_selector',
+      mode.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<int> insertUser(User user) async {
     final db = await database;
     return await db.insert(
@@ -596,7 +622,7 @@ state TEXT,
 
   Future<List<Map<String, dynamic>>> getCustomerByCompany(
       String companyName) async {
-    print("getcustomers");
+    print("getcustomers in");
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
       'DB_customer', // Your table name
@@ -607,6 +633,15 @@ state TEXT,
     print("ressul$result");
 
     // return result.map((row) => row['customer_name'] as String).toList();
+    return result;
+  }
+
+  Future<List<Map<String, dynamic>>> getModesPayment() async {
+    print("get modes");
+    final db = await database;
+    final List<Map<String, dynamic>> result =
+        await db.query('DB_mode_selector'); // Fetch all entries
+    print("result in mode: $result");
     return result;
   }
 
@@ -789,7 +824,7 @@ state TEXT,
   }
 
   Future<void> insertSalesItems(List<Map<String, dynamic>> orderedItems,
-      String invoiceNo, String customerName, double discountamount) async {
+      String? invoiceNo, String customerName, double discountamount) async {
     print("Inside insertSalesItems for customer: $customerName");
 
     final db = await database;
@@ -891,35 +926,6 @@ state TEXT,
     );
   }
 
-  Future<String> getNextInvoiceNumber() async {
-    final db = await database;
-
-    // Retrieve current invoice number
-    var result =
-        await db.query('invoice_counter', where: 'id = ?', whereArgs: [1]);
-    if (result.isEmpty) {
-      // Initialize if not present
-      await db
-          .insert('invoice_counter', {'id': 1, 'current_invoice_number': 1});
-      result =
-          await db.query('invoice_counter', where: 'id = ?', whereArgs: [1]);
-    }
-
-    int currentNumber = result.first['current_invoice_number'] as int;
-    int nextNumber = currentNumber + 1;
-
-    // Update the counter in the database
-    await db.update(
-      'invoice_counter',
-      {'current_invoice_number': nextNumber},
-      where: 'id = ?',
-      whereArgs: [1],
-    );
-
-    // Return the new invoice number formatted
-    return 'ACC-SINV-2024-${nextNumber.toString().padLeft(5, '0')}';
-  }
-
   Future<int> getOnlineStatus(String companyName) async {
     try {
       final db = await database;
@@ -1010,6 +1016,7 @@ state TEXT,
   // Function to get API Key and Secret Key from DB_company using company_name
 
   get taxes => [];
+  get payments => [];
 
   Future<List<Map<String, dynamic>>> fetchTaxesFromDB(
       String companyName) async {
@@ -1027,7 +1034,7 @@ state TEXT,
   }
 
   String apiUrl =
-      "http://143.110.187.133:80/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
+      "http://165.232.188.41:80/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
 
   Future<void> postSalesItemsToApi(
     List<Map<String, dynamic>> soldItemsMap,
@@ -1036,10 +1043,12 @@ state TEXT,
     String customername, // Pass customername as parameter
     String companyname, // Pass companyname as parameter
     double discount,
+    String selectedMode,
+    double paidAmount,
   ) async {
     // Step 1: Create Basic Authentication header
     String basicAuth =
-        'Basic ' + base64Encode(utf8.encode('$apiKey:$secretKey'));
+        'Basic ${base64Encode(utf8.encode('$apiKey:$secretKey'))}';
 
     // Step 2: Transform soldItemsMap into the API expected format
     List<Map<String, dynamic>> items = soldItemsMap.map((item) {
@@ -1074,7 +1083,14 @@ state TEXT,
       'naming_series': 'ACC-SINV-.YYYY.-',
       'customer': customername, // Use customername from parameter
       'items': items,
-      'taxes': taxes, // Use taxes fetched from DB
+      'taxes': taxes,
+      // 'payments': payments, // Use taxes fetched from DB
+      'payments': [
+        {
+          'mode_of_payment': selectedMode,
+          'amount': paidAmount,
+        },
+      ],
       'tax_template': taxTemplate,
       'company': companyname, // Use companyname from parameter
       'discount_amount': discount,
@@ -1192,7 +1208,6 @@ state TEXT,
 
     return List.generate(maps.length, (i) {
       return SalesItem(
-        id: maps[i]['id'] ?? 0, // Provide default value for null 'id'
         itemCode: maps[i]['item_code'] ?? '', // Ensure a default empty string
         itemName: maps[i]['item_name'] ?? '', // Ensure a default empty string
         itemDescription:

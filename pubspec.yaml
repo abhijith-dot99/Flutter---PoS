@@ -42,7 +42,7 @@ dev_dependencies:
   printing: ^5.13.1
   win32: ^5.5.3
   shared_preferences: ^2.3.1
-  path_provider: ^2.1.4
+  path_provider: ^2.0.0
   permission_handler: ^11.3.1
   open_file: ^3.3.2
   intl: ^0.18.0
