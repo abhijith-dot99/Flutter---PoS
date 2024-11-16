@@ -16,23 +16,23 @@ import 'model/item.dart';
 
 class PrintService {
   Future<void> printBill(
-      List<Item> items,
-      double subtotal,
-      double tax,
-      double total,
-      String selectedcust,
-      String salesInvoice,
-      String selectedCompanyName,
-      String customerName,
-      String customerAddressTitle,
-      String customerVatNumber,
-      String customercompanyCrNo,
-      String companyVatNo,
-      String companyCrNo,
-      String companyAddress,
-      double discount,
-       File  qrData,
-       ) async {
+    List<Item> items,
+    double subtotal,
+    double tax,
+    double total,
+    String selectedcust,
+    String salesInvoice,
+    String selectedCompanyName,
+    String customerName,
+    String customerAddressTitle,
+    String customerVatNumber,
+    String customercompanyCrNo,
+    String companyVatNo,
+    String companyCrNo,
+    String companyAddress,
+    double discount,
+    File qrData,
+  ) async {
     if (Platform.isWindows) {
       await printBillWindows(
           items,
@@ -50,8 +50,7 @@ class PrintService {
           companyCrNo,
           companyAddress,
           discount,
-          qrData
-          );
+          qrData);
     } else if (Platform.isAndroid) {
       await printBillAndroid(
           items,
@@ -176,7 +175,7 @@ class PrintService {
       discount,
       qrData) async {
     final pdf = pw.Document();
-final imageBytes = await qrData.readAsBytes();
+    final imageBytes = await qrData.readAsBytes();
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -192,23 +191,6 @@ final imageBytes = await qrData.readAsBytes();
               ),
             ),
             pw.SizedBox(height: 38),
-          //   pw.Center(
-          //   child: pw.Image(
-          //     pw.MemoryImage(
-          //       base64Decode(qrData), // Decode the base64 QR data
-          //     ),
-          //     width: 100,
-          //     height: 100,
-          //   ),
-          // ),
-
-          pw.Center(
-            child: pw.Image(
-               pw.MemoryImage(imageBytes),// Use qrFile for image from file
-              width: 100,
-              height: 100,
-            ),
-          ),
 
             // Invoice number and date
             pw.Row(
@@ -359,71 +341,71 @@ final imageBytes = await qrData.readAsBytes();
                           width:
                               1, // Ensure row-wise and column-wise separation within Buyer table
                         ),
-                        children: [                         
-                            pw.TableRow(
-                              children: [
-                                pw.Padding(
-                                  padding: pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text('Name:',
-                                      style: pw.TextStyle(fontSize: 10)),
-                                ),
-                                pw.Padding(
-                                  padding: pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text(customerName,
-                                      style: pw.TextStyle(fontSize: 10)),
-                                ),
-                              ],
-                            ),                          
-                            pw.TableRow(
-                              children: [
-                                pw.Padding(
-                                  padding: pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text('Address:',
-                                      style: pw.TextStyle(fontSize: 10)),
-                                ),
-                                pw.Padding(
-                                  padding: pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text(customerAddressTitle,
-                                      style: pw.TextStyle(fontSize: 10)),
-                                ),
-                              ],
-                            ),               
-                            pw.TableRow(
-                              children: [
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text('VAT No:',
-                                      style: pw.TextStyle(fontSize: 10)),
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text(customerVatNumber,
-                                      style: pw.TextStyle(fontSize: 10)),
-                                ),
-                              ],
-                            ),                   
-                            pw.TableRow(
-                              children: [
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text('CR No:',
-                                      style: const pw.TextStyle(fontSize: 10)),
-                                ),
-                                pw.Padding(
-                                  padding: const pw.EdgeInsets.only(
-                                      top: 10, bottom: 10, left: 5),
-                                  child: pw.Text(customercompanyCrNo,
-                                      style: const pw.TextStyle(fontSize: 10)),
-                                ),
-                              ],
-                            ),
+                        children: [
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('Name:',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(customerName,
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('Address:',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(customerAddressTitle,
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('VAT No:',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(customerVatNumber,
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
+                          pw.TableRow(
+                            children: [
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text('CR No:',
+                                    style: const pw.TextStyle(fontSize: 10)),
+                              ),
+                              pw.Padding(
+                                padding: const pw.EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 5),
+                                child: pw.Text(customercompanyCrNo,
+                                    style: const pw.TextStyle(fontSize: 10)),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -486,7 +468,7 @@ final imageBytes = await qrData.readAsBytes();
               ],
             ),
             pw.SizedBox(height: 8),
-              pw.Row(
+            pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text('Discount:',
@@ -503,6 +485,14 @@ final imageBytes = await qrData.readAsBytes();
                         fontWeight: pw.FontWeight.bold, fontSize: 16)),
                 pw.Text(total.toStringAsFixed(2)),
               ],
+            ),
+            pw.SizedBox(height: 8),
+            pw.Center(
+              child: pw.Image(
+                pw.MemoryImage(imageBytes), // Use qrFile for image from file
+                width: 100,
+                height: 100,
+              ),
             ),
           ],
         ),

@@ -1,11 +1,16 @@
 import 'dart:async'; // For Timer
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_pos_app/database/database_helper.dart';
+import 'package:flutter_pos_app/home.dart';
+import 'package:flutter_pos_app/main.dart';
 import 'package:flutter_pos_app/model/SaleItem.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SalesReport extends StatefulWidget {
-  const SalesReport({super.key});
+  SalesReport({super.key});
 
   @override
   _SalesReportState createState() => _SalesReportState();
@@ -22,10 +27,18 @@ class _SalesReportState extends State<SalesReport> {
   final TextEditingController searchController =
       TextEditingController(); // Search bar controller
 
+  final ScrollController _horizontalController = ScrollController();
+  final ScrollController _verticalController = ScrollController();
+  late String apiKey;
+  late String secretKey;
+  late String url;
+  late String selectedCompanyName;
+  late String selectedCompanyId;
   @override
   void initState() {
     super.initState();
     _fetchSalesItems(); // Fetch all items initially
+    _loadPreferences();
 
     // Start the 5-second timer
     Timer(const Duration(seconds: 5), () {
@@ -105,6 +118,77 @@ class _SalesReportState extends State<SalesReport> {
         return isInRange && matchesSearch;
       }).toList();
     });
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      apiKey = prefs.getString('apiKey') ?? '';
+      secretKey = prefs.getString('secretKey') ?? '';
+      // url = prefs.getString('url') ?? '';
+      url =
+          'http://206.189.132.138/api/method/duplex_dev.api.sales_invoice_return_items.get_sales_invoice_details';
+      selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
+      selectedCompanyId = prefs.getString('selectedCompanyId') ?? '';
+    });
+    print(apiKey);
+    print("url$url");
+    print("selectedco$selectedCompanyName");
+    print(secretKey);
+  }
+
+  Future<void> fetchDataAndNavigateToMain(
+    BuildContext context,
+    String invoiceNumber,
+  ) async {
+    print("nside fetchdata$invoiceNumber");
+
+    String basicAuth =
+        'Basic ${base64Encode(utf8.encode('$apiKey:$secretKey'))}';
+
+    try {
+      // Step 6: Make the API request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': basicAuth, // Set Basic Auth header
+          'Content-Type': 'application/json',
+        },
+        // body: invoiceNumber,
+        body: jsonEncode({
+          'invoice_no': invoiceNumber, // Passing the argument in the body
+        }),
+      );
+
+      // Step 7: Check for status code and response
+      if (response.statusCode == 200) {
+        print("Success: API returned status code 200");
+        try {
+          final Map<String, dynamic> data = jsonDecode(response.body);
+          print('Invoice Details: $data');
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    MainPage(data: data,)),
+          );
+        } catch (e) {
+          print("Error parsing API response: $e");
+        }
+
+        if (response.body.contains('item_code')) {
+          print("Item details found in the API response.");
+        } else {
+          print("Warning: Item details are missing in the API response.");
+        }
+      } else {
+        print("Error: API returned status code ${response.statusCode}");
+        print("Response Body: ${response.body}");
+      }
+    } catch (error) {
+      print("Error fetching data: $error");
+    }
   }
 
   @override
@@ -197,113 +281,176 @@ class _SalesReportState extends State<SalesReport> {
             ),
           ),
 
-          // Sales report table or message
+          // Sales report table or messageF
           Expanded(
             child: isLoading
-                ? const Center(
-                    child:
-                        CircularProgressIndicator()) // Show CircularProgressIndicator for 5 seconds
+                ? const Center(child: CircularProgressIndicator())
                 : showNothingHere
                     ? const Center(
                         child: Text('Nothing here',
-                            style: TextStyle(
-                                fontSize:
-                                    18))) // Show "Nothing here" if no data
-                    : SingleChildScrollView(
-                        scrollDirection:
-                            Axis.horizontal, // Enable horizontal scrolling
-                        child: SingleChildScrollView(
-                          scrollDirection:
-                              Axis.vertical, // Enable vertical scrolling
-                          child: DataTable(
-                            columnSpacing: 10, // Adjust spacing between columns
-                            dataRowMinHeight: 40, // Adjust row height
-                            dataRowMaxHeight: 50, // Set max row height
-                            border: const TableBorder(
-                              top: BorderSide(color: Colors.black, width: 1),
-                              bottom: BorderSide(color: Colors.black, width: 1),
-                              left: BorderSide(color: Colors.black, width: 1),
-                              right: BorderSide(color: Colors.black, width: 1),
-                              horizontalInside: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1), // Horizontal borders
-                              verticalInside: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1), // Vertical borders
-                            ),
-                            columns: const [
-                              DataColumn(
-                                  label: Text('Item Code',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Item Name',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Description',
-                                      textAlign: TextAlign.center)),
-                              // DataColumn(
-                              //     label: Text('Group',
-                              //         textAlign: TextAlign.center)),
-                                         DataColumn(
-                                  label: Text('Count',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Base Rate',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Base Amount',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Net Rate',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Net Amount',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Is Free Item',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Tax Rate',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Invoice No',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Customer Name',
-                                      textAlign: TextAlign.center)),
-                              DataColumn(
-                                  label: Text('Date',
-                                      textAlign: TextAlign.center)),
-                                          DataColumn(
-                                  label: Text('Discount',
-                                      textAlign: TextAlign.center))
-                            ],
-                            rows: filteredSalesItems
-                                .map(
-                                  (item) => DataRow(
-                                    cells: [
-                                      DataCell(Text(item.itemCode)),
-                                      DataCell(Text(item.itemName)),
-                                      DataCell(Text(item.itemDescription)),
-                                      // DataCell(Text(item.itemGroup)),
-                                      DataCell(Text(item.itemCount.toString())),
-                                      DataCell(Text(item.baseRate.toString())),
-                                      DataCell(
-                                          Text(item.baseAmount.toString())),
-                                      DataCell(Text(item.netRate.toString())),
-                                      DataCell(Text(item.netAmount.toString())),
-                                      DataCell(
-                                          Text(item.isFreeItem ? 'Yes' : 'No')),
-                                      DataCell(
-                                          Text(item.itemTaxRate.toString())),
-                                      DataCell(Text(item.invoiceNo)),
-                                      DataCell(Text(item.customerName)),
-                                      DataCell(Text(item.date)),
-                                       DataCell(Text(item.discount.toString())),
-                                    ],
+                            style: TextStyle(fontSize: 18)))
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 26.0), // Add padding
+                        child: Scrollbar(
+                          // Outer scrollbar for horizontal scrolling
+                          controller:
+                              _horizontalController, // Attach horizontal scroll controller
+                          thumbVisibility: true,
+                          thickness: 15.0,
+                          child: SingleChildScrollView(
+                            controller:
+                                _horizontalController, // Attach horizontal scroll controller
+                            scrollDirection: Axis.horizontal,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Scrollbar(
+                              // Inner scrollbar for vertical scrolling
+                              controller:
+                                  _verticalController, // Attach vertical scroll controller
+                              thumbVisibility: true,
+                              thickness: 15.0,
+                              child: SingleChildScrollView(
+                                controller:
+                                    _verticalController, // Attach vertical scroll controller
+                                scrollDirection: Axis.vertical,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: DataTable(
+                                  columnSpacing: 6,
+                                  dataRowMinHeight: 40,
+                                  dataRowMaxHeight: 50,
+                                  border: const TableBorder(
+                                    top: BorderSide(
+                                        color: Colors.black, width: 1),
+                                    bottom: BorderSide(
+                                        color: Colors.black, width: 1),
+                                    left: BorderSide(
+                                        color: Colors.black, width: 1),
+                                    right: BorderSide(
+                                        color: Colors.black, width: 1),
+                                    horizontalInside: BorderSide(
+                                        color: Colors.grey, width: 1),
+                                    verticalInside: BorderSide(
+                                        color: Colors.grey, width: 1),
                                   ),
-                                )
-                                .toList(),
+                                  columns: const [
+                                    DataColumn(
+                                        label: Text('Item Code',
+                                            textAlign: TextAlign.center)),
+                                    // DataColumn(
+                                    //     label: Text('Item Name',
+                                    //         textAlign: TextAlign.center)),
+                                    DataColumn(
+                                      label: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Item name',
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    DataColumn(
+                                        label: Text('Description',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Count',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Base Rate',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Base Amount',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Net Rate',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Net Amount',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Is Free Item',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Tax Rate',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Invoice No',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Customer Name',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Date',
+                                            textAlign: TextAlign.center)),
+                                    DataColumn(
+                                        label: Text('Discount',
+                                            textAlign: TextAlign.center)),
+                                  ],
+                                  rows: filteredSalesItems
+                                      .map((item) => DataRow(
+                                            cells: [
+                                              // DataCell(Text(item.itemCode)),
+
+                                              DataCell(
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      item.itemCode,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.repeat_rounded),
+                                                      onPressed: () {
+                                                        // Navigate to the homepage
+                                                        // Navigator.push(
+                                                        //   context,
+                                                        //   MaterialPageRoute(
+                                                        //       builder: (context) =>
+                                                        //           const MainPage()),
+                                                        // );
+                                                        fetchDataAndNavigateToMain(
+                                                            context,
+                                                            item.invoiceNo);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              DataCell(Text(item.itemName)),
+                                              DataCell(
+                                                  Text(item.itemDescription)),
+                                              DataCell(Text(
+                                                  item.itemCount.toString())),
+                                              DataCell(Text(
+                                                  item.baseRate.toString())),
+                                              DataCell(Text(
+                                                  item.baseAmount.toString())),
+                                              DataCell(Text(
+                                                  item.netRate.toString())),
+                                              DataCell(Text(
+                                                  item.netAmount.toString())),
+                                              DataCell(Text(item.isFreeItem
+                                                  ? 'Yes'
+                                                  : 'No')),
+                                              DataCell(Text(
+                                                  item.itemTaxRate.toString())),
+                                              DataCell(Text(item.invoiceNo)),
+                                              DataCell(Text(item.customerName)),
+                                              DataCell(Text(item.date)),
+                                              DataCell(Text(
+                                                  item.discount.toString())),
+                                            ],
+                                          ))
+                                      .toList(),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),

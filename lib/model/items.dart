@@ -17,7 +17,6 @@ class Items {
   final String customername;
   int itemCount;
 
-
   Items({
     required this.itemCode,
     required this.itemName,
@@ -35,7 +34,8 @@ class Items {
     required this.itemTaxRate,
     required this.customername,
     required this.itemCount,
-
+    required int isReturn,
+    required void returnAgainst,
   });
 
   // Method to convert an Item object to a Map
@@ -56,7 +56,6 @@ class Items {
       'item_tax_rate': itemTaxRate,
       'customername': customername,
       'item_count': itemCount,
-  
     };
   }
 }

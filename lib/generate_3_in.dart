@@ -245,7 +245,7 @@ class GeneratePDF {
                         'Seller',
                         style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold,
-                          fontSize: 9,
+                          fontSize: 8,
                         ),
                         textAlign: pw.TextAlign.center,
                       ),
@@ -256,7 +256,7 @@ class GeneratePDF {
                         'Buyer',
                         style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold,
-                          fontSize: 9,
+                          fontSize: 8,
                         ),
                         textAlign: pw.TextAlign.center,
                       ),
@@ -287,13 +287,13 @@ class GeneratePDF {
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('Name:',
-                                    style: const pw.TextStyle(fontSize: 6)),
+                                    style: const pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(selectedCompanyName,
-                                    style: const pw.TextStyle(fontSize: 6)),
+                                    style: const pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
@@ -303,13 +303,13 @@ class GeneratePDF {
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('Address:',
-                                    style: const pw.TextStyle(fontSize: 6)),
+                                    style: const pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(sellerAddress,
-                                    style: const pw.TextStyle(fontSize: 6)),
+                                    style: const pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
@@ -319,29 +319,29 @@ class GeneratePDF {
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('VAT No:',
-                                    style: const pw.TextStyle(fontSize: 6)),
+                                    style: const pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(sellerVatNumber,
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
                           pw.TableRow(
                             children: [
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('CR No:',
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(sellercompanyCrNo,
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
@@ -369,29 +369,29 @@ class GeneratePDF {
                                 padding: pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('Name:',
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
                                 padding: pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(customerName,
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
                           pw.TableRow(
                             children: [
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('Address:',
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
-                                padding: pw.EdgeInsets.only(
+                                padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(customerAddressTitle,
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
@@ -401,13 +401,13 @@ class GeneratePDF {
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('VAT No:',
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(customerVatNumber,
-                                    style: pw.TextStyle(fontSize: 6)),
+                                    style: pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
@@ -417,13 +417,13 @@ class GeneratePDF {
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text('CR No:',
-                                    style: const pw.TextStyle(fontSize: 6)),
+                                    style: const pw.TextStyle(fontSize: 7)),
                               ),
                               pw.Padding(
                                 padding: const pw.EdgeInsets.only(
                                     top: 10, bottom: 10, left: 5),
                                 child: pw.Text(customercompanyCrNo,
-                                    style: const pw.TextStyle(fontSize: 6)),
+                                    style: const pw.TextStyle(fontSize: 7)),
                               ),
                             ],
                           ),
@@ -465,9 +465,9 @@ class GeneratePDF {
                 ];
               }).toList(),
               headerStyle:
-                  pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8),
+                  pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 6),
               cellStyle: const pw.TextStyle(
-                fontSize: 8, // Font size for cell data
+                fontSize: 6, // Font size for cell data
               ),
               cellAlignment: pw.Alignment.center, // Center-align table cells
             ),

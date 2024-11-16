@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class SettingsPage extends StatefulWidget {
   final bool showImages;
   final ValueChanged<bool> onShowImagesChanged;
+  final bool a4;
+  final ValueChanged<bool> ona4Changed;
 
   const SettingsPage({
     Key? key,
     required this.showImages,
     required this.onShowImagesChanged,
+    required this.a4,
+    required this.ona4Changed
   }) : super(key: key);
 
   @override
@@ -16,11 +20,13 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late bool _showImages;
+  late bool _a4;
 
   @override
   void initState() {
     super.initState();
     _showImages = widget.showImages;
+    _a4 = widget.a4;
   }
 
   @override
@@ -56,6 +62,21 @@ class _SettingsPageState extends State<SettingsPage> {
                   _showImages = value;
                 });
                 widget.onShowImagesChanged(value);
+              },
+            ),
+            SwitchListTile(
+              title: const Text(
+                'A4',
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+              value: _a4,
+              onChanged: (value) {
+                setState(() {
+                  _a4 = value;
+                });
+                widget.ona4Changed(value);
               },
             ),
           ],

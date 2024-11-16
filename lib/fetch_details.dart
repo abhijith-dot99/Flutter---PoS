@@ -785,6 +785,23 @@ class _FetchDetailsPageState extends State<FetchDetailsPage> {
                       ),
                     ),
                   ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final dbHelper = DatabaseHelper();
+                      await dbHelper.clearSoldItems();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 10),
+                    ),
+                    child: const Text(
+                      'Clear sold items',
+                      style: TextStyle(
+                        color: Colors.white, // Set your desired color here
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

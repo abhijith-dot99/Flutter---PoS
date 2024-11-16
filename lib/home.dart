@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 import 'dart:ui' as ui;
@@ -18,9 +19,12 @@ import 'package:path_provider/path_provider.dart';
 // For UI and BuildContext
 
 class HomePage extends StatefulWidget {
-  final bool showImages; // Add this parameter
+  final bool? showImages; // Add this parameter
+  final bool? a4;
+  final Map<String, dynamic>? datas;
 
-  const HomePage({Key? key, required this.showImages}) : super(key: key);
+  const HomePage({Key? key, this.showImages, this.a4, this.datas})
+      : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -32,7 +36,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double fetchedTax = 0.0;
   String fetchVat = '';
   // String qrData = 'afpc';
-
+// double subtotal = 0.0;
+  double currentDiscount = 0.0;
   String? selectedMode;
   double paidAmount = 0;
   double vatPercent = 0.15;
@@ -44,7 +49,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Item> searchResults = [];
   List<Item> orderedItems = [];
   List<Items> soldItems = [];
+  int isReturn = 0;
+  String? returnAgainst = '';
 
+  List<Map<String, dynamic>> soldItemsMap = [];
   List<Item> orderedItemsPage1 = [];
   List<Item> orderedItemsPage2 = [];
   List<Item> orderedItemsPage3 = [];
@@ -73,6 +81,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Map<int, List<Item>> pageOrderedItems = {};
 
   List<Map<String, dynamic>> modesOfPayments = [];
+  String? selectedModeOfPayment;
   int currentPageIndex = 1;
   int pageIndex = 1;
 
@@ -92,6 +101,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   String?
       previousCustomer; // Keep track of previous customer outside the function.
+  late final Map<String, dynamic>? _localDatas;
+
+  double jsonDiscount = 0.0;
+  double jsonTaxAmount = 0.0;
+  double jsonTax = 0.0;
+  String? jsonInvoice = '';
+  double jsonSubtotal = 0.0;
+  double jsonGrandTotal = 0.0;
+  double manualDiscount = 0.0;
+  bool _isJsonDiscountFetched = false;
+  bool _isjsonTaxRateFetched = false;
   @override
   void initState() {
     super.initState();
@@ -105,6 +125,83 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _loadCustomerForSelectedCompany();
       _loadModesFromDB();
     });
+
+    selectedMode = _getSelectedModeForCurrentPage();
+    //  _localDatas = widget.datas;
+    print("data in home${widget.datas}");
+  }
+
+  void _fetchJsonDiscount() {
+    if (!_isJsonDiscountFetched &&
+        widget.datas != null &&
+        widget.datas!['message'] != null) {
+      final Map<String, dynamic> message = widget.datas!['message']!;
+      jsonDiscount = message['discount_amount'] ?? 0.0;
+
+      // Set the initial discount in the controller if JSON discount is valid
+      if (jsonDiscount > 0) {
+        _discountController.text = jsonDiscount.toStringAsFixed(2);
+      }
+      _isJsonDiscountFetched = true; // Ensures this runs only once
+    }
+  }
+
+  void _fetchJsonGrandTotal() {
+    if (widget.datas != null && widget.datas!['message'] != null) {
+      final Map<String, dynamic> message = widget.datas!['message']!;
+      jsonGrandTotal = message['grand_total'] ?? 0.0;
+    }
+  }
+
+  String? _fetchInvocie() {
+    if (widget.datas != null && widget.datas!['message'] != null) {
+      final Map<String, dynamic> message = widget.datas!['message']!;
+      String d = message['invoice_no'];
+      print("{message$d");
+      return message['invoice_no'] ?? ''; // Return the invoice number
+    }
+    return null; // Return null if no invoice number is found
+  }
+
+  void _fetchJsonTax() {
+    // Safely check if widget.datas and widget.datas['message'] are not null
+    final Map<String, dynamic>? message = widget.datas?['message'];
+
+    if (message != null &&
+        message['taxes'] != null &&
+        message['taxes'].isNotEmpty) {
+      List<dynamic> taxes = message['taxes'];
+      for (var tax in taxes) {
+        // Safely access tax_amount and handle nulls
+        double taxAmount = tax['tax_amount'] ?? 0.0; // Default to 0.0 if null
+        print("Fetched Tax Amount: $taxAmount");
+        jsonTaxAmount = taxAmount;
+      }
+    } else {
+      // If there's no taxes data, you can set default or handle accordingly
+      print("No taxes data found.");
+    }
+  }
+
+  void _fetchJsonSubTotal() {
+    // Safely check if widget.datas and widget.datas['message'] are not null
+    final Map<String, dynamic>? message = widget.datas?['message'];
+
+    if (message != null &&
+        message['taxes'] != null &&
+        message['items'].isNotEmpty) {
+      List<dynamic> taxes = message['items'];
+      for (var tax in taxes) {
+        // Safely access tax_amount and handle nulls
+        double fetchSubAmount =
+            tax['net_amount'] ?? 0.0; // Default to 0.0 if null
+        print("Fetched Tax Amount: $fetchSubAmount");
+        jsonSubtotal = fetchSubAmount;
+      }
+    } else {
+      // If there's no taxes data, you can set default or handle accordingly
+      print("No subtotal found.");
+    }
   }
 
   void _clearFields() {
@@ -112,11 +209,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Clear each widget's controller or variable
       _discountController.clear();
       paidAmountController.clear();
-      // selectedMode = null;
+      selectedMode = null;
       orderedItems.clear();
+
       // _selectedCustomer = null;
       // paidAmount = 0;
-      _getSelectedCustomerForCurrentPage();
+      // _getSelectedCustomerForCurrentPage();
     });
   }
 
@@ -124,29 +222,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     setState(() {
       if (currentPageIndex == 1) {
         _selectedCustomerPage1 = null;
+        selectedModePage1 = null;
+        paidAmountPage1 = 0;
+        discountPage1 = 0;
+        orderedItemsPage1 = [];
       } else if (currentPageIndex == 2) {
         _selectedCustomerPage2 = null;
+        selectedModePage2 = null;
+        paidAmountPage2 = 0;
+        discountPage1 = 0;
+        orderedItemsPage2 = [];
       } else if (currentPageIndex == 3) {
         _selectedCustomerPage3 = null;
+        selectedModePage3 = null;
+        paidAmountPage3 = 0;
+        discountPage1 = 0;
+        orderedItemsPage3 = [];
       }
     });
   }
 
   String? _getSelectedCustomerForCurrentPage() {
+    print("inside getselectedcust");
     if (currentPageIndex == 1) {
       // print("getcust$_selectedCustomerPage1");
+      print("_selectedCustomerPage1$_selectedCustomerPage1");
 
       return _selectedCustomerPage1;
     } else if (currentPageIndex == 2) {
+      print("_selectedCustomerPage2$_selectedCustomerPage2");
       return _selectedCustomerPage2;
     } else if (currentPageIndex == 3) {
-      // print("getcust$_selectedCustomerPage3");
+      print("_selectedCustomerPage3$_selectedCustomerPage3");
       return _selectedCustomerPage3;
     }
     return null;
   }
 
   void _setSelectedCustomerForCurrentPage(String? newValue) {
+    print("insdie setselectd");
     if (currentPageIndex == 1) {
       _selectedCustomerPage1 = newValue;
       print(
@@ -162,8 +276,68 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-// Getter for selectedMode
+  String? _extractModeOfPayment() {
+    if (widget.datas?['message']?['payments'] != null &&
+        widget.datas?['message']['payments'].isNotEmpty) {
+      return widget.datas?['message']['payments'][0]['mode_of_payment'];
+    }
+    return null;
+  }
+
+// Get the selected mode for the current page with dataItems check
+  // String? _getSelectedModeForCurrentPage() {
+  //   // If dataItems is not empty, set the initial mode of payment from widget.datas
+  //   if ({widget.datas}.isNotEmpty) {
+  //     final modeFromData = _extractModeOfPayment();
+  //     print("modefromdta$modeFromData");
+  //     if (modeFromData != null) {
+  //       // Set the mode based on the page index if it's the first time fetching
+  //       if (currentPageIndex == 1 && selectedModePage1 == null) {
+  //         selectedModePage1 = modeFromData;
+  //         return selectedModePage1;
+  //       } else if (currentPageIndex == 2 && selectedModePage2 == null) {
+  //         selectedModePage2 = modeFromData;
+  //         return selectedModePage2;
+  //       } else if (currentPageIndex == 3 && selectedModePage3 == null) {
+  //         selectedModePage3 = modeFromData;
+  //         return selectedModePage3;
+  //       }
+  //     }
+  //   }
+
+  //   // Return the selected mode for the current page
+  //   if (currentPageIndex == 1) {
+  //     return selectedModePage1;
+  //   } else if (currentPageIndex == 2) {
+  //     return selectedModePage2;
+  //   } else if (currentPageIndex == 3) {
+  //     return selectedModePage3;
+  //   }
+  //   return null;
+  // }
+
   String? _getSelectedModeForCurrentPage() {
+    // If widget.datas is not null or empty, set the initial mode of payment from widget.datas
+    if (widget.datas != null && widget.datas!.isNotEmpty) {
+      final modeFromData = _extractModeOfPayment();
+      print("Mode from data: $modeFromData");
+
+      // Set the mode based on the current page if it's the first time fetching
+      if (modeFromData != null) {
+        if (currentPageIndex == 1 && selectedModePage1 == null) {
+          selectedModePage1 = modeFromData;
+          return selectedModePage1;
+        } else if (currentPageIndex == 2 && selectedModePage2 == null) {
+          selectedModePage2 = modeFromData;
+          return selectedModePage2;
+        } else if (currentPageIndex == 3 && selectedModePage3 == null) {
+          selectedModePage3 = modeFromData;
+          return selectedModePage3;
+        }
+      }
+    }
+
+    // Return the selected mode for the current page if already set
     if (currentPageIndex == 1) {
       return selectedModePage1;
     } else if (currentPageIndex == 2) {
@@ -171,10 +345,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } else if (currentPageIndex == 3) {
       return selectedModePage3;
     }
+
     return null;
   }
 
-// Setter for selectedMode
+// Set the selected mode for the current page
   void _setSelectedModeForCurrentPage(String? mode) {
     setState(() {
       if (currentPageIndex == 1) {
@@ -189,6 +364,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     });
   }
+
+// Getter for selectedMode
+//   String? _getSelectedModeForCurrentPage() {
+//     if (currentPageIndex == 1) {
+//       return selectedModePage1;
+//     } else if (currentPageIndex == 2) {
+//       return selectedModePage2;
+//     } else if (currentPageIndex == 3) {
+//       return selectedModePage3;
+//     }
+//     return null;
+//   }
+
+// // Setter for selectedMode
+//   void _setSelectedModeForCurrentPage(String? mode) {
+//     setState(() {
+//       if (currentPageIndex == 1) {
+//         selectedModePage1 = mode;
+//         selectedMode = selectedModePage1;
+//       } else if (currentPageIndex == 2) {
+//         selectedModePage2 = mode;
+//         selectedMode = selectedModePage2;
+//       } else if (currentPageIndex == 3) {
+//         selectedModePage3 = mode;
+//         selectedMode = selectedModePage3;
+//       }
+//     });
+//   }
 
 // Getter for paidAmount
   double _getPaidAmountForCurrentPage() {
@@ -233,6 +436,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _setDiscountForCurrentPage(double discount) {
+    print("inside setdisocunt curretn$discount");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         if (currentPageIndex == 1) {
@@ -248,25 +452,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _openPage(int pageIndex) {
     setState(() {
-      // Save the current page's ordered items and paidAmount before switching
-      // if (currentPageIndex == 1) {
-      //   orderedItemsPage1 = List.from(orderedItems);
-
-      //   _selectedCustomer = _selectedCustomerPage1;
-      //   paidAmountPage1 = double.tryParse(paidAmountController.text) ?? 0;
-      //   print("Saved selected customer and paid amount for Page 1");
-      // } else if (currentPageIndex == 2) {
-      //   orderedItemsPage2 = List.from(orderedItems);
-      //   _selectedCustomer = _selectedCustomerPage2;
-      //   paidAmountPage2 = double.tryParse(paidAmountController.text) ?? 0;
-      //   print("Saved selected customer and paid amount for Page 2");
-      // } else if (currentPageIndex == 3) {
-      //   orderedItemsPage3 = List.from(orderedItems);
-      //   _selectedCustomer = _selectedCustomerPage3;
-      //   paidAmountPage3 = double.tryParse(paidAmountController.text) ?? 0;
-      //   print("Saved selected customer and paid amount for Page 3");
-      // }
-
       // Switch to the new page and load its items
       currentPageIndex = pageIndex;
 
@@ -274,18 +459,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         orderedItems = List.from(orderedItemsPage1);
         _selectedCustomer = _selectedCustomerPage1;
         paidAmountController.text = paidAmountPage1.toString();
+        //   if (paidAmountController.text.isEmpty) {
+        //   paidAmountController.text = paidAmountPage1.toString();
+        // }
         _discountController.text = _getDiscountForCurrentPage().toString();
-        print("Loaded selected customer and paid amount for Page 1");
+        print(
+            "Loaded selected customer and paid amount for Page 1${_discountController.text}");
       } else if (currentPageIndex == 2) {
         orderedItems = List.from(orderedItemsPage2);
         _selectedCustomer = _selectedCustomerPage2;
         paidAmountController.text = paidAmountPage2.toString();
+        //   if (paidAmountController.text.isEmpty) {
+        //   paidAmountController.text = paidAmountPage2.toString();
+        // }
         _discountController.text = _getDiscountForCurrentPage().toString();
         print("Loaded selected customer and paid amount for Page 2");
       } else if (currentPageIndex == 3) {
         orderedItems = List.from(orderedItemsPage3);
         _selectedCustomer = _selectedCustomerPage3;
         paidAmountController.text = paidAmountPage3.toString();
+        //   if (paidAmountController.text.isEmpty) {
+        //   paidAmountController.text = paidAmountPage3.toString();
+        // }
         _discountController.text = _getDiscountForCurrentPage().toString();
         print("Loaded selected customer and paid amount for Page 3");
       }
@@ -424,6 +619,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
 // Function to add an item to the order
   Future<void> addItemToOrder(Item item) async {
+    print("inside addditem toordr");
     final dbHelper = DatabaseHelper();
     double companyTax = await dbHelper.fetchCompanyTax(selectedCompanyName);
     setState(() {
@@ -499,24 +695,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           title: 'Lorem Restaurant',
                           action: _search(),
                         ),
-                        // Container(
-                        //   // height: 70,
-                        //   padding: const EdgeInsets.symmetric(vertical: 8),
-                        //   child: ListView(
-                        //     scrollDirection: Axis.horizontal,
-                        //     children: const [
-                        //       // _itemTab(
-                        //       //   icon: 'assets/icons/samplepic.jpg',
-                        //       //   title: 'All',
-                        //       //   isActive: selectedCategory == 'All',
-                        //       //   // onTap: () => filterItems('All'),
-                        //       // ),
-                       
-                         
-                        //       // Add more item tabs here
-                        //     ],
-                        //   ),
-                        // ),
                         Expanded(
                           child: LayoutBuilder(
                             key: ValueKey('$itemWidth-$itemHeight'),
@@ -537,7 +715,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   final item = searchResults[index];
                                   return _item(
                                     image:
-                                        widget.showImages ? item.image : null,
+                                        widget.showImages! ? item.image : null,
                                     itemName: item.itemName,
                                     price: item.price,
                                     itemCount: item.itemCount,
@@ -699,47 +877,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  // Widget _itemTab(
-  //     {required String icon,
-  //     required String title,
-  //     required bool isActive,
-  //     required VoidCallback onTap}) {
-  //   return GestureDetector(
-  //     onTap: onTap,
-  //     child: Container(
-  //       // width: 150,
-  //       margin: const EdgeInsets.only(right: 16),
-  //       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-  //       decoration: BoxDecoration(
-  //         borderRadius: BorderRadius.circular(10),
-  //         color: isActive
-  //             ? const Color(0xfffd8f27)
-  //             : Color.fromARGB(255, 223, 230, 227),
-  //         border: Border.all(
-  //           color: isActive
-  //               ? Colors.deepOrangeAccent
-  //               : const Color.fromARGB(255, 224, 201, 201),
-  //           width: 2,
-  //         ),
-  //       ),
-  //       child: Row(
-  //         children: [
-  //           Image.asset(icon,
-  //               width: 25,
-  //               errorBuilder: (context, error, stackTrace) =>
-  //                   const Icon(Icons.error, color: Colors.red)),
-  //           const SizedBox(width: 4),
-  //           Text(itemName,
-  //               style: TextStyle(
-  //                   fontSize: 13,
-  //                   color: isActive ? Colors.white : Colors.black,
-  //                   fontWeight: FontWeight.bold)),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _topMenu({
     required String title,
     // required String subTitle,
@@ -827,7 +964,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     required int itemCount,
     required String price,
     required int index, // Add index to identify the item in the list
+    required List<dynamic> items, // Add items parameter
   }) {
+    print("insdie itemorder");
     double itemPrice = double.parse(price.replaceAll(' ', ''));
 
     // int quantity = itemCount;
@@ -835,11 +974,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         itemCount > 0 ? itemCount : 1; // Ensure quantity starts at 1 if not set
 
     double total = itemPrice * quantity;
+    print("totatl in itemorder$total");
     editingItemIndex = index; // Set the index of the item being edited
     input = ''; //initialized the input
     return GestureDetector(
       onTap: () {
-        _showEditDialog(context, index);
+        _showEditDialog(context, index, items);
       },
       child: Container(
           margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
@@ -931,20 +1071,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _showEditDialog(BuildContext context, int index) {
-    final item = orderedItems[index];
+  void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
+    final item = items[index];
 
-    TextEditingController quantityController =
-        TextEditingController(text: item.itemCount.toString());
-
+    TextEditingController quantityController = TextEditingController(
+        text: item['qty']?.toString() ?? item.itemCount.toString());
     TextEditingController priceController =
-        TextEditingController(text: item.price);
+        TextEditingController(text: item['rate']?.toString() ?? item.price);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          // backgroundColor: Color(0xff1f2029),
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -965,7 +1103,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
                 decoration: InputDecoration(
                   hintText: 'Enter Valid Quantity',
-                  hintStyle: TextStyle(color: Colors.white54),
+                  hintStyle: TextStyle(color: Colors.black54),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -973,17 +1111,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   fillColor: Colors.white,
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextField(
                 controller: priceController,
-                style: TextStyle(color: Colors.black),
+                style: const TextStyle(color: Colors.black),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                 ],
                 decoration: InputDecoration(
                   hintText: 'Enter Valid Price',
-                  hintStyle: TextStyle(color: Colors.white54),
+                  hintStyle: TextStyle(color: Colors.black54),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -995,26 +1133,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Save'),
+              child: const Text('Save'),
               onPressed: () {
                 setState(() {
-                  orderedItems[index] = Item(
-                    image: item.image,
-                    itemName: item.itemName,
-                    itemCode: item.itemCode,
-                    itemDesciption: item.itemDesciption,
-                    price: priceController.text,
-                    tax: item.tax,
-                    companyTax: item.companyTax,
-                    itemCount: int.parse(quantityController.text),
-                    itemtaxtype: item.itemtaxtype,
-                  );
+                  if (items == orderedItems) {
+                    // Update orderedItems
+                    orderedItems[index] = Item(
+                      image: item.image,
+                      itemName: item.itemName,
+                      itemCode: item.itemCode,
+                      itemDesciption: item.itemDesciption,
+                      price: priceController.text,
+                      tax: item.tax,
+                      companyTax: item.companyTax,
+                      itemCount: int.parse(quantityController.text),
+                      itemtaxtype: item.itemtaxtype,
+                    );
+                  } else {
+                    // Update dataItems structure
+                    items[index]['qty'] = int.parse(quantityController.text);
+                    items[index]['rate'] = priceController.text;
+                  }
                 });
                 Navigator.of(context).pop();
               },
@@ -1024,6 +1169,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       },
     );
   }
+
 
   // Calculate the subtotal of the order
   double calculateSubtotal() {
@@ -1085,8 +1231,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _setDiscountForCurrentPage(discount);
     }
 
-    double vatAmount =
-        subtotal - discount * vatPercent;
+    double vatAmount = subtotal - discount * vatPercent;
 
     // Calculate tax after applying discount
     double totalTax = calculateTax(discount);
@@ -1103,9 +1248,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return total;
   }
 
-  double calculateVatAmount(){
+  double calculateVatAmount() {
     double subtotal = calculateSubtotal();
-        double discount = 0.0;
+    double discount = 0.0;
 
     // Check if discount is not empty and parse it
     if (_discountController.text.isNotEmpty) {
@@ -1113,10 +1258,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       discount = double.tryParse(_discountController.text) ?? 0;
       _setDiscountForCurrentPage(discount);
     }
-        double vatAmount =
-        subtotal - discount * vatPercent;
+    double vatAmount = subtotal - discount * vatPercent;
 
-        return vatAmount;
+    return vatAmount;
   }
 
   Future<PermissionStatus> requestStoragePermission() async {
@@ -1202,16 +1346,38 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return file;
   }
 
-  Widget _calculateAndPrintSection() {
-    double discount = 0.0;
-    if (_discountController.text.isNotEmpty) {
-      // discount = double.parse(_discountController.text);
-      discount = double.tryParse(_discountController.text) ?? 0;
-      _setDiscountForCurrentPage(discount);
+  void _updateDiscount(double newDiscount) {
+    if (newDiscount != currentDiscount) {
+      // Only update if the discount is different
+      currentDiscount = newDiscount;
+      _setDiscountForCurrentPage(newDiscount);
     }
-    double subtotal = calculateSubtotal();
-    double tax = calculateTax(discount);
-    double total = calculateTotal();
+  }
+
+  Widget _calculateAndPrintSection() {
+    // final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
+    // final Map<String, dynamic> message = widget.datas?['message'] ?? {};
+    //   print("dataitems in calculate$message");
+
+    //   double totalAmount = 0.0;
+    double discount = 0.0;
+
+    _fetchJsonDiscount();
+    _fetchJsonTax();
+    _fetchJsonSubTotal();
+    _fetchJsonGrandTotal();
+
+    // Determine the discount based on either JSON or manual input
+    manualDiscount = double.tryParse(_discountController.text) ?? 0.0;
+    discount = jsonDiscount > 0 ? jsonDiscount : manualDiscount;
+
+    // double subtotal = calculateSubtotal();
+    double subtotal = jsonSubtotal > 0.0 ? jsonSubtotal : calculateSubtotal();
+    // double tax = calculateTax(discount);
+    double tax = jsonTaxAmount > 0.0 ? jsonTaxAmount : calculateTax(discount);
+    // double total = calculateTotal();
+    double total = jsonGrandTotal > 0.0 ? jsonGrandTotal : calculateTotal();
+    // _setPaidAmountForCurrentPage(paidAmount);
 
     return Container(
       padding: const EdgeInsets.all(15),
@@ -1235,8 +1401,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 width: 50, // Adjust the width as needed
               ),
               Text(
-                // paidAmount.toStringAsFixed(2),
-                _getPaidAmountForCurrentPage().toString(),
+                //  _setPaidAmountForCurrentPage(paidAmount),
+                paidAmount.toStringAsFixed(2),
+                // _getPaidAmountForCurrentPage(paidAmount),
+
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -1266,50 +1434,126 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       fontWeight: FontWeight.bold, color: Colors.black87)),
             ],
           ),
+
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     const Text('Discount',
+          //         style: TextStyle(
+          //             fontWeight: FontWeight.bold, color: Colors.black87)),
+          //     SizedBox(
+          //       width: 50, // Adjust the width as needed
+          //       child: TextField(
+          //         controller:
+          //             _discountController, // Replace with your TextEditingController
+          //         style: const TextStyle(
+          //             fontWeight: FontWeight.bold,
+          //             fontSize: 14,
+          //             color: Colors.black87),
+          //         textAlign: TextAlign.end,
+          //         decoration: const InputDecoration(
+          //           // border: InputBorder.none, // Remove the underline
+          //           contentPadding:
+          //               EdgeInsets.all(0), // Adjust padding as needed
+          //           hintText: '0.00', // Hint text
+          //           hintStyle: TextStyle(
+          //             color: Colors.grey, // Light grey color for the hint text
+          //             fontWeight:
+          //                 FontWeight.normal, // You can adjust the font weight
+          //           ),
+          //         ),
+          //         keyboardType:
+          //             const TextInputType.numberWithOptions(decimal: true),
+          //         inputFormatters: [
+          //           // FilteringTextInputFormatter.digitsOnly, // Allow only digits
+          //           FilteringTextInputFormatter.allow(
+          //               RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
+          //         ],
+          //         // onChanged: (value) {
+          //         //   // Handle the input change if needed
+          //         //   setState(() {
+          //         //     total = calculateTotal();
+          //         //   });
+          //         // },
+          //           onSubmitted: (value) {
+          //           setState(() {
+          //             manualDiscount = double.tryParse(value) ?? 0.0;
+          //             total = calculateTotal();
+          //           });
+          //         },
+          //       //    onChanged: (value) {
+          //       //   setState(() {
+          //       //     manualDiscount = double.tryParse(value) ?? 0.0;
+          //       //     totalDiscountedAmount = manualDiscount;
+          //       //     total = calculateTotal();
+          //       //   });
+          //       // },
+          //       ),
+          //     ),
+          //   ],
+          // ),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Discount',
                   style: TextStyle(
                       fontWeight: FontWeight.bold, color: Colors.black87)),
-              SizedBox(
-                width: 50, // Adjust the width as needed
-                child: TextField(
-                  controller:
-                      _discountController, // Replace with your TextEditingController
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black87),
-                  textAlign: TextAlign.end,
-                  decoration: const InputDecoration(
-                    // border: InputBorder.none, // Remove the underline
-                    contentPadding:
-                        EdgeInsets.all(0), // Adjust padding as needed
-                    hintText: '0.00', // Hint text
-                    hintStyle: TextStyle(
-                      color: Colors.grey, // Light grey color for the hint text
-                      fontWeight:
-                          FontWeight.normal, // You can adjust the font weight
+              Row(
+                children: [
+                  SizedBox(
+                    width: 50, // Adjust the width as needed
+                    child: TextField(
+                      controller: _discountController,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.black87),
+                      textAlign: TextAlign.end,
+                      decoration: const InputDecoration(
+                        contentPadding:
+                            EdgeInsets.all(0), // Adjust padding as needed
+                        hintText: '0.00', // Hint text
+                        hintStyle: TextStyle(
+                          color:
+                              Colors.grey, // Light grey color for the hint text
+                          fontWeight: FontWeight.normal, // Adjust font weight
+                        ),
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
+                      ],
                     ),
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    // FilteringTextInputFormatter.digitsOnly, // Allow only digits
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
-                  ],
-                  onChanged: (value) {
-                    // Handle the input change if needed
-                    setState(() {
-                      total = calculateTotal();
-                    });
-                  },
-                ),
+                  const SizedBox(
+                      width: 10), // Space between TextField and Button
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        // Fetch the discount from the TextField
+                        manualDiscount =
+                            double.tryParse(_discountController.text) ?? 0.0;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      backgroundColor: Colors.blue, // Button background color
+                    ),
+                    child: const Text(
+                      'Apply',
+                      style:
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+
           Container(
             margin: const EdgeInsets.symmetric(vertical: 1),
             height: 2,
@@ -1410,8 +1654,89 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             itemTaxRate: item.tax,
                             // invoice: invoiceNo,
                             customername: _selectedCustomer!,
+                            isReturn: 0,
+                            returnAgainst: '',
                           ))
                       .toList();
+
+                  void setSoldItemsFromData() {
+                    print("Inside setSoldItemsFromData");
+
+                    try {
+                      if (soldItemsMap.isEmpty &&
+                          widget.datas != null &&
+                          widget.datas!['message'] != null) {
+                        final Map<String, dynamic> message =
+                            widget.datas!['message']!;
+
+                        returnAgainst = _fetchInvocie() ?? '';
+                        isReturn = 1;
+
+                        List<dynamic> items = message['items'] ?? [];
+
+                        soldItems = items.map((item) {
+                          print("Processing item: $item"); // Debug raw data
+
+                          return Items(
+                            itemCode: item['item_code']?.toString() ??
+                                '', // Convert to String
+                            itemName: item['item_name']?.toString() ??
+                                '', // Convert to String
+                            itemDescription:
+                                item['item_description']?.toString() ?? '',
+                            itemGroup: item['item_group']?.toString() ?? '',
+                            itemImage: item['item_image']?.toString() ?? '',
+                            itemUom: item['item_uom']?.toString() ?? '',
+                            baseRate: (item['rate'] is double)
+                                ? item['rate']
+                                : (item['rate'] is int)
+                                    ? (item['rate'] as int).toDouble()
+                                    : 0.0, // Default fallback
+                            baseAmount: (item['amount'] is double)
+                                ? item['amount']
+                                : (item['amount'] is int)
+                                    ? (item['amount'] as int).toDouble()
+                                    : 0.0, // Default fallback
+                            netRate: (item['net_rate'] is double)
+                                ? item['net_rate']
+                                : (item['net_rate'] is int)
+                                    ? (item['net_rate'] as int).toDouble()
+                                    : 0.0, // Default fallback
+                            netAmount: (item['net_amount'] is double)
+                                ? item['net_amount']
+                                : (item['net_amount'] is int)
+                                    ? (item['net_amount'] as int).toDouble()
+                                    : 0.0, // Default fallback
+                            pricingRules:
+                                item['pricing_rules']?.toString() ?? '',
+                            isFreeItem: (item['is_free_item'] is int)
+                                ? (item['is_free_item'] as int) != 0
+                                : (item['is_free_item'] is bool)
+                                    ? item['is_free_item'] as bool
+                                    : false, // Default fallback
+                            itemTaxRate: item['item_tax_rate']?.toString() ??
+                                '', // Convert to String
+                            customername: message['customer']?.toString() ??
+                                '', // Convert to String
+                            itemCount: (item['qty'] is int)
+                                ? item['qty'] as int
+                                : (item['qty'] is double)
+                                    ? (item['qty'] as double).toInt()
+                                    : 1, // Default fallback
+                            isReturn: 1,
+                            returnAgainst:
+                                returnAgainst, // Use an empty string if _fetchInvocie() returns null
+                          );
+                        }).toList();
+
+                        print("SoldItems after setting from data: $soldItems");
+                      }
+                    } catch (e, stackTrace) {
+                      print("Error occurred while processing sale: $e");
+                      print(
+                          stackTrace); // Print stack trace for detailed debugging
+                    }
+                  }
 
                   double discountamount = 0.0;
 
@@ -1421,8 +1746,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         double.tryParse(_discountController.text) ?? 0;
                     _setDiscountForCurrentPage(discount);
                   }
-                  List<Map<String, dynamic>> soldItemsMap =
-                      soldItems.map((item) => item.toMap()).toList();
+
+                  if (soldItems.isEmpty) {
+                    setSoldItemsFromData();
+                  }
+                  // List<Map<String, dynamic>>
+                  soldItemsMap = soldItems.map((item) => item.toMap()).toList();
                   print("soldItems: $soldItemsMap");
 
                   int fullcount = soldItemsMap.fold(
@@ -1442,16 +1771,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   String companyCrNo = keys['cr_no'] ?? '';
                   print("selectedCompany: $selectedCompanyName");
                   // print("selectmode$selectedMode");
+                  print("salesitemsss$soldItemsMap");
+                  print("isretyrn$isReturn");
+                  print("returnagainst$returnAgainst");
 
                   Future prepareAndPostSalesItems(
-                    List<Map<String, dynamic>> soldItemsMap,
-                    String selectedCustomer,
-                    String selectedCompanyName,
-                    DatabaseHelper dbHelper,
-                    double discount,
-                  ) async {
+                      List<Map<String, dynamic>> soldItemsMap,
+                      String selectedCustomer,
+                      String selectedCompanyName,
+                      DatabaseHelper dbHelper,
+                      double discount,
+                      int isReturn,
+                      String returnAgainst) async {
                     print("selectedModeasync$selectedMode");
                     print("paidamountinasync$paidAmount");
+                    print("solditemsss$soldItemsMap");
+
                     // Call postSalesItemsToApi with the fetched keys
                     return await dbHelper.postSalesItemsToApi(
                       soldItemsMap,
@@ -1462,6 +1797,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       discount,
                       selectedMode!,
                       paidAmount,
+                      isReturn,
+                      returnAgainst,
                     );
                   }
 
@@ -1472,7 +1809,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       _selectedCustomer!,
                       selectedCompanyName,
                       dbHelper,
-                      discount);
+                      discount,
+                      isReturn,
+                      returnAgainst!);
 
                   print("Response body in home$responseBody");
 
@@ -1481,9 +1820,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     salesInvoice =
                         responseBody['message']['sales_invoice'] as String?;
                   }
-
-                  await dbHelper.insertSalesItems(soldItemsMap, salesInvoice,
-                      _selectedCustomer!, discountamount);
+                  File qrFile = await generateQR(selectedCompanyName, fetchVat);
+                  // await dbHelper.insertSalesItems(soldItemsMap, salesInvoice,
+                  //     _selectedCustomer!, discountamount);
 
                   print("salesinvoiceafterextraction$salesInvoice");
                   String customerName =
@@ -1531,22 +1870,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   print("fetchVat$fetchVat");
 
                   // Print bill after inserting and posting
-                  final printService = PrintService();
-                  final generatePDF = GeneratePDF();
+                  // final printService = PrintService();
+                  // final generatePDF = GeneratePDF();
 
-                  // String qrData = await generateQR(selectedCompanyName, fetchVat);
-                  // Uint8List qrData = await generateQR(selectedCompanyName, fetchVat);
-                  // String base64QrData = base64Encode(qrData);
-                  File qrFile = await generateQR(selectedCompanyName, fetchVat);
                   if (salesInvoice != null) {
-                    // await printService.printBill(
-                     await generatePDF.generate3inch(
+                    final printService = PrintService();
+                    final generatePDF = GeneratePDF();
+                    // File qrFile =
+                    //     await generateQR(selectedCompanyName, fetchVat);
+
+                    if (widget.a4 == false) {
+                      await generatePDF.generate3inch(
                         orderedItems,
                         subtotal,
                         tax,
                         total,
                         _selectedCustomer!,
-                        salesInvoice, // Pass the sales_invoice as a string to printBill
+                        salesInvoice,
                         selectedCompanyName,
                         customerName,
                         customerAddressTitle,
@@ -1556,17 +1896,40 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         companyCrNo,
                         companyAddress,
                         discountamount,
-                        qrFile);
+                        qrFile,
+                      );
+                    } else {
+                      await printService.printBill(
+                        orderedItems,
+                        subtotal,
+                        tax,
+                        total,
+                        _selectedCustomer!,
+                        salesInvoice,
+                        selectedCompanyName,
+                        customerName,
+                        customerAddressTitle,
+                        customerVatNumber,
+                        customercompanyCrNo,
+                        companyVatNo,
+                        companyCrNo,
+                        companyAddress,
+                        discountamount,
+                        qrFile,
+                      );
+                    }
+
+                    print("Print job started.");
+                    // Clear fields only if printing was successful
+                    _clearFields();
+                    _clearSelectedCustomerForCurrentPage();
+                    // Update previousCustomer after successful sale processing
+                    previousCustomer = _selectedCustomer;
+                    await dbHelper.insertSalesItems(soldItemsMap, salesInvoice,
+                        _selectedCustomer!, discountamount);
                   } else {
                     print("Error: salesInvoice is null, cannot print bill.");
                   }
-
-                  print("Print job started.");
-                  // Update previousCustomer after the sale is successfully processed
-                  previousCustomer =
-                      _selectedCustomer; // Update to track customer change
-                  _clearFields();
-                  _clearSelectedCustomerForCurrentPage();
                 } catch (e) {
                   print(
                       "Error occurred while processing sale: ${e.toString()}");
@@ -1593,52 +1956,202 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // Widget _buildOrderedItemsSection() {
+  //   final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
+  //   print("orderitemss$orderedItems");
+  //   print("dataitemsa$dataItems");
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: Color.fromARGB(155, 239, 241, 241),
+  //       borderRadius: BorderRadius.circular(12),
+  //     ),
+  //     child: orderedItems.isEmpty
+  //         ? const Center(
+  //             child: Column(
+  //               mainAxisAlignment: MainAxisAlignment.center,
+  //               crossAxisAlignment: CrossAxisAlignment.center,
+  //               children: [
+  //                 Icon(
+  //                   Icons.shopping_cart_outlined,
+  //                   size: 50,
+  //                   color: Colors.black26,
+  //                 ),
+  //                 // SizedBox(height: 10),
+  //                 Text(
+  //                   'Cart',
+  //                   style: TextStyle(
+  //                     color: Colors.black26,
+  //                     fontSize: 16,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           )
+  //         : ListView.builder(
+  //             itemCount: orderedItems.length,
+  //             itemBuilder: (context, index) {
+  //               final item = orderedItems[index];
+  //               // Print the itemCount and its datatype
+  //               return _itemOrder(
+  //                 image: item.image,
+  //                 itemName: item.itemName,
+  //                 price: item.price,
+  //                 itemCount: item.itemCount,
+  //                 index: index,
+  //               );
+  //             },
+  //           ),
+
+  //   );
+  // }
+
   Widget _buildOrderedItemsSection() {
+    // Extract dataItems from widget.datas if available
+    final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
+    print("dataiteminbuild$dataItems");
+
     return Container(
       decoration: BoxDecoration(
         color: Color.fromARGB(155, 239, 241, 241),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: orderedItems.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 50,
-                    color: Colors.black26,
-                  ),
-                  // SizedBox(height: 10),
-                  Text(
-                    'Cart',
-                    style: TextStyle(
-                      color: Colors.black26,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              itemCount: orderedItems.length,
+      child: dataItems.isNotEmpty
+          ? ListView.builder(
+              itemCount: dataItems.length,
               itemBuilder: (context, index) {
-                final item = orderedItems[index];
-                // Print the itemCount and its datatype
+                final item = dataItems[index];
                 return _itemOrder(
-                  image: item.image,
-                  itemName: item.itemName,
-                  price: item.price,
-                  itemCount: item.itemCount,
+                  image:
+                      null, // Placeholder or null as no image data is provided
+                  itemName: item['item_name'] ?? 'Unknown Item',
+                  price: item['rate']?.toString() ?? '0.0',
+                  itemCount: item['qty']?.toInt() ?? 1,
                   index: index,
+                  items: dataItems,
                 );
               },
-            ),
+            )
+          : (orderedItems.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 50,
+                        color: Colors.black26,
+                      ),
+                      Text(
+                        'Cart',
+                        style: TextStyle(
+                          color: Colors.black26,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: orderedItems.length,
+                  itemBuilder: (context, index) {
+                    final item = orderedItems[index];
+                    return _itemOrder(
+                      image: item.image,
+                      itemName: item.itemName,
+                      price: item.price.toString(),
+                      itemCount: item.itemCount,
+                      index: index,
+                      items: orderedItems, // Pass orderedItems
+                    );
+                  },
+                )),
     );
   }
 
+  // Widget _paidAmount() {
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: const EdgeInsets.all(7),
+  //     decoration: BoxDecoration(
+  //       borderRadius: BorderRadius.circular(14),
+  //       color: const Color.fromARGB(155, 222, 229, 231),
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: TextField(
+  //                 controller: paidAmountController,
+  //                 keyboardType: TextInputType.number,
+  // inputFormatters: [
+  //   FilteringTextInputFormatter
+  //       .digitsOnly, // Only numbers allowed
+  // ],
+  //                 decoration: const InputDecoration(
+  //                   labelText: 'Paying Amount',
+  //                   border: InputBorder.none,
+  //                 ),
+  //               ),
+  //             ),
+  //             ElevatedButton(
+  //               onPressed: () {
+  //                 setState(() {
+  //                   double paidAmount =
+  //                       double.tryParse(paidAmountController.text) ?? 0;
+  //                   _setPaidAmountForCurrentPage(paidAmount);
+  //                   print(
+  //                       "Entered amount for Page $currentPageIndex: $paidAmount");
+  //                 });
+  //               },
+  //               style: ElevatedButton.styleFrom(
+  //                 backgroundColor: const Color(0xFF4285F4),
+  //                 foregroundColor: Colors.white,
+  //                 shape: RoundedRectangleBorder(
+  //                   borderRadius: BorderRadius.circular(10),
+  //                 ),
+  //                 padding:
+  //                     const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+  //               ),
+  //               child: const Row(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   Icon(
+  //                     Icons.check,
+  //                     color: Colors.white,
+  //                     size: 15,
+  //                   ),
+  //                   SizedBox(width: 3),
+  //                   Text(
+  //                     'OK',
+  //                     style: TextStyle(
+  //                       fontSize: 12,
+  //                       fontWeight: FontWeight.bold,
+  //                       letterSpacing: 1.2,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _paidAmount() {
+    // Extract paid_amount from the message if available
+    final Map<String, dynamic> message = widget.datas?['message'] ?? {};
+    double initialPaidAmount =
+        message['paid_amount'] ?? 0.0; // Default to 0.0 if not found
+
+    // Set the initial value of the paidAmountController if it's not already set
+    if (paidAmountController.text.isEmpty) {
+      paidAmountController.text = initialPaidAmount.toString();
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(7),
@@ -1653,7 +2166,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Expanded(
                 child: TextField(
                   controller: paidAmountController,
-                  keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter
                         .digitsOnly, // Only numbers allowed
@@ -1662,13 +2174,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     labelText: 'Paying Amount',
                     border: InputBorder.none,
                   ),
+                  // onChanged: (value) {
+                  //   // Optionally handle changes in the input in real-time
+                  //   double paidAmount = double.tryParse(value) ?? 0.0;
+                  //   _setPaidAmountForCurrentPage(paidAmount);
+                  // },
                 ),
               ),
               ElevatedButton(
                 onPressed: () {
                   setState(() {
                     double paidAmount =
-                        double.tryParse(paidAmountController.text) ?? 0;
+                        double.tryParse(paidAmountController.text) ?? 0.0;
                     _setPaidAmountForCurrentPage(paidAmount);
                     print(
                         "Entered amount for Page $currentPageIndex: $paidAmount");
@@ -1721,7 +2238,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: DropdownButton<String>(
         isExpanded: true,
         hint: const Text("Mode Of Payment"),
-        value: _getSelectedModeForCurrentPage(),
+        // value: _getSelectedModeForCurrentPage(),
+        value: selectedMode,
         items: modesOfPayments.map((mode) {
           return DropdownMenuItem<String>(
             value: mode['mode_name'],
@@ -1736,9 +2254,153 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // Widget _viewCustomerList(BuildContext context) {
+  //   return SizedBox(
+  //     width: double.infinity, // Makes the bfutton take full width
+  //     child: ElevatedButton(
+  //       style: ElevatedButton.styleFrom(
+  //         backgroundColor: const Color(0xFF4285F4), // Set the color here
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(20),
+  //         ),
+  //       ),
+  //       onPressed: () {
+  //         showDialog(
+  //           context: context,
+  //           builder: (BuildContext context) {
+  //             return Stack(
+  //               children: [
+  //                 // Add a BackdropFilter to blur the background
+  //                 BackdropFilter(
+  //                   filter: ImageFilter.blur(
+  //                       sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
+  //                   child: Container(
+  //                     color: Colors.white.withOpacity(
+  //                         0), // Just to make the BackdropFilter visible
+  //                   ),
+  //                 ),
+  //                 AlertDialog(
+  //                   backgroundColor: const Color.fromARGB(
+  //                       255, 255, 255, 255), // Set background color here
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(20),
+  //                   ),
+  //                   title: const Text(
+  //                     'Select Customer',
+  //                     style: TextStyle(color: Colors.black87), // Title color
+  //                   ),
+  //                   content: Container(
+  //                     width: MediaQuery.of(context).size.width *
+  //                         0.8, // Adjust the width as needed
+  //                     child: Column(
+  //                       mainAxisSize: MainAxisSize.min,
+  //                       children: [
+  //                         DropdownButton<String>(
+  //                           value: _filteredCustomers.contains(
+  //                                   _getSelectedCustomerForCurrentPage())
+  //                               ? _getSelectedCustomerForCurrentPage()
+  //                               : null,
+  //                           hint: const Text(
+  //                             'Select a customer',
+  //                             style: TextStyle(color: Colors.black38),
+  //                           ),
+  //                           isExpanded: true,
+  //                           dropdownColor: Color.fromARGB(255, 226, 226, 233),
+  //                           items: _filteredCustomers.map((String? customer) {
+  //                             return DropdownMenuItem<String>(
+  //                               value: customer,
+  //                               child: Text(
+  //                                 customer!,
+  //                                 style: const TextStyle(color: Colors.black87),
+  //                               ),
+  //                             );
+  //                           }).toList(),
+  //                           onChanged: (String? newValue) {
+  //                             setState(() {
+  //                               _setSelectedCustomerForCurrentPage(newValue);
+  //                             });
+  //                             Navigator.of(context).pop();
+  //                           },
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                   actions: <Widget>[
+  //                     Row(
+  //                       mainAxisSize: MainAxisSize
+  //                           .min, // Use min size for the row to wrap its children
+  //                       children: [
+  //                         TextButton(
+  //                           child: const Text(
+  //                             'Close',
+  //                             style: TextStyle(
+  //                                 color: Colors
+  //                                     .redAccent), // Close button text color
+  //                           ),
+  //                           onPressed: () {
+  //                             Navigator.of(context).pop();
+  //                           },
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             );
+  //           },
+  //         );
+  //       },
+  //       child: Row(
+  //         mainAxisSize:
+  //             MainAxisSize.max, // Use max to take full available space
+  //         mainAxisAlignment:
+  //             MainAxisAlignment.center, // Center the content horizontally
+  //         crossAxisAlignment:
+  //             CrossAxisAlignment.center, // Center the content vertically
+  //         children: [
+  //           const Icon(
+  //             Icons.person,
+  //             color: Colors.white,
+  //             size: 16, // Icon stays constant
+  //           ),
+  //           const SizedBox(width: 8), // Space between the icon and text
+  //           FittedBox(
+  //             fit: BoxFit.scaleDown, // Ensures the text scales down if needed
+  //             alignment:
+  //                 Alignment.center, // Centers the text inside the FittedBox
+  //             child: Text(
+  //               _getSelectedCustomerForCurrentPage() ?? 'Customer',
+  //               style: const TextStyle(
+  //                 color: Colors.white,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _viewCustomerList(BuildContext context) {
+    // Extract customer name from dataItems if available
+    final Map<String, dynamic> message = widget.datas?['message'] ?? {};
+    print("customer in message: ${message['customer']}");
+
+    final List<String?> customers = message.isNotEmpty
+        ? [message['customer']?.toString() ?? '']
+        : _filteredCustomers;
+
+    print("ddddd$customers");
+
+    // Determine the customer name to display on the button
+    final String displayedCustomer = message['customer']?.toString() ??
+        _getSelectedCustomerForCurrentPage() ??
+        'Customer';
+    _setSelectedCustomerForCurrentPage(displayedCustomer);
+
     return SizedBox(
-      width: double.infinity, // Makes the bfutton take full width
+      width: double.infinity, // Makes the button take full width
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4285F4), // Set the color here
@@ -1762,8 +2424,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                   ),
                   AlertDialog(
-                    backgroundColor: const Color.fromARGB(
-                        255, 255, 255, 255), // Set background color here
+                    backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -1777,33 +2438,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          DropdownButton<String>(
-                            value: _filteredCustomers.contains(
-                                    _getSelectedCustomerForCurrentPage())
-                                ? _getSelectedCustomerForCurrentPage()
-                                : null,
-                            hint: const Text(
-                              'Select a customer',
-                              style: TextStyle(color: Colors.black38),
-                            ),
-                            isExpanded: true,
-                            dropdownColor: Color.fromARGB(255, 226, 226, 233),
-                            items: _filteredCustomers.map((String? customer) {
-                              return DropdownMenuItem<String>(
-                                value: customer,
-                                child: Text(
-                                  customer!,
+                          // If the customer exists in message, just show it as text.
+                          message['customer'] != null
+                              ? Text(
+                                  message['customer'].toString(),
                                   style: const TextStyle(color: Colors.black87),
+                                )
+                              : DropdownButton<String?>(
+                                  // When no message customer, show dropdown
+                                  value: customers.contains(
+                                          _getSelectedCustomerForCurrentPage())
+                                      ? _getSelectedCustomerForCurrentPage()
+                                      : null,
+                                  hint: const Text(
+                                    'Select a customer',
+                                    style: TextStyle(color: Colors.black38),
+                                  ),
+                                  isExpanded: true,
+                                  dropdownColor:
+                                      Color.fromARGB(255, 226, 226, 233),
+                                  items: customers.map((String? customer) {
+                                    return DropdownMenuItem<String?>(
+                                      value: customer,
+                                      child: Text(
+                                        customer ?? '',
+                                        style: const TextStyle(
+                                            color: Colors.black87),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      // When the user selects a customer, set the selected customer for the current page
+                                      _setSelectedCustomerForCurrentPage(
+                                          newValue);
+                                    });
+                                    Navigator.of(context).pop();
+                                  },
                                 ),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _setSelectedCustomerForCurrentPage(newValue);
-                              });
-                              Navigator.of(context).pop();
-                            },
-                          ),
                         ],
                       ),
                     ),
@@ -1851,7 +2523,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               alignment:
                   Alignment.center, // Centers the text inside the FittedBox
               child: Text(
-                _getSelectedCustomerForCurrentPage() ?? 'Customer',
+                displayedCustomer, // Display the customer name here
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

@@ -14,7 +14,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart'; // Standard sqflite for mobile
 
 void main() {
-
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -51,9 +50,9 @@ class _AppInitializerState extends State<AppInitializer> {
   void initState() {
     super.initState();
     _checkLoginStatus();
-
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
     if (_isLoggedIn) {
       return const MainPage(); // Show the main page if logged in
@@ -62,7 +61,7 @@ class _AppInitializerState extends State<AppInitializer> {
       // return MainPage();
     }
   }
-  
+
   Future<bool> _checkLoginStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isValidUser = prefs.getBool('isValidUser') ?? false;
@@ -78,12 +77,11 @@ class _AppInitializerState extends State<AppInitializer> {
 
     return isValidUser;
   }
-
-
 }
 
 class MainPage extends StatefulWidget {
-  const MainPage({Key? key}) : super(key: key);
+  final Map<String, dynamic>? data;
+  const MainPage({Key? key, this.data}) : super(key: key);
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -92,13 +90,15 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   String pageActive = 'Home';
   bool showImages = false;
+  bool a4 = false;
   double itemHeight = 250; // Default height
   double itemWidth = 120;
 
   _pageView() {
     switch (pageActive) {
       case 'Home':
-        return HomePage(showImages: showImages);
+        // return HomePage(showImages: showImages, a4: a4);
+        return HomePage(showImages: showImages, a4: a4, datas: widget.data);
       case 'Menu':
         return Container();
       case 'History':
@@ -108,7 +108,8 @@ class _MainPageState extends State<MainPage> {
       case 'Settings':
         return Container();
       default:
-        return HomePage(showImages: showImages);
+        // return HomePage(showImages: showImages,a4: a4);
+        return HomePage(showImages: showImages, a4: a4, datas: widget.data);
     }
   }
 
@@ -182,7 +183,7 @@ class _MainPageState extends State<MainPage> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => SalesReport(
-                            // items: items,
+                          // items: items,
                           )),
                 );
               },
@@ -202,9 +203,15 @@ class _MainPageState extends State<MainPage> {
                   MaterialPageRoute(
                     builder: (context) => SettingsPage(
                       showImages: showImages,
+                      a4: a4,
                       onShowImagesChanged: (value) {
                         setState(() {
                           showImages = value;
+                        });
+                      },
+                       ona4Changed: (value) {
+                        setState(() {
+                          a4 = value;
                         });
                       },
                     ),

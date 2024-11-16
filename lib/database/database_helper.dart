@@ -651,6 +651,12 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     print('Items table cleared.');
   }
 
+    Future<void> clearSoldItems() async {
+    final db = await database;
+    await db.delete('DB_sales_items');
+    print('Items table cleared.');
+  }
+
   // Similarly, add methods for other tables
   Future<void> clearCustomers() async {
     final db = await database;
@@ -1034,7 +1040,7 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
   }
 
   String apiUrl =
-      "http://165.232.188.41:80/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
+      "http://206.189.132.138/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
 
   Future<void> postSalesItemsToApi(
     List<Map<String, dynamic>> soldItemsMap,
@@ -1045,6 +1051,8 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     double discount,
     String selectedMode,
     double paidAmount,
+    int isReturn,
+    String returnAgainst
   ) async {
     // Step 1: Create Basic Authentication header
     String basicAuth =
@@ -1054,7 +1062,8 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     List<Map<String, dynamic>> items = soldItemsMap.map((item) {
       return {
         'item_code': item['item_code'],
-        'qty': item['item_count'],
+        // 'qty': item['item_count'],
+        'qty': isReturn == 1 ? -item['item_count'] : item['item_count'], // Make qty negative if return
         'rate': item['net_rate'],
       };
     }).toList();
@@ -1065,7 +1074,8 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     // Format the taxes into the required structure
     List<Map<String, dynamic>> taxes = taxData.map((tax) {
       return {
-        'tax_name': tax['tax_name'],
+        // 'tax_name': tax['tax_name'],
+        'name': tax['tax_name'],
         'charge_type': tax['charge_type'],
         'account_head': tax['account_head'],
         'description': tax['description'],
@@ -1076,7 +1086,16 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
 
 // Extract 'tax_name' for the 'tax_template'
     String taxTemplate =
-        taxes.isNotEmpty ? taxes[0]['tax_name'].toString() : '';
+        taxes.isNotEmpty ? taxes[0]['name'].toString() : '';
+
+
+double adjustedDiscount = discount == 0 ? 0 : (isReturn == 1 ? -discount : discount);
+  List<Map<String, dynamic>> payments = [
+    {
+      'mode_of_payment': selectedMode,
+      'amount': isReturn == 1 ? -paidAmount : paidAmount, // Make amount negative if return
+    },
+  ];
 
     // Step 4: Prepare the final payload
     Map<String, dynamic> payloadMap = {
@@ -1085,15 +1104,19 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
       'items': items,
       'taxes': taxes,
       // 'payments': payments, // Use taxes fetched from DB
-      'payments': [
-        {
-          'mode_of_payment': selectedMode,
-          'amount': paidAmount,
-        },
-      ],
+      // 'payments': [
+      //   {
+      //     'mode_of_payment': selectedMode,
+      //     'amount': paidAmount,
+      //   },
+      // ],
+      'payments': payments, // Adjusted payments
       'tax_template': taxTemplate,
       'company': companyname, // Use companyname from parameter
-      'discount_amount': discount,
+      // 'discount_amount': discount,
+       'discount_amount': adjustedDiscount, // Adjusted discount
+      'is_return' :isReturn,
+      'return_against': returnAgainst
     };
 
     String payload = jsonEncode(payloadMap);
@@ -1110,6 +1133,7 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
         },
         body: payload,
       );
+      print("urls $apiUrl");
 
       // Step 7: Check for status code and response
       if (response.statusCode == 200) {
@@ -1137,6 +1161,8 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     }
     print("=== Sales Items Post to API Complete ===");
   }
+
+
 
   Future<double> fetchCompanyTax(String companyName) async {
     final db = await database;
@@ -1241,5 +1267,46 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
         discount: double.tryParse(maps[i]['discount'].toString()) ?? 0.0,
       );
     });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSalesReturnItems(
+      String invoiceNo) async {
+    final db = await database;
+    print("invoice in db$invoiceNo");
+
+    // Query the DB_sales_items table where the invoice_no matches the provided invoiceNo
+    return await db.query(
+      'DB_sales_items',
+      columns: [
+        'id',
+        'item_code',
+        'item_name',
+        'item_count',
+        'customer_name',
+        'date',
+        'invoice_no',
+        'base_rate',
+        'base_amount',
+        'net_rate',
+        'net_amount'
+      ],
+      where: 'invoice_no = ?',
+      whereArgs: [invoiceNo],
+    );
+  }
+
+  Future<void> updateItemCountinDb(
+      int id, int newCount, double newBaseAmount) async {
+    // Update the item count and base amount in the database
+    final db = await database;
+    await db.update(
+      'DB_sales_items',
+      {
+        'item_count': newCount,
+        'base_amount': newBaseAmount,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
