@@ -1,7 +1,9 @@
 // models/item.dart
 class Item {
-  final String price;
-  final String tax;
+  // final String price;
+  String price;
+  // final String tax;
+  String tax;
   int itemCount;
   final itemDesciption;
   final String itemCode;
@@ -32,8 +34,7 @@ class Item {
       tax: map['item_tax'] ?? '0.00',
       companyTax: map['rate'] ?? 0.0,
       itemCount: map['item_count'] ?? 1,
-      itemtaxtype: map['item_tax_type'], 
-
+      itemtaxtype: map['item_tax_type'],
     );
   }
 

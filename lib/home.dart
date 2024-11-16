@@ -37,6 +37,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String fetchVat = '';
   // String qrData = 'afpc';
 // double subtotal = 0.0;
+  bool isManuallyUpdated = false;
   double currentDiscount = 0.0;
   String? selectedMode;
   double paidAmount = 0;
@@ -146,13 +147,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _fetchJsonGrandTotal() {
-    if (widget.datas != null && widget.datas!['message'] != null) {
-      final Map<String, dynamic> message = widget.datas!['message']!;
-      jsonGrandTotal = message['grand_total'] ?? 0.0;
-    }
-  }
-
   String? _fetchInvocie() {
     if (widget.datas != null && widget.datas!['message'] != null) {
       final Map<String, dynamic> message = widget.datas!['message']!;
@@ -183,7 +177,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  // void _fetchJsonSubTotal() {
+  //   // Safely check if widget.datas and widget.datas['message'] are not null
+  //   final Map<String, dynamic>? message = widget.datas?['message'];
+
+  //   if (message != null &&
+  //       message['taxes'] != null &&
+  //       message['items'].isNotEmpty) {
+  //     List<dynamic> taxes = message['items'];
+  //     for (var tax in taxes) {
+  //       // Safely access tax_amount and handle nulls
+  //       double fetchSubAmount =
+  //           tax['net_amount'] ?? 0.0; // Default to 0.0 if null
+  //       print("Fetched Tax Amount: $fetchSubAmount");
+  //       jsonSubtotal = fetchSubAmount;
+  //     }
+  //   } else {
+  //     // If there's no taxes data, you can set default or handle accordingly
+  //     print("No subtotal found.");
+  //   }
+  // }
+
+  void updateItemDetails(int index, String quantity, String rate) {
+    print("insdie updateitems");
+
+    // Update the item at the specified index
+    items[index].itemCount = int.parse(quantity); // Convert quantity to integer
+    items[index].price = rate; // Update price with new value
+
+
+    // Mark that the update is coming from the UI (manual)
+    isManuallyUpdated = true;
+
+    // Calculate the updated amount locally (you can update a new field or subtotal based on itemCount and price)
+    jsonSubtotal = items[index].itemCount * (double.tryParse(rate) ?? 0.0);
+
+    print("Updated Amount: $jsonSubtotal");
+
+    // After updating the item, calculate the updated subtotal
+  }
+
+// Function to fetch and calculate the new subtotal from the API response
   void _fetchJsonSubTotal() {
+    print("inside fetchsub");
+
     // Safely check if widget.datas and widget.datas['message'] are not null
     final Map<String, dynamic>? message = widget.datas?['message'];
 
@@ -192,15 +229,48 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         message['items'].isNotEmpty) {
       List<dynamic> taxes = message['items'];
       for (var tax in taxes) {
-        // Safely access tax_amount and handle nulls
-        double fetchSubAmount =
-            tax['net_amount'] ?? 0.0; // Default to 0.0 if null
-        print("Fetched Tax Amount: $fetchSubAmount");
-        jsonSubtotal = fetchSubAmount;
+        // Only update if it's not a manual update
+        if (!isManuallyUpdated) {
+          // Safely access net_amount and handle null values
+          double fetchSubAmount =
+              tax['net_amount'] ?? 0.0; // Default to 0.0 if null
+          print("Fetched Tax Amount: $fetchSubAmount");
+
+          // Only trigger the state update if the value has changed
+          if (fetchSubAmount != jsonSubtotal) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              setState(() {
+                jsonSubtotal = fetchSubAmount;
+              });
+
+              // Optionally, update the UI or perform any other actions with the new subtotal
+              print("Updated Subtotal: $jsonSubtotal");
+            });
+          }
+        } else {
+          print("Subtotal is manually updated, skipping API update.");
+        }
       }
     } else {
-      // If there's no taxes data, you can set default or handle accordingly
+      // If there's no taxes data, handle accordingly
       print("No subtotal found.");
+
+    }
+
+    // Reset the flag after the API call
+    isManuallyUpdated = false;
+  }
+
+  void _fetchJsonGrandTotal() {
+    print("insidefetchGrandtotal");
+    final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
+    final Map<String, dynamic> dataItems1 = widget.datas?['message'] ?? {};
+
+    print("dataitem$dataItems");
+    print("dtaitems2$dataItems1");
+    if (widget.datas != null && widget.datas!['message'] != null) {
+      final Map<String, dynamic> message = widget.datas!['message']!;
+      jsonGrandTotal = message['grand_total'] ?? 0.0;
     }
   }
 
@@ -1072,6 +1142,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
+    print("inside showedit dialog");
     final item = items[index];
 
     TextEditingController quantityController = TextEditingController(
@@ -1159,6 +1230,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     // Update dataItems structure
                     items[index]['qty'] = int.parse(quantityController.text);
                     items[index]['rate'] = priceController.text;
+                    updateItemDetails(
+                        index, quantityController.text, priceController.text);
                   }
                 });
                 Navigator.of(context).pop();
@@ -1169,7 +1242,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       },
     );
   }
-
 
   // Calculate the subtotal of the order
   double calculateSubtotal() {
@@ -1469,18 +1541,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           //           FilteringTextInputFormatter.allow(
           //               RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
           //         ],
-          //         // onChanged: (value) {
-          //         //   // Handle the input change if needed
-          //         //   setState(() {
-          //         //     total = calculateTotal();
-          //         //   });
-          //         // },
-          //           onSubmitted: (value) {
+          //         onChanged: (value) {
+          //           // Handle the input change if needed
           //           setState(() {
-          //             manualDiscount = double.tryParse(value) ?? 0.0;
           //             total = calculateTotal();
           //           });
           //         },
+
           //       //    onChanged: (value) {
           //       //   setState(() {
           //       //     manualDiscount = double.tryParse(value) ?? 0.0;
