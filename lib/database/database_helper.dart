@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 // import 'package:flutter_pos_app/model/ModeData.dart';
 import 'package:flutter_pos_app/model/SaleItem.dart';
 import 'package:flutter_pos_app/model/company.dart';
@@ -651,7 +652,7 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     print('Items table cleared.');
   }
 
-    Future<void> clearSoldItems() async {
+  Future<void> clearSoldItems() async {
     final db = await database;
     await db.delete('DB_sales_items');
     print('Items table cleared.');
@@ -1043,17 +1044,17 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
       "http://206.189.132.138/api/method/duplex_dev.api.make_sales_invoice.create_sales_invoice";
 
   Future<void> postSalesItemsToApi(
-    List<Map<String, dynamic>> soldItemsMap,
-    String apiKey,
-    String secretKey,
-    String customername, // Pass customername as parameter
-    String companyname, // Pass companyname as parameter
-    double discount,
-    String selectedMode,
-    double paidAmount,
-    int isReturn,
-    String returnAgainst
-  ) async {
+      List<Map<String, dynamic>> soldItemsMap,
+      String apiKey,
+      String secretKey,
+      String customername, // Pass customername as parameter
+      String companyname, // Pass companyname as parameter
+      double discount,
+      String selectedMode,
+      double paidAmount,
+      int isReturn,
+      String returnAgainst,
+      BuildContext context) async {
     // Step 1: Create Basic Authentication header
     String basicAuth =
         'Basic ${base64Encode(utf8.encode('$apiKey:$secretKey'))}';
@@ -1063,7 +1064,9 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
       return {
         'item_code': item['item_code'],
         // 'qty': item['item_count'],
-        'qty': isReturn == 1 ? -item['item_count'] : item['item_count'], // Make qty negative if return
+        'qty': isReturn == 1
+            ? -item['item_count']
+            : item['item_count'], // Make qty negative if return
         'rate': item['net_rate'],
       };
     }).toList();
@@ -1085,21 +1088,22 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     }).toList();
 
 // Extract 'tax_name' for the 'tax_template'
-    String taxTemplate =
-        taxes.isNotEmpty ? taxes[0]['name'].toString() : '';
+    String taxTemplate = taxes.isNotEmpty ? taxes[0]['name'].toString() : '';
 
-
-double adjustedDiscount = discount == 0 ? 0 : (isReturn == 1 ? -discount : discount);
-  List<Map<String, dynamic>> payments = [
-    {
-      'mode_of_payment': selectedMode,
-      'amount': isReturn == 1 ? -paidAmount : paidAmount, // Make amount negative if return
-    },
-  ];
+    double adjustedDiscount =
+        discount == 0 ? 0 : (isReturn == 1 ? -discount : discount);
+    List<Map<String, dynamic>> payments = [
+      {
+        'mode_of_payment': selectedMode,
+        'amount': isReturn == 1
+            ? -paidAmount
+            : paidAmount, // Make amount negative if return
+      },
+    ];
 
     // Step 4: Prepare the final payload
     Map<String, dynamic> payloadMap = {
-      'naming_series': 'ACC-SINV-.YYYY.-',
+      // 'naming_series': 'ACC-SINV-.YYYY.-',
       'customer': customername, // Use customername from parameter
       'items': items,
       'taxes': taxes,
@@ -1114,8 +1118,8 @@ double adjustedDiscount = discount == 0 ? 0 : (isReturn == 1 ? -discount : disco
       'tax_template': taxTemplate,
       'company': companyname, // Use companyname from parameter
       // 'discount_amount': discount,
-       'discount_amount': adjustedDiscount, // Adjusted discount
-      'is_return' :isReturn,
+      'discount_amount': adjustedDiscount, // Adjusted discount
+      'is_return': isReturn,
       'return_against': returnAgainst
     };
 
@@ -1142,6 +1146,21 @@ double adjustedDiscount = discount == 0 ? 0 : (isReturn == 1 ? -discount : disco
           final responseBody = jsonDecode(response.body);
           print("Response Body: ${jsonEncode(responseBody)}");
           print(responseBody);
+          if (responseBody['message'] != null &&
+              responseBody['message']['error'] != null) {
+            String errorMessage = responseBody['message']['error'];
+            print("Error in API response: $errorMessage");
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage), // Use the dynamic errorMessage
+                duration:
+                    Duration(seconds: 3), // Optional: Adjust duration if needed
+              ),
+            );
+          } else {
+            print("API response processed successfully.");
+          }
           return responseBody;
         } catch (e) {
           print("Error parsing API response: $e");
@@ -1161,8 +1180,6 @@ double adjustedDiscount = discount == 0 ? 0 : (isReturn == 1 ? -discount : disco
     }
     print("=== Sales Items Post to API Complete ===");
   }
-
-
 
   Future<double> fetchCompanyTax(String companyName) async {
     final db = await database;

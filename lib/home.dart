@@ -126,13 +126,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _loadCustomerForSelectedCompany();
       _loadModesFromDB();
     });
+    checkData();
 
     selectedMode = _getSelectedModeForCurrentPage();
-    //  _localDatas = widget.datas;
+
     print("data in home${widget.datas}");
   }
 
+  void checkData() {
+    if (widget.datas == null) {
+      print("nothing");
+    } else {
+      final Map<String, dynamic> message = widget.datas?['message'] ?? {};
+      double initialPaidAmount = message['paid_amount'] ?? 0.0;
+
+      // Initialize controller and state
+      paidAmountController.text = initialPaidAmount.toString();
+      _setPaidAmountForCurrentPage(initialPaidAmount);
+      _fetchJsonDiscount();
+      _fetchJsonTax();
+      _fetchJsonSubTotal();
+      _fetchJsonGrandTotal();
+      // _paidAmount();
+    }
+  }
+
   void _fetchJsonDiscount() {
+    print("inside fetchdisocunt");
     if (!_isJsonDiscountFetched &&
         widget.datas != null &&
         widget.datas!['message'] != null) {
@@ -157,6 +177,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return null; // Return null if no invoice number is found
   }
 
+  // void _fetchJsonTax() {
+  //   // Safely check if widget.datas and widget.datas['message'] are not null
+  //   final Map<String, dynamic>? message = widget.datas?['message'];
+
+  //   if (message != null &&
+  //       message['taxes'] != null &&
+  //       message['taxes'].isNotEmpty) {
+  //     List<dynamic> taxes = message['taxes'];
+  //     for (var tax in taxes) {
+  //       // Safely access tax_amount and handle nulls
+  //       double taxAmount = tax['tax_amount'] ?? 0.0; // Default to 0.0 if null
+  //       print("Fetched Tax Amount: $taxAmount");
+  //       jsonTaxAmount = taxAmount;
+  //     }
+  //   } else {
+  //     // If there's no taxes data, you can set default or handle accordingly
+  //     print("No taxes data found.");
+  //   }
+  // }
+
   void _fetchJsonTax() {
     // Safely check if widget.datas and widget.datas['message'] are not null
     final Map<String, dynamic>? message = widget.datas?['message'];
@@ -165,11 +205,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         message['taxes'] != null &&
         message['taxes'].isNotEmpty) {
       List<dynamic> taxes = message['taxes'];
-      for (var tax in taxes) {
-        // Safely access tax_amount and handle nulls
-        double taxAmount = tax['tax_amount'] ?? 0.0; // Default to 0.0 if null
-        print("Fetched Tax Amount: $taxAmount");
-        jsonTaxAmount = taxAmount;
+      if (!isManuallyUpdated) {
+        print("isManuallyUpdated$isManuallyUpdated");
+        for (var tax in taxes) {
+          // Safely access tax_amount and handle nulls
+          double taxAmount = tax['tax_amount'] ?? 0.0; // Default to 0.0 if null
+          print("Fetched Tax Amount: $taxAmount");
+          jsonTaxAmount = taxAmount;
+        }
       }
     } else {
       // If there's no taxes data, you can set default or handle accordingly
@@ -177,42 +220,211 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  // void _fetchJsonSubTotal() {
-  //   // Safely check if widget.datas and widget.datas['message'] are not null
-  //   final Map<String, dynamic>? message = widget.datas?['message'];
+  void calculateNewTotal() {
+    print("Calculating new total...");
 
-  //   if (message != null &&
-  //       message['taxes'] != null &&
-  //       message['items'].isNotEmpty) {
-  //     List<dynamic> taxes = message['items'];
-  //     for (var tax in taxes) {
-  //       // Safely access tax_amount and handle nulls
-  //       double fetchSubAmount =
-  //           tax['net_amount'] ?? 0.0; // Default to 0.0 if null
-  //       print("Fetched Tax Amount: $fetchSubAmount");
-  //       jsonSubtotal = fetchSubAmount;
-  //     }
-  //   } else {
-  //     // If there's no taxes data, you can set default or handle accordingly
-  //     print("No subtotal found.");
-  //   }
-  // }
+    // Initialize subtotal, discount, and tax variables
+    double updatedSubtotal = 0.0;
+    double updatedTotalTax = 0.0;
+    double discount = 0.0;
+
+    // Safely extract items from widget data
+    final List<dynamic> items = widget.datas?['message']?['items'] ?? [];
+    final Map<String, dynamic>? message = widget.datas?['message'];
+
+    if (message != null) {
+      // Fetch discount amount if available
+      // discount = (message['discount_amount'] is String)
+      //     ? double.tryParse(message['discount_amount']) ?? 0.0
+      //     : (message['discount_amount'] ?? 0.0);
+
+      if (_discountController.text.isNotEmpty) {
+        print("in if discppunt");
+        // discount = double.parse(_discountController.text);
+        discount = double.tryParse(_discountController.text) ?? 0;
+        print("dicount in $discount");
+        // _setDiscountForCurrentPage(discount);
+      } else {
+        print("in else discount");
+        discount = (message['discount_amount'] is String)
+            ? double.tryParse(message['discount_amount']) ?? 0.0
+            : (message['discount_amount'] ?? 0.0);
+      }
+
+      print("Fetched discount: $discount");
+
+      // Fetch company tax rate
+      double companyTax = 0.0;
+      if (message['taxes'] != null && message['taxes'].isNotEmpty) {
+        var tax = message['taxes'][0]; // Assuming single tax rate
+        companyTax = (tax['rate'] is String)
+            ? double.tryParse(tax['rate']) ?? 0.0
+            : (tax['rate'] ?? 0.0);
+      }
+
+      print("Fetched company tax rate: $companyTax%");
+
+      // Iterate over updated items to calculate subtotal and tax
+      for (var item in items) {
+        double price = (item['rate'] is String)
+            ? double.tryParse(item['rate']) ?? 0.0
+            : (item['rate'] ?? 0.0);
+        int quantity = (item['qty'] is String)
+            ? int.tryParse(item['qty']) ?? 0
+            : (item['qty'] ?? 0);
+
+        double itemTotal = price * quantity;
+        double itemTax = itemTotal * (companyTax / 100);
+
+        updatedSubtotal += itemTotal;
+        updatedTotalTax += itemTax;
+
+        print(
+            "Item ${item['item_code']} - Quantity: $quantity, Price: $price, Item Total: $itemTotal, Item Tax: $itemTax");
+      }
+
+      // Apply discount proportion to tax
+      double discountProportion =
+          updatedSubtotal > 0 ? (discount / updatedSubtotal) : 0.0;
+      updatedTotalTax = updatedTotalTax * (1 - discountProportion);
+      print("padiamountincalculatnew$paidAmount");
+
+      // Calculate new total
+      double newTotal =
+          updatedSubtotal + updatedTotalTax - discount;
+
+      // Ensure total is not negative
+      if (newTotal < 0) {
+        newTotal = 0;
+      }
+
+      print("Updated Subtotal: $updatedSubtotal");
+      print("Updated Total Tax: $updatedTotalTax");
+      print("Updated Grand Total: $newTotal");
+
+      // Assign to jsonGrandTotal
+      setState(() {
+        jsonGrandTotal = newTotal;
+      });
+      print("jsongrandinnew$jsonGrandTotal");
+    } else {
+      print("No valid message data found to calculate new total.");
+    }
+  }
+
+  void updateTaxDetails() {
+    print("Inside updateTaxDetails, Paid Amount: $paidAmount");
+
+    // Extract the data safely
+    final Map<String, dynamic>? data = widget.datas?['message'];
+
+    if (data != null && data['taxes'] != null && data['items'] != null) {
+      // Safely parse discount amount
+      double discountInUp = (data['discount_amount'] is String)
+          ? double.tryParse(data['discount_amount']) ?? 0.0
+          : (data['discount_amount'] ?? 0.0);
+      print("Discount Amount in Update: $discountInUp");
+
+      // Extract items and taxes
+      List<dynamic> items = data['items'];
+      List<dynamic> taxes = data['taxes'];
+
+      // Calculate subtotal and tax rate
+      double subtotal =
+          jsonSubtotal; // Use the provided `jsonSubtotal` as the base
+      double totalTax = 0.0;
+
+      print("Initial Subtotal: $subtotal");
+      print("Initial Tax Amount: $jsonTaxAmount");
+
+      // Fetch tax rate from taxes list
+      if (taxes.isNotEmpty) {
+        var tax = taxes.first; // Assuming a single tax rate applies
+        companyTax = (tax['rate'] is String)
+            ? double.tryParse(tax['rate']) ?? 0.0
+            : (tax['rate'] ?? 0.0);
+        print("Company Tax Rate: $companyTax%");
+      } else {
+        print("No taxes found in data!");
+      }
+
+      // Iterate over items
+      for (var item in items) {
+        // Safely parse item details
+        double price = (item['rate'] is String)
+            ? double.tryParse(item['rate']) ?? 0.0
+            : (item['rate'] ?? 0.0);
+        int itemQuantity = (item['qty'] is String)
+            ? int.tryParse(item['qty']) ?? 0
+            : (item['qty'] ?? 0);
+
+        print("Processing Item: ${item['item_code'] ?? 'Unknown'}");
+        print("Item Price: $price, Item Quantity: $itemQuantity");
+
+        // Calculate item total
+        double itemTotal = price * itemQuantity;
+        print("Item Total (Price * Quantity): $itemTotal");
+
+        // Calculate company tax for the item
+        double companyTaxAmount = itemTotal * (companyTax / 100);
+        print("Company Tax Amount (Item Total * Tax Rate): $companyTaxAmount");
+
+        // Calculate discount proportion
+        double discountProportion =
+            subtotal > 0 ? (discountInUp / subtotal) : 0.0;
+        print("Discount Proportion (Discount / Subtotal): $discountProportion");
+
+        // Apply discount to company tax
+        double discountedCompanyTax =
+            companyTaxAmount * (1 - discountProportion);
+        print(
+            "Discounted Company Tax (Company Tax * (1 - Discount Proportion)): $discountedCompanyTax");
+        print(
+            "Discounted Company Tax (Company Tax * (1 - Discount Proportion)): ${discountedCompanyTax.runtimeType}");
+        // Add to total tax
+        totalTax += discountedCompanyTax;
+        print("totaltaxin update${totalTax}");
+        print("totaltaxin update${totalTax.runtimeType}");
+      }
+
+      // Update jsonTaxAmount with calculated total tax
+      jsonTaxAmount = totalTax;
+      print("Updated jsonTaxAmount: $jsonTaxAmount");
+    } else {
+      print("Invalid or missing data. Cannot update tax details.");
+    }
+  }
+
 
   void updateItemDetails(int index, String quantity, String rate) {
     print("insdie updateitems");
+    final Map<String, dynamic>? data = widget.datas?['message'];
+    List<dynamic> taxes = data?['taxes'];
+
+    for (var tax in taxes) {
+      companyTax = (tax['rate'] is String) // Safely parse tax amount
+          ? double.tryParse(tax['rate']) ?? 0.0
+          : (tax['rate'] ?? 0.0);
+      print("Fetched Radd Amount: $companyTax");
+    }
 
     // Update the item at the specified index
     items[index].itemCount = int.parse(quantity); // Convert quantity to integer
     items[index].price = rate; // Update price with new value
-
 
     // Mark that the update is coming from the UI (manual)
     isManuallyUpdated = true;
 
     // Calculate the updated amount locally (you can update a new field or subtotal based on itemCount and price)
     jsonSubtotal = items[index].itemCount * (double.tryParse(rate) ?? 0.0);
+    print("companytaxoutinitem$companyTax");
 
-    print("Updated Amount: $jsonSubtotal");
+    // double companyTaxAmount = jsonSubtotal;
+    // double companyTaxAmount = jsonSubtotal / companyTax;
+    // print("companytaxin$companyTaxAmount");
+    jsonTaxAmount = companyTax;
+
+    print("Updated Amount: $jsonTaxAmount");
 
     // After updating the item, calculate the updated subtotal
   }
@@ -227,14 +439,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (message != null &&
         message['taxes'] != null &&
         message['items'].isNotEmpty) {
-      List<dynamic> taxes = message['items'];
-      for (var tax in taxes) {
+      List<dynamic> items = message['items'];
+      List<dynamic> taxes = message['taxes'];
+      for (var tax in items) {
         // Only update if it's not a manual update
         if (!isManuallyUpdated) {
           // Safely access net_amount and handle null values
           double fetchSubAmount =
               tax['net_amount'] ?? 0.0; // Default to 0.0 if null
-          print("Fetched Tax Amount: $fetchSubAmount");
+          print("Fetched Sub Amount: $fetchSubAmount");
 
           // Only trigger the state update if the value has changed
           if (fetchSubAmount != jsonSubtotal) {
@@ -254,7 +467,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } else {
       // If there's no taxes data, handle accordingly
       print("No subtotal found.");
-
     }
 
     // Reset the flag after the API call
@@ -511,10 +723,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         if (currentPageIndex == 1) {
           discountPage1 = discount;
+          discount = discountPage1;
         } else if (currentPageIndex == 2) {
           discountPage2 = discount;
+          discount = discountPage2;
         } else if (currentPageIndex == 3) {
           discountPage3 = discount;
+          discount = discountPage3;
         }
       });
     });
@@ -1141,107 +1356,218 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
-    print("inside showedit dialog");
-    final item = items[index];
 
-    TextEditingController quantityController = TextEditingController(
-        text: item['qty']?.toString() ?? item.itemCount.toString());
-    TextEditingController priceController =
-        TextEditingController(text: item['rate']?.toString() ?? item.price);
+void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
+  print("inside showedit dialog");
+  final item = items[index];
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Edit Item',
-            style: TextStyle(color: Colors.black),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: quantityController,
-                style: const TextStyle(color: Colors.black),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                decoration: InputDecoration(
-                  hintText: 'Enter Valid Quantity',
-                  hintStyle: TextStyle(color: Colors.black54),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
+  // Check if the item is a Map or an Item object
+  TextEditingController quantityController = TextEditingController(
+      text: item is Map
+          ? item['qty']?.toString() ?? '0'
+          : item.itemCount.toString());
+  TextEditingController priceController = TextEditingController(
+      text: item is Map ? item['rate']?.toString() ?? '0' : item.price);
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          'Edit Item',
+          style: TextStyle(color: Colors.black),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: quantityController,
+              style: const TextStyle(color: Colors.black),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              decoration: InputDecoration(
+                hintText: 'Enter Valid Quantity',
+                hintStyle: TextStyle(color: Colors.black54),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                filled: true,
+                fillColor: Colors.white,
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: priceController,
-                style: const TextStyle(color: Colors.black),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                decoration: InputDecoration(
-                  hintText: 'Enter Valid Price',
-                  hintStyle: TextStyle(color: Colors.black54),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
             ),
-            ElevatedButton(
-              child: const Text('Save'),
-              onPressed: () {
-                setState(() {
-                  if (items == orderedItems) {
-                    // Update orderedItems
-                    orderedItems[index] = Item(
-                      image: item.image,
-                      itemName: item.itemName,
-                      itemCode: item.itemCode,
-                      itemDesciption: item.itemDesciption,
-                      price: priceController.text,
-                      tax: item.tax,
-                      companyTax: item.companyTax,
-                      itemCount: int.parse(quantityController.text),
-                      itemtaxtype: item.itemtaxtype,
-                    );
-                  } else {
-                    // Update dataItems structure
-                    items[index]['qty'] = int.parse(quantityController.text);
-                    items[index]['rate'] = priceController.text;
-                    updateItemDetails(
-                        index, quantityController.text, priceController.text);
-                  }
-                });
-                Navigator.of(context).pop();
-              },
+            const SizedBox(height: 10),
+            TextField(
+              controller: priceController,
+              style: const TextStyle(color: Colors.black),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              decoration: InputDecoration(
+                hintText: 'Enter Valid Price',
+                hintStyle: TextStyle(color: Colors.black54),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Save'),
+            onPressed: () {
+              setState(() {
+                if (item is Item) {
+                  // Update the Item object
+                  orderedItems[index] = Item(
+                    image: item.image,
+                    itemName: item.itemName,
+                    itemCode: item.itemCode,
+                    itemDesciption: item.itemDesciption,
+                    price: priceController.text,
+                    tax: item.tax,
+                    companyTax: item.companyTax,
+                    itemCount: int.parse(quantityController.text),
+                    itemtaxtype: item.itemtaxtype,
+                  );
+                } else if (item is Map) {
+                  // Update the Map structure
+                  items[index]['qty'] = int.parse(quantityController.text);
+                  items[index]['rate'] = priceController.text;
+                  updateItemDetails(
+                      index, quantityController.text, priceController.text);
+                  updateTaxDetails();
+                  calculateNewTotal();
+                }
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+  // void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
+  //   print("inside showedit dialog");
+  //   final item = items[index];
+
+  //   TextEditingController quantityController = TextEditingController(
+  //       text: item['qty']?.toString() ?? item.itemCount.toString());
+  //   TextEditingController priceController =
+  //       TextEditingController(text: item['rate']?.toString() ?? item.price);
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         backgroundColor: Colors.white,
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(20),
+  //         ),
+  //         title: const Text(
+  //           'Edit Item',
+  //           style: TextStyle(color: Colors.black),
+  //         ),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextField(
+  //               controller: quantityController,
+  //               style: const TextStyle(color: Colors.black),
+  //               keyboardType: TextInputType.number,
+  //               inputFormatters: [
+  //                 FilteringTextInputFormatter.digitsOnly,
+  //               ],
+  //               decoration: InputDecoration(
+  //                 hintText: 'Enter Valid Quantity',
+  //                 hintStyle: TextStyle(color: Colors.black54),
+  //                 border: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                 ),
+  //                 filled: true,
+  //                 fillColor: Colors.white,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 10),
+  //             TextField(
+  //               controller: priceController,
+  //               style: const TextStyle(color: Colors.black),
+  //               keyboardType: TextInputType.number,
+  //               inputFormatters: [
+  //                 FilteringTextInputFormatter.digitsOnly,
+  //               ],
+  //               decoration: InputDecoration(
+  //                 hintText: 'Enter Valid Price',
+  //                 hintStyle: TextStyle(color: Colors.black54),
+  //                 border: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                 ),
+  //                 filled: true,
+  //                 fillColor: Colors.white,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         actions: <Widget>[
+  //           TextButton(
+  //             child: const Text('Cancel'),
+  //             onPressed: () {
+  //               Navigator.of(context).pop();
+  //             },
+  //           ),
+  //           ElevatedButton(
+  //             child: const Text('Save'),
+  //             onPressed: () {
+  //               setState(() {
+  //                 if (items == orderedItems) {
+  //                   // Update orderedItems
+  //                   orderedItems[index] = Item(
+  //                     image: item.image,
+  //                     itemName: item.itemName,
+  //                     itemCode: item.itemCode,
+  //                     itemDesciption: item.itemDesciption,
+  //                     price: priceController.text,
+  //                     tax: item.tax,
+  //                     companyTax: item.companyTax,
+  //                     itemCount: int.parse(quantityController.text),
+  //                     itemtaxtype: item.itemtaxtype,
+  //                   );
+  //                 } else {
+  //                   // Update dataItems structure
+  //                   items[index]['qty'] = int.parse(quantityController.text);
+  //                   items[index]['rate'] = priceController.text;
+  //                   updateItemDetails(
+  //                       index, quantityController.text, priceController.text);
+  //                   updateTaxDetails();
+  //                   calculateNewTotal();
+  //                 }
+  //               });
+  //               Navigator.of(context).pop();
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
 
   // Calculate the subtotal of the order
   double calculateSubtotal() {
@@ -1276,34 +1602,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       double price = double.parse(item.price.replaceAll(' ', ''));
       int quantity = item.itemCount;
       double itemTotal = price * quantity;
+      // itemTotal = itemTotal - paidAmount;
+      print("qunatity in calculatetax$quantity");
+      print("pricein calulatetax$price");
+      print("itemTotal$itemTotal");
+      print("companyTaxincalculattax$companyTax");
 
       // Calculate company tax before discount
       double companyTaxAmount = itemTotal * (companyTax / 100);
+      print("companyTaxAmount in$companyTaxAmount");
 
       // Calculate the taxable amount after applying discount proportionally
       double discountProportion = discount / calculateSubtotal();
+      print("discountProportion$discount");
+      print("discountincalculatetax$discountProportion");
       double discountedCompanyTax = companyTaxAmount * (1 - discountProportion);
+      print("discountedcompanytax$discountedCompanyTax");
 
       // Add discounted tax to the total
       totalTax += discountedCompanyTax;
+      print("totalTax$totalTax");
     }
-
+    // totalTax = totalTax - paidAmount;
     return totalTax;
   }
 
-// Calculate the total amount including tax and discount
   double calculateTotal() {
+    print("inside calculateTotal");
     double subtotal = calculateSubtotal();
     double discount = 0.0;
 
     // Check if discount is not empty and parse it
     if (_discountController.text.isNotEmpty) {
-      // discount = double.parse(_discountController.text);
       discount = double.tryParse(_discountController.text) ?? 0;
-      _setDiscountForCurrentPage(discount);
+    } else {
+      // Fallback to `calculateNewTotal` when discount is empty
+      calculateNewTotal();
+      print("in else");
     }
-
-    double vatAmount = subtotal - discount * vatPercent;
 
     // Calculate tax after applying discount
     double totalTax = calculateTax(discount);
@@ -1320,6 +1656,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return total;
   }
 
+// Calculate the total amount including tax and discount
+  // double calculateTotal() {
+  //   print("inside calculatetotal");
+  //   double subtotal = calculateSubtotal();
+  //   double discount = 0.0;
+
+  //   // Check if discount is not empty and parse it
+  //   if (_discountController.text.isNotEmpty) {
+  //     // discount = double.parse(_discountController.text);
+  //     discount = double.tryParse(_discountController.text) ?? 0;
+  //     // _setDiscountForCurrentPage(discount);
+  //   } else {
+  //     calculateNewTotal();
+  //     print("in else");
+  //   }
+
+  //   double vatAmount = subtotal - discount * vatPercent;
+
+  //   // Calculate tax after applying discount
+  //   double totalTax = calculateTax(discount);
+
+  //   // Subtract the discount from the subtotal
+  //   double total =
+  //       subtotal + totalTax - discount - _getPaidAmountForCurrentPage();
+
+  //   // Ensure total doesn't go below zero
+  //   if (total < 0) {
+  //     total = 0;
+  //   }
+
+  //   return total;
+  // }
+
   double calculateVatAmount() {
     double subtotal = calculateSubtotal();
     double discount = 0.0;
@@ -1328,7 +1697,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (_discountController.text.isNotEmpty) {
       // discount = double.parse(_discountController.text);
       discount = double.tryParse(_discountController.text) ?? 0;
-      _setDiscountForCurrentPage(discount);
+      // _setDiscountForCurrentPage(discount);
     }
     double vatAmount = subtotal - discount * vatPercent;
 
@@ -1434,14 +1803,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     //   double totalAmount = 0.0;
     double discount = 0.0;
 
-    _fetchJsonDiscount();
-    _fetchJsonTax();
-    _fetchJsonSubTotal();
-    _fetchJsonGrandTotal();
-
     // Determine the discount based on either JSON or manual input
     manualDiscount = double.tryParse(_discountController.text) ?? 0.0;
     discount = jsonDiscount > 0 ? jsonDiscount : manualDiscount;
+    print("manual discont$manualDiscount");
 
     // double subtotal = calculateSubtotal();
     double subtotal = jsonSubtotal > 0.0 ? jsonSubtotal : calculateSubtotal();
@@ -1484,6 +1849,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               )
             ],
           ),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1507,119 +1873,124 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ],
           ),
 
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //   children: [
-          //     const Text('Discount',
-          //         style: TextStyle(
-          //             fontWeight: FontWeight.bold, color: Colors.black87)),
-          //     SizedBox(
-          //       width: 50, // Adjust the width as needed
-          //       child: TextField(
-          //         controller:
-          //             _discountController, // Replace with your TextEditingController
-          //         style: const TextStyle(
-          //             fontWeight: FontWeight.bold,
-          //             fontSize: 14,
-          //             color: Colors.black87),
-          //         textAlign: TextAlign.end,
-          //         decoration: const InputDecoration(
-          //           // border: InputBorder.none, // Remove the underline
-          //           contentPadding:
-          //               EdgeInsets.all(0), // Adjust padding as needed
-          //           hintText: '0.00', // Hint text
-          //           hintStyle: TextStyle(
-          //             color: Colors.grey, // Light grey color for the hint text
-          //             fontWeight:
-          //                 FontWeight.normal, // You can adjust the font weight
-          //           ),
-          //         ),
-          //         keyboardType:
-          //             const TextInputType.numberWithOptions(decimal: true),
-          //         inputFormatters: [
-          //           // FilteringTextInputFormatter.digitsOnly, // Allow only digits
-          //           FilteringTextInputFormatter.allow(
-          //               RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
-          //         ],
-          //         onChanged: (value) {
-          //           // Handle the input change if needed
-          //           setState(() {
-          //             total = calculateTotal();
-          //           });
-          //         },
-
-          //       //    onChanged: (value) {
-          //       //   setState(() {
-          //       //     manualDiscount = double.tryParse(value) ?? 0.0;
-          //       //     totalDiscountedAmount = manualDiscount;
-          //       //     total = calculateTotal();
-          //       //   });
-          //       // },
-          //       ),
-          //     ),
-          //   ],
-          // ),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Discount',
                   style: TextStyle(
                       fontWeight: FontWeight.bold, color: Colors.black87)),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 50, // Adjust the width as needed
-                    child: TextField(
-                      controller: _discountController,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.black87),
-                      textAlign: TextAlign.end,
-                      decoration: const InputDecoration(
-                        contentPadding:
-                            EdgeInsets.all(0), // Adjust padding as needed
-                        hintText: '0.00', // Hint text
-                        hintStyle: TextStyle(
-                          color:
-                              Colors.grey, // Light grey color for the hint text
-                          fontWeight: FontWeight.normal, // Adjust font weight
-                        ),
-                      ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
-                      ],
+              SizedBox(
+                width: 50, // Adjust the width as needed
+                child: TextField(
+                  controller:
+                      _discountController, // Replace with your TextEditingController
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.black87),
+                  textAlign: TextAlign.end,
+                  decoration: const InputDecoration(
+                    // border: InputBorder.none, // Remove the underline
+                    contentPadding:
+                        EdgeInsets.all(0), // Adjust padding as needed
+                    hintText: '0.00', // Hint text
+                    hintStyle: TextStyle(
+                      color: Colors.grey, // Light grey color for the hint text
+                      fontWeight:
+                          FontWeight.normal, // You can adjust the font weight
                     ),
                   ),
-                  const SizedBox(
-                      width: 10), // Space between TextField and Button
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        // Fetch the discount from the TextField
-                        manualDiscount =
-                            double.tryParse(_discountController.text) ?? 0.0;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      backgroundColor: Colors.blue, // Button background color
-                    ),
-                    child: const Text(
-                      'Apply',
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    // FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
+                  ],
+                  // onChanged: (value) {
+                  //   print("changing");
+                  //   setState(() {
+                  //     total = calculateTotal();
+                  //   });
+                  // },
+
+                  onChanged: (value) {
+                    print("Discount field changed: $value");
+                    setState(() {
+                      if (!isManuallyUpdated) {
+                        // calculateTax(double.tryParse(value) ?? 0.0);
+                        total = calculateTotal();
+                      } else {
+                        calculateNewTotal();
+                      }
+                      // total = calculateTotal();
+                    });
+                  },
+                ),
               ),
             ],
           ),
+
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     const Text('Discount',
+          //         style: TextStyle(
+          //             fontWeight: FontWeight.bold, color: Colors.black87)),
+          //     Row(
+          //       children: [
+          //         SizedBox(
+          //           width: 50, // Adjust the width as needed
+          //           child: TextField(
+          //             controller: _discountController,
+          //             style: const TextStyle(
+          //                 fontWeight: FontWeight.bold,
+          //                 fontSize: 14,
+          //                 color: Colors.black87),
+          //             textAlign: TextAlign.end,
+          //             decoration: const InputDecoration(
+          //               contentPadding:
+          //                   EdgeInsets.all(0), // Adjust padding as needed
+          //               hintText: '0.00', // Hint text
+          //               hintStyle: TextStyle(
+          //                 color:
+          //                     Colors.grey, // Light grey color for the hint text
+          //                 fontWeight: FontWeight.normal, // Adjust font weight
+          //               ),
+          //             ),
+          //             keyboardType:
+          //                 const TextInputType.numberWithOptions(decimal: true),
+          //             inputFormatters: [
+          //               FilteringTextInputFormatter.allow(
+          //                   RegExp(r'^\d*\.?\d*')), // Allow decimal numbers
+          //             ],
+          //           ),
+          //         ),
+          //         const SizedBox(
+          //             width: 10), // Space between TextField and Button
+          //         ElevatedButton(
+          //           onPressed: () {
+          //             setState(() {
+          //               // Fetch the discount from the TextField
+          //               manualDiscount =
+          //                   double.tryParse(_discountController.text) ?? 0.0;
+          //             });
+          //           },
+          //           style: ElevatedButton.styleFrom(
+          //             padding: const EdgeInsets.symmetric(
+          //                 horizontal: 10, vertical: 5),
+          //             backgroundColor: Colors.blue, // Button background color
+          //           ),
+          //           child: const Text(
+          //             'Apply',
+          //             style:
+          //                 TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ],
+          // ),
 
           Container(
             margin: const EdgeInsets.symmetric(vertical: 1),
@@ -1825,14 +2196,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       0, (sum, item) => sum + (item['item_count'] as int));
                   print("fullcount$fullcount");
 
-                  // Insert sales items into DB_sales_items with new customer name
-
                   // Declare responseBody here
 
                   Map<String, String?> keys = await dbHelper
                       .getApiKeysByCompanyName(selectedCompanyName);
-                  // String? apiKey = keys['apiKey'];
-                  // String? secretKey = keys['secretKey'];
                   String companyVatNo = keys['vat_number'] ?? '';
                   String companyAddress = keys['main_address'] ?? '';
                   String companyCrNo = keys['cr_no'] ?? '';
@@ -1856,17 +2223,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                     // Call postSalesItemsToApi with the fetched keys
                     return await dbHelper.postSalesItemsToApi(
-                      soldItemsMap,
-                      apiKey,
-                      secretKey,
-                      selectedCustomer,
-                      selectedCompanyName,
-                      discount,
-                      selectedMode!,
-                      paidAmount,
-                      isReturn,
-                      returnAgainst,
-                    );
+                        soldItemsMap,
+                        apiKey,
+                        secretKey,
+                        selectedCustomer,
+                        selectedCompanyName,
+                        discount,
+                        selectedMode!,
+                        paidAmount,
+                        isReturn,
+                        returnAgainst,
+                        context);
                   }
 
                   Map<String, dynamic>? responseBody;
@@ -1888,18 +2255,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         responseBody['message']['sales_invoice'] as String?;
                   }
                   File qrFile = await generateQR(selectedCompanyName, fetchVat);
-                  // await dbHelper.insertSalesItems(soldItemsMap, salesInvoice,
-                  //     _selectedCustomer!, discountamount);
 
                   print("salesinvoiceafterextraction$salesInvoice");
                   String customerName =
                       customerData['customer_name'] ?? 'Unknown';
-                  String customerType = customerData['type'] ?? 'Unknown';
-                  String customerEmail = customerData['email'] ?? 'Unknown';
-                  String customerAddressType =
-                      customerData['address_type'] ?? 'Unknown';
-                  String customerState = customerData['state'] ?? 'Unknown';
-                  String customerPincode = customerData['pincode'] ?? '00000';
 
                   String customerAddressTitle =
                       (customerData['address_title'] ?? '') +
@@ -1910,8 +2269,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ' ' +
                           (customerData['city'] ?? 'Unknown');
 
-                  String customerCountry =
-                      customerData['address_country'] ?? 'Unknown';
                   String customerVatNumber =
                       customerData['vat_number'] ?? 'Unknown';
                   String customercompanyCrNo =
@@ -1936,15 +2293,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   print("fullcount$fullcount");
                   print("fetchVat$fetchVat");
 
-                  // Print bill after inserting and posting
-                  // final printService = PrintService();
-                  // final generatePDF = GeneratePDF();
-
                   if (salesInvoice != null) {
                     final printService = PrintService();
                     final generatePDF = GeneratePDF();
-                    // File qrFile =
-                    //     await generateQR(selectedCompanyName, fetchVat);
 
                     if (widget.a4 == false) {
                       await generatePDF.generate3inch(
@@ -2210,14 +2561,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _paidAmount() {
     // Extract paid_amount from the message if available
-    final Map<String, dynamic> message = widget.datas?['message'] ?? {};
-    double initialPaidAmount =
-        message['paid_amount'] ?? 0.0; // Default to 0.0 if not found
+    // final Map<String, dynamic> message = widget.datas?['message'] ?? {};
+    // double initialPaidAmount =
+    //     message['paid_amount'] ?? 0.0; // Default to 0.0 if not found
 
-    // Set the initial value of the paidAmountController if it's not already set
-    if (paidAmountController.text.isEmpty) {
-      paidAmountController.text = initialPaidAmount.toString();
-    }
+    // // Set the initial value of the paidAmountController if it's not already set
+    // if (paidAmountController.text.isEmpty) {
+    //   paidAmountController.text = initialPaidAmount.toString();
+    // }
 
     return Container(
       width: double.infinity,
@@ -2234,59 +2585,65 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: TextField(
                   controller: paidAmountController,
                   inputFormatters: [
-                    FilteringTextInputFormatter
-                        .digitsOnly, // Only numbers allowed
+                    FilteringTextInputFormatter.allow(
+                      RegExp(
+                          r'^\d*\.?\d*'), // Allows digits and a single decimal point
+                    ),
                   ],
                   decoration: const InputDecoration(
                     labelText: 'Paying Amount',
                     border: InputBorder.none,
                   ),
-                  // onChanged: (value) {
-                  //   // Optionally handle changes in the input in real-time
-                  //   double paidAmount = double.tryParse(value) ?? 0.0;
-                  //   _setPaidAmountForCurrentPage(paidAmount);
-                  // },
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    double paidAmount =
-                        double.tryParse(paidAmountController.text) ?? 0.0;
+                  onChanged: (value) {
+                    // setState(() {
+                    // Optionally handle changes in the input in real-time
+                    double paidAmount = double.tryParse(value) ?? 0.0;
+                    // double paidAmount =
+                    //     double.tryParse(paidAmountController.text) ?? 0.0;
                     _setPaidAmountForCurrentPage(paidAmount);
-                    print(
-                        "Entered amount for Page $currentPageIndex: $paidAmount");
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4285F4),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 15,
-                    ),
-                    SizedBox(width: 3),
-                    Text(
-                      'OK',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
+                    // });
+                  },
                 ),
               ),
+              // ElevatedButton(
+              //   onPressed: () {
+              //     setState(() {
+              //       double paidAmount =
+              //           double.tryParse(paidAmountController.text) ?? 0.0;
+              //       _setPaidAmountForCurrentPage(paidAmount);
+              //       print(
+              //           "Entered amount for Page $currentPageIndex: $paidAmount");
+              //     });
+              //   },
+              //   style: ElevatedButton.styleFrom(
+              //     backgroundColor: const Color(0xFF4285F4),
+              //     foregroundColor: Colors.white,
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(10),
+              //     ),
+              //     padding:
+              //         const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+              //   ),
+              //   child: const Row(
+              //     mainAxisSize: MainAxisSize.min,
+              //     children: [
+              //       Icon(
+              //         Icons.check,
+              //         color: Colors.white,
+              //         size: 15,
+              //       ),
+              //       SizedBox(width: 3),
+              //       Text(
+              //         'OK',
+              //         style: TextStyle(
+              //           fontSize: 12,
+              //           fontWeight: FontWeight.bold,
+              //           letterSpacing: 1.2,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ],
