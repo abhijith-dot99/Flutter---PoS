@@ -174,6 +174,7 @@ class GeneratePDF {
       String sellerAddress,
       discount,
       qrData) async {
+    print("items in pdf$items");
     final pdf = pw.Document();
     final imageBytes = await qrData.readAsBytes();
     pdf.addPage(
@@ -523,15 +524,14 @@ class GeneratePDF {
                         fontWeight: pw.FontWeight.bold, fontSize: 10)),
               ],
             ),
-             pw.SizedBox(height: 8),
-               pw.Center(
+            pw.SizedBox(height: 8),
+            pw.Center(
               child: pw.Image(
                 pw.MemoryImage(imageBytes), // Use qrFile for image from file
                 width: 50,
                 height: 50,
               ),
             ),
-
           ],
         ),
       ),

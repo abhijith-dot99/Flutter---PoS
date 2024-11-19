@@ -125,9 +125,12 @@ class _SalesReportState extends State<SalesReport> {
     setState(() {
       apiKey = prefs.getString('apiKey') ?? '';
       secretKey = prefs.getString('secretKey') ?? '';
-      // url = prefs.getString('url') ?? '';
+
       url =
           'http://206.189.132.138/api/method/duplex_dev.api.sales_invoice_return_items.get_sales_invoice_details';
+
+      // url =
+      //     'http://206.189.132.138/api/method/frappe.model.mapper.make_mapped_doc';
       selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
       selectedCompanyId = prefs.getString('selectedCompanyId') ?? '';
     });
@@ -156,7 +159,10 @@ class _SalesReportState extends State<SalesReport> {
         },
         // body: invoiceNumber,
         body: jsonEncode({
-          'invoice_no': invoiceNumber, // Passing the argument in the body
+          'invoice_no': invoiceNumber,
+          // 'source_name': invoiceNumber,
+          // 'method':
+          //     'erpnext.accounts.doctype.sales_invoice.sales_invoice.make_sales_return',
         }),
       );
 
@@ -170,8 +176,9 @@ class _SalesReportState extends State<SalesReport> {
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    MainPage(data: data,)),
+                builder: (context) => MainPage(
+                      data: data,
+                    )),
           );
         } catch (e) {
           print("Error parsing API response: $e");

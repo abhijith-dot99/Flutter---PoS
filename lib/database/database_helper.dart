@@ -1140,40 +1140,151 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
       print("urls $apiUrl");
 
       // Step 7: Check for status code and response
+      // if (response.statusCode == 200) {
+      //   print("Success: API returned status code 200");
+      //   try {
+      //     final responseBody = jsonDecode(response.body);
+      //     print("Response Body1: ${jsonEncode(responseBody)}");
+      //     print(responseBody);
+      //     if (responseBody['message'] != null &&
+      //         responseBody['message']['error'] != null) {
+      //       String errorMessage = responseBody['message']['error'];
+      //       String snackBarMessage = isReturn == 1
+      //           ? "Return processed successfully!"
+      //           : "Sale completed successfully!";
+      //       Color snackBarColor = isReturn == 1 ? Colors.green : Colors.blue;
+      //       print("Error in API response: $errorMessage");
+
+      //       ScaffoldMessenger.of(context).showSnackBar(
+      //         SnackBar(
+      //           content: Text(snackBarMessage),
+      //           backgroundColor: snackBarColor,
+      //           duration: Duration(seconds: 3), // Customize as needed
+      //         ),
+      //       );
+      //     } else if (responseBody['message'] != null &&
+      //         responseBody['message']['error'] != null) {
+      //       String errorMessage = responseBody['message']['error'];
+      //       print("Error in API response: $errorMessage");
+
+      //       ScaffoldMessenger.of(context).showSnackBar(
+      //         SnackBar(
+      //           content: Text(errorMessage),
+      //           backgroundColor: Colors.red,
+      //           duration:
+      //               Duration(seconds: 3), // Optional: Adjust duration if needed
+      //         ),
+      //       );
+      //     } else {
+      //       print("API response processed successfully.");
+      //       print("Response Body: ${response.body}");
+      //       ScaffoldMessenger.of(context).showSnackBar(
+      //         SnackBar(
+      //           content: Text("API Error: ${response.statusCode}"),
+      //           backgroundColor: Colors.red,
+      //           duration: Duration(seconds: 3),
+      //         ),
+      //       );
+      //     }
+      //     return responseBody;
+      //   }
+
+      //   catch (e) {
+      //     print("Error parsing API response: $e");
+      //   }
+
+      //   if (response.body.contains('item_code')) {
+      //     print("Item details found in the API response.");
+      //   } else {
+      //     print("Warning: Item details are missing in the API response.");
+      //   }
+      // } else {
+      //   print("Error: API returned status code ${response.statusCode}");
+      //   print("Response Body: ${response.body}");
+      // }
+
       if (response.statusCode == 200) {
         print("Success: API returned status code 200");
         try {
           final responseBody = jsonDecode(response.body);
           print("Response Body: ${jsonEncode(responseBody)}");
           print(responseBody);
-          if (responseBody['message'] != null &&
-              responseBody['message']['error'] != null) {
-            String errorMessage = responseBody['message']['error'];
-            print("Error in API response: $errorMessage");
 
+          if (responseBody['message'] != null) {
+            // Check if `sales_invoice` exists
+            if (responseBody['message']['sales_invoice'] != null) {
+              String salesInvoice = responseBody['message']['sales_invoice'];
+              String snackBarMessage = isReturn == 1
+                  ? "Product Returned successfully!"
+                  : "Sale completed successfully!";
+              Color snackBarColor = isReturn == 1 ? Colors.green : Colors.blue;
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(snackBarMessage),
+                  backgroundColor: snackBarColor,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+
+              print("Sales Invoice: $salesInvoice");
+              return responseBody; // Return the response body if processing is successful
+            }
+            // Check if `error` exists
+            else if (responseBody['message']['error'] != null) {
+              String errorMessage = responseBody['message']['error'];
+              print("Error in API response: $errorMessage");
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMessage),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            } else {
+              // Handle unexpected message structure
+              print("Unexpected API response structure.");
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Unexpected API response."),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          } else {
+            // Handle case where `message` is null
+            print("API response does not contain 'message'.");
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMessage), // Use the dynamic errorMessage
-                duration:
-                    Duration(seconds: 3), // Optional: Adjust duration if needed
+              const SnackBar(
+                content: Text("Invalid response from server."),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
               ),
             );
-          } else {
-            print("API response processed successfully.");
           }
-          return responseBody;
         } catch (e) {
           print("Error parsing API response: $e");
-        }
-
-        if (response.body.contains('item_code')) {
-          print("Item details found in the API response.");
-        } else {
-          print("Warning: Item details are missing in the API response.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Error parsing API response."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
         }
       } else {
+        // Handle non-200 status codes
         print("Error: API returned status code ${response.statusCode}");
         print("Response Body: ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("API Error: ${response.statusCode}"),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
       print("Error during API request: $e");

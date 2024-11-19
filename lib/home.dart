@@ -126,6 +126,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _loadCustomerForSelectedCompany();
       _loadModesFromDB();
     });
+    // makeDataValuesPositive();
     checkData();
 
     selectedMode = _getSelectedModeForCurrentPage();
@@ -138,7 +139,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       print("nothing");
     } else {
       final Map<String, dynamic> message = widget.datas?['message'] ?? {};
+      final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
+      print("messaeg incheckdata items$dataItems");
+      final List<dynamic> taxItems = widget.datas?['message']?['taxes'] ?? [];
+      print("messaeg incheckdata tax$taxItems");
+      final List<dynamic> paymentsitems =
+          widget.datas?['message']?['payments'] ?? [];
+      print("messaeg incheckdata payments$paymentsitems");
       double initialPaidAmount = message['paid_amount'] ?? 0.0;
+      print("initialPaidAmount$initialPaidAmount");
 
       // Initialize controller and state
       paidAmountController.text = initialPaidAmount.toString();
@@ -147,7 +156,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _fetchJsonTax();
       _fetchJsonSubTotal();
       _fetchJsonGrandTotal();
-      // _paidAmount();
+      _paidAmount();
     }
   }
 
@@ -221,7 +230,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void calculateNewTotal() {
-    print("Calculating new total...");
+    log("Calculating new total...");
 
     // Initialize subtotal, discount, and tax variables
     double updatedSubtotal = 0.0;
@@ -262,50 +271,64 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             : (tax['rate'] ?? 0.0);
       }
 
-      print("Fetched company tax rate: $companyTax%");
+      print("Fetched company tax rate: $companyTax");
 
       // Iterate over updated items to calculate subtotal and tax
       for (var item in items) {
         double price = (item['rate'] is String)
             ? double.tryParse(item['rate']) ?? 0.0
             : (item['rate'] ?? 0.0);
-        int quantity = (item['qty'] is String)
-            ? int.tryParse(item['qty']) ?? 0
-            : (item['qty'] ?? 0);
+        // int quantity = (item['qty'] is String)
+        //     ? int.tryParse(item['qty']) ?? 0
+        //     : (item['qty'] ?? 0);
+        double qtyAsDouble = item['qty'] is String
+            ? double.tryParse(item['qty']) ?? 0.0
+            : (item['qty']?.toDouble() ?? 0.0);
+        int quantity = qtyAsDouble.round(); // Convert to int
 
         double itemTotal = price * quantity;
         double itemTax = itemTotal * (companyTax / 100);
 
         updatedSubtotal += itemTotal;
         updatedTotalTax += itemTax;
+        print("updatedTotalTax type: ${updatedTotalTax.runtimeType}");
+        print("itemTax type: ${itemTax.runtimeType}");
 
         print(
             "Item ${item['item_code']} - Quantity: $quantity, Price: $price, Item Total: $itemTotal, Item Tax: $itemTax");
       }
 
       // Apply discount proportion to tax
+      print(
+          "discount${discount.runtimeType} ','${updatedSubtotal.runtimeType}");
       double discountProportion =
           updatedSubtotal > 0 ? (discount / updatedSubtotal) : 0.0;
+      print("discountProportion${discountProportion.runtimeType}");
       updatedTotalTax = updatedTotalTax * (1 - discountProportion);
+
       print("padiamountincalculatnew$paidAmount");
 
       // Calculate new total
-      double newTotal =
-          updatedSubtotal + updatedTotalTax - discount;
+      // double newTotal =
+      // updatedSubtotal + updatedTotalTax - discount - paidAmount;
+      double newTotal = updatedSubtotal + updatedTotalTax - discount;
 
       // Ensure total is not negative
       if (newTotal < 0) {
         newTotal = 0;
       }
 
-      print("Updated Subtotal: $updatedSubtotal");
+      log("Updated Subtotal: $updatedSubtotal");
+      jsonSubtotal = updatedSubtotal;
       print("Updated Total Tax: $updatedTotalTax");
       print("Updated Grand Total: $newTotal");
 
       // Assign to jsonGrandTotal
-      setState(() {
-        jsonGrandTotal = newTotal;
-      });
+
+      // setState(() {
+
+      jsonGrandTotal = newTotal;
+      // });
       print("jsongrandinnew$jsonGrandTotal");
     } else {
       print("No valid message data found to calculate new total.");
@@ -354,9 +377,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         double price = (item['rate'] is String)
             ? double.tryParse(item['rate']) ?? 0.0
             : (item['rate'] ?? 0.0);
+        // int itemQuantity = (item['qty'] is String)
+        //     ? int.tryParse(item['qty']) ?? 0
+        //     : (item['qty'] ?? 0);
         int itemQuantity = (item['qty'] is String)
-            ? int.tryParse(item['qty']) ?? 0
-            : (item['qty'] ?? 0);
+            ? (double.tryParse(item['qty']) ?? 0.0).toInt()
+            : (item['qty'] is double)
+                ? (item['qty'] as double).toInt()
+                : (item['qty'] ?? 0);
 
         print("Processing Item: ${item['item_code'] ?? 'Unknown'}");
         print("Item Price: $price, Item Quantity: $itemQuantity");
@@ -395,7 +423,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-
   void updateItemDetails(int index, String quantity, String rate) {
     print("insdie updateitems");
     final Map<String, dynamic>? data = widget.datas?['message'];
@@ -429,7 +456,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // After updating the item, calculate the updated subtotal
   }
 
-// Function to fetch and calculate the new subtotal from the API response
   void _fetchJsonSubTotal() {
     print("inside fetchsub");
 
@@ -440,38 +466,88 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         message['taxes'] != null &&
         message['items'].isNotEmpty) {
       List<dynamic> items = message['items'];
-      List<dynamic> taxes = message['taxes'];
-      for (var tax in items) {
+      double totalSubtotal = 0.0; // Initialize running total
+
+      for (var item in items) {
         // Only update if it's not a manual update
         if (!isManuallyUpdated) {
           // Safely access net_amount and handle null values
           double fetchSubAmount =
-              tax['net_amount'] ?? 0.0; // Default to 0.0 if null
+              item['net_amount'] ?? 0.0; // Default to 0.0 if null
           print("Fetched Sub Amount: $fetchSubAmount");
 
-          // Only trigger the state update if the value has changed
-          if (fetchSubAmount != jsonSubtotal) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              setState(() {
-                jsonSubtotal = fetchSubAmount;
-              });
-
-              // Optionally, update the UI or perform any other actions with the new subtotal
-              print("Updated Subtotal: $jsonSubtotal");
-            });
-          }
+          // Add the amount to the running total
+          totalSubtotal += fetchSubAmount;
         } else {
           print("Subtotal is manually updated, skipping API update.");
         }
       }
+
+      // Only trigger the state update if the value has changed
+      if (!isManuallyUpdated && totalSubtotal != jsonSubtotal) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {
+            jsonSubtotal = totalSubtotal; // Update with total sum
+          });
+
+          // Optionally, update the UI or perform any other actions with the new subtotal
+          print("Updated Subtotal: $jsonSubtotal");
+        });
+      }
     } else {
-      // If there's no taxes data, handle accordingly
-      print("No subtotal found.");
+      // If there's no data, handle accordingly
+      print("No items found to calculate subtotal.");
     }
 
     // Reset the flag after the API call
     isManuallyUpdated = false;
   }
+
+// Function to fetch and calculate the new subtotal from the API response
+  // void _fetchJsonSubTotal() {
+  //   print("inside fetchsub");
+
+  //   // Safely check if widget.datas and widget.datas['message'] are not null
+  //   final Map<String, dynamic>? message = widget.datas?['message'];
+
+  //   if (message != null &&
+  //       message['taxes'] != null &&
+  //       message['items'].isNotEmpty) {
+  //     List<dynamic> items = message['items'];
+  //     List<dynamic> taxes = message['taxes'];
+  //     double totalSubtotal = 0.0;
+  //     for (var tax in items) {
+  //       // Only update if it's not a manual update
+  //       if (!isManuallyUpdated) {
+  //         // Safely access net_amount and handle null values
+  //         double fetchSubAmount =
+  //             tax['net_amount'] ?? 0.0; // Default to 0.0 if null
+  //         print("Fetched Sub Amount: $fetchSubAmount");
+  //         totalSubtotal += fetchSubAmount;
+
+  //         // Only trigger the state update if the value has changed
+  //         if (fetchSubAmount != jsonSubtotal) {
+  //           WidgetsBinding.instance.addPostFrameCallback((_) {
+  //             setState(() {
+  //               jsonSubtotal = fetchSubAmount;
+  //             });
+
+  //             // Optionally, update the UI or perform any other actions with the new subtotal
+  //             print("Updated Subtotal: $jsonSubtotal");
+  //           });
+  //         }
+  //       } else {
+  //         print("Subtotal is manually updated, skipping API update.");
+  //       }
+  //     }
+  //   } else {
+  //     // If there's no taxes data, handle accordingly
+  //     print("No subtotal found.");
+  //   }
+
+  //   // Reset the flag after the API call
+  //   isManuallyUpdated = false;
+  // }
 
   void _fetchJsonGrandTotal() {
     print("insidefetchGrandtotal");
@@ -1356,122 +1432,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-
-void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
-  print("inside showedit dialog");
-  final item = items[index];
-
-  // Check if the item is a Map or an Item object
-  TextEditingController quantityController = TextEditingController(
-      text: item is Map
-          ? item['qty']?.toString() ?? '0'
-          : item.itemCount.toString());
-  TextEditingController priceController = TextEditingController(
-      text: item is Map ? item['rate']?.toString() ?? '0' : item.price);
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text(
-          'Edit Item',
-          style: TextStyle(color: Colors.black),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: quantityController,
-              style: const TextStyle(color: Colors.black),
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              decoration: InputDecoration(
-                hintText: 'Enter Valid Quantity',
-                hintStyle: TextStyle(color: Colors.black54),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: priceController,
-              style: const TextStyle(color: Colors.black),
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              decoration: InputDecoration(
-                hintText: 'Enter Valid Price',
-                hintStyle: TextStyle(color: Colors.black54),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('Cancel'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          ElevatedButton(
-            child: const Text('Save'),
-            onPressed: () {
-              setState(() {
-                if (item is Item) {
-                  // Update the Item object
-                  orderedItems[index] = Item(
-                    image: item.image,
-                    itemName: item.itemName,
-                    itemCode: item.itemCode,
-                    itemDesciption: item.itemDesciption,
-                    price: priceController.text,
-                    tax: item.tax,
-                    companyTax: item.companyTax,
-                    itemCount: int.parse(quantityController.text),
-                    itemtaxtype: item.itemtaxtype,
-                  );
-                } else if (item is Map) {
-                  // Update the Map structure
-                  items[index]['qty'] = int.parse(quantityController.text);
-                  items[index]['rate'] = priceController.text;
-                  updateItemDetails(
-                      index, quantityController.text, priceController.text);
-                  updateTaxDetails();
-                  calculateNewTotal();
-                }
-              });
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
-
   // void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
   //   print("inside showedit dialog");
   //   final item = items[index];
 
+  //   // Check if the item is a Map or an Item object
   //   TextEditingController quantityController = TextEditingController(
-  //       text: item['qty']?.toString() ?? item.itemCount.toString());
-  //   TextEditingController priceController =
-  //       TextEditingController(text: item['rate']?.toString() ?? item.price);
+  //       text: item is Map
+  //           ? item['qty']?.toString() ?? '0'
+  //           : item.itemCount.toString());
+  //   TextEditingController priceController = TextEditingController(
+  //       text: item is Map ? item['rate']?.toString() ?? '0' : item.price);
 
   //   showDialog(
   //     context: context,
@@ -1536,8 +1507,8 @@ void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
   //             child: const Text('Save'),
   //             onPressed: () {
   //               setState(() {
-  //                 if (items == orderedItems) {
-  //                   // Update orderedItems
+  //                 if (item is Item) {
+  //                   // Update the Item object
   //                   orderedItems[index] = Item(
   //                     image: item.image,
   //                     itemName: item.itemName,
@@ -1549,8 +1520,8 @@ void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
   //                     itemCount: int.parse(quantityController.text),
   //                     itemtaxtype: item.itemtaxtype,
   //                   );
-  //                 } else {
-  //                   // Update dataItems structure
+  //                 } else if (item is Map) {
+  //                   // Update the Map structure
   //                   items[index]['qty'] = int.parse(quantityController.text);
   //                   items[index]['rate'] = priceController.text;
   //                   updateItemDetails(
@@ -1568,9 +1539,113 @@ void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
   //   );
   // }
 
+  void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
+    log("inside showedit dialog");
+    final item = items[index];
+
+    TextEditingController quantityController = TextEditingController(
+        text: item['qty']?.toString() ?? item.itemCount.toString());
+    TextEditingController priceController =
+        TextEditingController(text: item['rate']?.toString() ?? item.price);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Edit Item',
+            style: TextStyle(color: Colors.black),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: quantityController,
+                style: const TextStyle(color: Colors.black),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Enter Valid Quantity',
+                  hintStyle: TextStyle(color: Colors.black54),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: priceController,
+                style: const TextStyle(color: Colors.black),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Enter Valid Price',
+                  hintStyle: TextStyle(color: Colors.black54),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Save'),
+              onPressed: () {
+                setState(() {
+                  if (items == orderedItems) {
+                    // Update orderedItems
+                    orderedItems[index] = Item(
+                      image: item.image,
+                      itemName: item.itemName,
+                      itemCode: item.itemCode,
+                      itemDesciption: item.itemDesciption,
+                      price: priceController.text,
+                      tax: item.tax,
+                      companyTax: item.companyTax,
+                      itemCount: int.parse(quantityController.text),
+                      itemtaxtype: item.itemtaxtype,
+                    );
+                  } else {
+                    // Update dataItems structure
+                    items[index]['qty'] = int.parse(quantityController.text);
+                    items[index]['rate'] = priceController.text;
+                    updateItemDetails(
+                        index, quantityController.text, priceController.text);
+                    updateTaxDetails();
+                    calculateNewTotal();
+                  }
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   // Calculate the subtotal of the order
   double calculateSubtotal() {
+    log("inside calculatesub");
     double subtotal = 0.0;
     for (var item in orderedItems) {
       double price = double.parse(item.price.replaceAll(' ', ''));
@@ -2297,9 +2372,38 @@ void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
                     final printService = PrintService();
                     final generatePDF = GeneratePDF();
 
+                    if (orderedItems.isEmpty &&
+                        widget.datas != null &&
+                        widget.datas!['message'] != null) {
+                      final Map<String, dynamic> message =
+                          widget.datas!['message']!;
+                      List<dynamic> items = message['items'] ?? [];
+
+                      // Map items to match orderedItems structure
+                      orderedItems = items.map((item) {
+                        return Item(
+                          itemCode: item['item_code']?.toString() ?? '',
+                          itemName: item['item_name']?.toString() ?? '',
+                          itemDesciption:
+                              item['item_description']?.toString() ?? '',
+                          itemCount: (item['qty'] is int)
+                              ? item['qty'] as int
+                              : (item['qty'] is double)
+                                  ? (item['qty'] as double).toInt()
+                                  : 1,
+                          price: item['rate']?.toString() ?? '0.0',
+                          image: item['item_image']?.toString() ?? '',
+                          tax: item['item_tax_rate']?.toString() ?? '0.0',
+                          companyTax: companyTax,
+                          itemtaxtype: '',
+                        );
+                      }).toList();
+                    }
+
                     if (widget.a4 == false) {
                       await generatePDF.generate3inch(
                         orderedItems,
+                        // items,
                         subtotal,
                         tax,
                         total,
@@ -2319,6 +2423,7 @@ void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
                     } else {
                       await printService.printBill(
                         orderedItems,
+                        // items,
                         subtotal,
                         tax,
                         total,
@@ -2677,134 +2782,6 @@ void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
       ),
     );
   }
-
-  // Widget _viewCustomerList(BuildContext context) {
-  //   return SizedBox(
-  //     width: double.infinity, // Makes the bfutton take full width
-  //     child: ElevatedButton(
-  //       style: ElevatedButton.styleFrom(
-  //         backgroundColor: const Color(0xFF4285F4), // Set the color here
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(20),
-  //         ),
-  //       ),
-  //       onPressed: () {
-  //         showDialog(
-  //           context: context,
-  //           builder: (BuildContext context) {
-  //             return Stack(
-  //               children: [
-  //                 // Add a BackdropFilter to blur the background
-  //                 BackdropFilter(
-  //                   filter: ImageFilter.blur(
-  //                       sigmaX: 5.0, sigmaY: 5.0), // Adjust blur intensity
-  //                   child: Container(
-  //                     color: Colors.white.withOpacity(
-  //                         0), // Just to make the BackdropFilter visible
-  //                   ),
-  //                 ),
-  //                 AlertDialog(
-  //                   backgroundColor: const Color.fromARGB(
-  //                       255, 255, 255, 255), // Set background color here
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(20),
-  //                   ),
-  //                   title: const Text(
-  //                     'Select Customer',
-  //                     style: TextStyle(color: Colors.black87), // Title color
-  //                   ),
-  //                   content: Container(
-  //                     width: MediaQuery.of(context).size.width *
-  //                         0.8, // Adjust the width as needed
-  //                     child: Column(
-  //                       mainAxisSize: MainAxisSize.min,
-  //                       children: [
-  //                         DropdownButton<String>(
-  //                           value: _filteredCustomers.contains(
-  //                                   _getSelectedCustomerForCurrentPage())
-  //                               ? _getSelectedCustomerForCurrentPage()
-  //                               : null,
-  //                           hint: const Text(
-  //                             'Select a customer',
-  //                             style: TextStyle(color: Colors.black38),
-  //                           ),
-  //                           isExpanded: true,
-  //                           dropdownColor: Color.fromARGB(255, 226, 226, 233),
-  //                           items: _filteredCustomers.map((String? customer) {
-  //                             return DropdownMenuItem<String>(
-  //                               value: customer,
-  //                               child: Text(
-  //                                 customer!,
-  //                                 style: const TextStyle(color: Colors.black87),
-  //                               ),
-  //                             );
-  //                           }).toList(),
-  //                           onChanged: (String? newValue) {
-  //                             setState(() {
-  //                               _setSelectedCustomerForCurrentPage(newValue);
-  //                             });
-  //                             Navigator.of(context).pop();
-  //                           },
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                   actions: <Widget>[
-  //                     Row(
-  //                       mainAxisSize: MainAxisSize
-  //                           .min, // Use min size for the row to wrap its children
-  //                       children: [
-  //                         TextButton(
-  //                           child: const Text(
-  //                             'Close',
-  //                             style: TextStyle(
-  //                                 color: Colors
-  //                                     .redAccent), // Close button text color
-  //                           ),
-  //                           onPressed: () {
-  //                             Navigator.of(context).pop();
-  //                           },
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ],
-  //             );
-  //           },
-  //         );
-  //       },
-  //       child: Row(
-  //         mainAxisSize:
-  //             MainAxisSize.max, // Use max to take full available space
-  //         mainAxisAlignment:
-  //             MainAxisAlignment.center, // Center the content horizontally
-  //         crossAxisAlignment:
-  //             CrossAxisAlignment.center, // Center the content vertically
-  //         children: [
-  //           const Icon(
-  //             Icons.person,
-  //             color: Colors.white,
-  //             size: 16, // Icon stays constant
-  //           ),
-  //           const SizedBox(width: 8), // Space between the icon and text
-  //           FittedBox(
-  //             fit: BoxFit.scaleDown, // Ensures the text scales down if needed
-  //             alignment:
-  //                 Alignment.center, // Centers the text inside the FittedBox
-  //             child: Text(
-  //               _getSelectedCustomerForCurrentPage() ?? 'Customer',
-  //               style: const TextStyle(
-  //                 color: Colors.white,
-  //                 fontWeight: FontWeight.bold,
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _viewCustomerList(BuildContext context) {
     // Extract customer name from dataItems if available
