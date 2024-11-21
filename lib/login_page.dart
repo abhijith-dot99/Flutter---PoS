@@ -58,6 +58,7 @@ class _LoginPageState extends State<LoginPage> {
     print("isvalide$isValidUser");
 
     await prefs.setBool('isValidUser', isValidUser);
+    await prefs.setString('UserName', username);
     await prefs.setString('selectedCompanyName', selectedCompany!);
 
     if (isValidUser) {

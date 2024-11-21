@@ -32,6 +32,7 @@ class _SalesReportState extends State<SalesReport> {
   late String apiKey;
   late String secretKey;
   late String url;
+  late String userName;
   late String selectedCompanyName;
   late String selectedCompanyId;
   @override
@@ -125,19 +126,21 @@ class _SalesReportState extends State<SalesReport> {
     setState(() {
       apiKey = prefs.getString('apiKey') ?? '';
       secretKey = prefs.getString('secretKey') ?? '';
-
-      url =
-          'http://206.189.132.138/api/method/duplex_dev.api.sales_invoice_return_items.get_sales_invoice_details';
+      userName = prefs.getString('UserName') ?? '';
 
       // url =
-      //     'http://206.189.132.138/api/method/frappe.model.mapper.make_mapped_doc';
+      //     'http://206.189.132.138/api/method/duplex_dev.api.sales_invoice_return_items.get_sales_invoice_details';
+
+      url =
+          'http://206.189.132.138/api/method/frappe.model.mapper.make_mapped_doc';
       selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
       selectedCompanyId = prefs.getString('selectedCompanyId') ?? '';
     });
-    print(apiKey);
-    print("url$url");
-    print("selectedco$selectedCompanyName");
-    print(secretKey);
+    print("1api key$apiKey");
+    print("1userName$userName");
+    print("1url$url");
+    print("1selectedco$selectedCompanyName");
+    print("1seceret key$secretKey");
   }
 
   Future<void> fetchDataAndNavigateToMain(
@@ -159,10 +162,11 @@ class _SalesReportState extends State<SalesReport> {
         },
         // body: invoiceNumber,
         body: jsonEncode({
-          'invoice_no': invoiceNumber,
-          // 'source_name': invoiceNumber,
-          // 'method':
-          //     'erpnext.accounts.doctype.sales_invoice.sales_invoice.make_sales_return',
+          // 'invoice_no': invoiceNumber,
+          'source_name': invoiceNumber,
+          'method':
+              'erpnext.accounts.doctype.sales_invoice.sales_invoice.make_sales_return',
+          'staff': userName,
         }),
       );
 
@@ -343,9 +347,6 @@ class _SalesReportState extends State<SalesReport> {
                                     DataColumn(
                                         label: Text('Item Code',
                                             textAlign: TextAlign.center)),
-                                    // DataColumn(
-                                    //     label: Text('Item Name',
-                                    //         textAlign: TextAlign.center)),
                                     DataColumn(
                                       label: Row(
                                         mainAxisAlignment:
@@ -462,6 +463,7 @@ class _SalesReportState extends State<SalesReport> {
                         ),
                       ),
           ),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 16.0)),
         ],
       ),
     );

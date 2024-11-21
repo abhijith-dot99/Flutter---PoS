@@ -830,8 +830,12 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
     return base64.decode(base64String);
   }
 
-  Future<void> insertSalesItems(List<Map<String, dynamic>> orderedItems,
-      String? invoiceNo, String customerName, double discountamount) async {
+  Future<void> insertSalesItems(
+    List<Map<String, dynamic>> orderedItems,
+    String? invoiceNo,
+    String customerName,
+    double discountamount,
+  ) async {
     print("Inside insertSalesItems for customer: $customerName");
 
     final db = await database;
@@ -840,6 +844,13 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
 
     // Iterate over each ordered item and insert into the DB_sales_items table
     for (var item in orderedItems) {
+      // Check if item_count is 0
+      if (item['item_count'] == 0) {
+        print("Skipping item with item_count 0: ${item['item_name']}");
+        continue; // Skip inserting this item
+      }
+
+      // Insert into DB_sales_items if item_count is not 0
       await db.insert(
         'DB_sales_items',
         {
@@ -870,6 +881,47 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
 
     print("Items inserted into DB_sales_items for invoice: $invoiceNo");
   }
+
+  // Future<void> insertSalesItems(List<Map<String, dynamic>> orderedItems,
+  //     String? invoiceNo, String customerName, double discountamount) async {
+  //   print("Inside insertSalesItems for customer: $customerName");
+
+  //   final db = await database;
+  //   print("itemsss$orderedItems");
+  //   String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  //   // Iterate over each ordered item and insert into the DB_sales_items table
+  //   for (var item in orderedItems) {
+  //     await db.insert(
+  //       'DB_sales_items',
+  //       {
+  //         'item_code': item['item_code'],
+  //         'item_name': item['item_name'],
+  //         'item_description': item['item_description'],
+  //         'item_group': item['item_group'],
+  //         'item_image': item['item_image'],
+  //         'item_uom': item['item_uom'],
+  //         'base_rate': item['base_rate'],
+  //         'base_amount': item['base_amount'],
+  //         'net_rate': item['net_rate'],
+  //         'net_amount': item['net_amount'],
+  //         'pricing_rules': item['pricing_rules'],
+  //         'is_free_item': item['is_free_item'] == true ? 1 : 0,
+  //         'item_tax_rate': item['item_tax_rate'].toString(),
+  //         'invoice_no': invoiceNo, // Invoice number for tracking the sale
+  //         'customer_name':
+  //             customerName, // Add customer name to track sale by customer
+  //         'item_count': item['item_count'],
+  //         'date': currentDate, // Add the current date
+  //         'discount': discountamount,
+  //       },
+  //       conflictAlgorithm:
+  //           ConflictAlgorithm.abort, // Replace if a conflict occurs
+  //     );
+  //   }
+
+  //   print("Items inserted into DB_sales_items for invoice: $invoiceNo");
+  // }
 
   Future<String?> getTaxName(companyName) async {
     final db = await database;
@@ -1054,19 +1106,25 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
       double paidAmount,
       int isReturn,
       String returnAgainst,
+      String userName,
       BuildContext context) async {
     // Step 1: Create Basic Authentication header
+    print("isreturn in db$isReturn");
     String basicAuth =
         'Basic ${base64Encode(utf8.encode('$apiKey:$secretKey'))}';
+    print("soldItemsMap in db$soldItemsMap");
 
     // Step 2: Transform soldItemsMap into the API expected format
     List<Map<String, dynamic>> items = soldItemsMap.map((item) {
       return {
         'item_code': item['item_code'],
-        // 'qty': item['item_count'],
+        // 'qty': isReturn == 1
+        //     ? -item['item_count']
+        //     : item['item_count'], // Make qty negative if return
         'qty': isReturn == 1
             ? -item['item_count']
-            : item['item_count'], // Make qty negative if return
+                .abs() // Ensure item_count is negative for return
+            : item['item_count'], // Regular quantity
         'rate': item['net_rate'],
       };
     }).toList();
@@ -1107,20 +1165,13 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
       'customer': customername, // Use customername from parameter
       'items': items,
       'taxes': taxes,
-      // 'payments': payments, // Use taxes fetched from DB
-      // 'payments': [
-      //   {
-      //     'mode_of_payment': selectedMode,
-      //     'amount': paidAmount,
-      //   },
-      // ],
       'payments': payments, // Adjusted payments
       'tax_template': taxTemplate,
       'company': companyname, // Use companyname from parameter
-      // 'discount_amount': discount,
       'discount_amount': adjustedDiscount, // Adjusted discount
       'is_return': isReturn,
-      'return_against': returnAgainst
+      'return_against': returnAgainst,
+      'staff': userName
     };
 
     String payload = jsonEncode(payloadMap);
@@ -1138,70 +1189,6 @@ CREATE TABLE IF NOT EXISTS  DB_mode_selector(
         body: payload,
       );
       print("urls $apiUrl");
-
-      // Step 7: Check for status code and response
-      // if (response.statusCode == 200) {
-      //   print("Success: API returned status code 200");
-      //   try {
-      //     final responseBody = jsonDecode(response.body);
-      //     print("Response Body1: ${jsonEncode(responseBody)}");
-      //     print(responseBody);
-      //     if (responseBody['message'] != null &&
-      //         responseBody['message']['error'] != null) {
-      //       String errorMessage = responseBody['message']['error'];
-      //       String snackBarMessage = isReturn == 1
-      //           ? "Return processed successfully!"
-      //           : "Sale completed successfully!";
-      //       Color snackBarColor = isReturn == 1 ? Colors.green : Colors.blue;
-      //       print("Error in API response: $errorMessage");
-
-      //       ScaffoldMessenger.of(context).showSnackBar(
-      //         SnackBar(
-      //           content: Text(snackBarMessage),
-      //           backgroundColor: snackBarColor,
-      //           duration: Duration(seconds: 3), // Customize as needed
-      //         ),
-      //       );
-      //     } else if (responseBody['message'] != null &&
-      //         responseBody['message']['error'] != null) {
-      //       String errorMessage = responseBody['message']['error'];
-      //       print("Error in API response: $errorMessage");
-
-      //       ScaffoldMessenger.of(context).showSnackBar(
-      //         SnackBar(
-      //           content: Text(errorMessage),
-      //           backgroundColor: Colors.red,
-      //           duration:
-      //               Duration(seconds: 3), // Optional: Adjust duration if needed
-      //         ),
-      //       );
-      //     } else {
-      //       print("API response processed successfully.");
-      //       print("Response Body: ${response.body}");
-      //       ScaffoldMessenger.of(context).showSnackBar(
-      //         SnackBar(
-      //           content: Text("API Error: ${response.statusCode}"),
-      //           backgroundColor: Colors.red,
-      //           duration: Duration(seconds: 3),
-      //         ),
-      //       );
-      //     }
-      //     return responseBody;
-      //   }
-
-      //   catch (e) {
-      //     print("Error parsing API response: $e");
-      //   }
-
-      //   if (response.body.contains('item_code')) {
-      //     print("Item details found in the API response.");
-      //   } else {
-      //     print("Warning: Item details are missing in the API response.");
-      //   }
-      // } else {
-      //   print("Error: API returned status code ${response.statusCode}");
-      //   print("Response Body: ${response.body}");
-      // }
 
       if (response.statusCode == 200) {
         print("Success: API returned status code 200");

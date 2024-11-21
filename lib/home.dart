@@ -49,6 +49,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String selectedCategory = 'All'; // Track the selected category
   List<Item> searchResults = [];
   List<Item> orderedItems = [];
+  List<dynamic> dataItems = [];
   List<Items> soldItems = [];
   int isReturn = 0;
   String? returnAgainst = '';
@@ -99,6 +100,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   late String secretKey;
   late String apiKey;
+  late String userName;
 
   String?
       previousCustomer; // Keep track of previous customer outside the function.
@@ -113,6 +115,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double manualDiscount = 0.0;
   bool _isJsonDiscountFetched = false;
   bool _isjsonTaxRateFetched = false;
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +130,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _loadModesFromDB();
     });
     // makeDataValuesPositive();
+    dataItems = widget.datas?['message']?['items'] ?? [];
     checkData();
 
     selectedMode = _getSelectedModeForCurrentPage();
@@ -139,6 +143,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       print("nothing");
     } else {
       final Map<String, dynamic> message = widget.datas?['message'] ?? {};
+      print("messaeg incheckdata fulldata$message");
       final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
       print("messaeg incheckdata items$dataItems");
       final List<dynamic> taxItems = widget.datas?['message']?['taxes'] ?? [];
@@ -176,13 +181,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  String? _fetchInvocie() {
-    if (widget.datas != null && widget.datas!['message'] != null) {
-      final Map<String, dynamic> message = widget.datas!['message']!;
-      String d = message['invoice_no'];
-      print("{message$d");
-      return message['invoice_no'] ?? ''; // Return the invoice number
+  // String? _fetchInvocie() {
+  //   if (widget.datas != null && widget.datas!['message'] != null) {
+  //     final Map<String, dynamic> message = widget.datas!['message']!;
+  //     String d = message['invoice_no'];
+  //     print("{message$d");
+  //     return message['invoice_no'] ?? ''; // Return the invoice number
+  //   }
+  //   return null; // Return null if no invoice number is found
+  // }
+
+  String? _fetchInvoice() {
+    if (widget.datas != null) {
+      final message = widget.datas!['message'];
+      if (message is Map<String, dynamic>) {
+        final invoiceNo = message['invoice_no'];
+        print("Invoice Number: $invoiceNo");
+        return invoiceNo?.toString(); // Convert to String if not null
+      }
     }
+    print("Invoice number not found");
     return null; // Return null if no invoice number is found
   }
 
@@ -314,9 +332,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       double newTotal = updatedSubtotal + updatedTotalTax - discount;
 
       // Ensure total is not negative
-      if (newTotal < 0) {
-        newTotal = 0;
-      }
+      // if (newTotal < 0) {
+      //   newTotal = 0;
+      // }
 
       log("Updated Subtotal: $updatedSubtotal");
       jsonSubtotal = updatedSubtotal;
@@ -444,6 +462,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     // Calculate the updated amount locally (you can update a new field or subtotal based on itemCount and price)
     jsonSubtotal = items[index].itemCount * (double.tryParse(rate) ?? 0.0);
+    print("json subtotal in updateiem$jsonSubtotal");
     print("companytaxoutinitem$companyTax");
 
     // double companyTaxAmount = jsonSubtotal;
@@ -558,7 +577,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     print("dtaitems2$dataItems1");
     if (widget.datas != null && widget.datas!['message'] != null) {
       final Map<String, dynamic> message = widget.datas!['message']!;
+
       jsonGrandTotal = message['grand_total'] ?? 0.0;
+
+      print("jsongrandtotoal in fetch$jsonGrandTotal");
     }
   }
 
@@ -569,6 +591,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       paidAmountController.clear();
       selectedMode = null;
       orderedItems.clear();
+      soldItems.clear();
+      dataItems.clear();
 
       // _selectedCustomer = null;
       // paidAmount = 0;
@@ -953,6 +977,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       selectedCompanyName = prefs.getString('selectedCompanyName') ?? '';
       secretKey = prefs.getString('secretKey') ?? '';
       apiKey = prefs.getString('apiKey') ?? '';
+      userName = prefs.getString('userName') ?? '';
     });
     print("apiinsideload$apiKey");
     print("secretinsideload$secretKey");
@@ -1432,121 +1457,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  // void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
-  //   print("inside showedit dialog");
-  //   final item = items[index];
-
-  //   // Check if the item is a Map or an Item object
-  //   TextEditingController quantityController = TextEditingController(
-  //       text: item is Map
-  //           ? item['qty']?.toString() ?? '0'
-  //           : item.itemCount.toString());
-  //   TextEditingController priceController = TextEditingController(
-  //       text: item is Map ? item['rate']?.toString() ?? '0' : item.price);
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         backgroundColor: Colors.white,
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(20),
-  //         ),
-  //         title: const Text(
-  //           'Edit Item',
-  //           style: TextStyle(color: Colors.black),
-  //         ),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             TextField(
-  //               controller: quantityController,
-  //               style: const TextStyle(color: Colors.black),
-  //               keyboardType: TextInputType.number,
-  //               inputFormatters: [
-  //                 FilteringTextInputFormatter.digitsOnly,
-  //               ],
-  //               decoration: InputDecoration(
-  //                 hintText: 'Enter Valid Quantity',
-  //                 hintStyle: TextStyle(color: Colors.black54),
-  //                 border: OutlineInputBorder(
-  //                   borderRadius: BorderRadius.circular(12),
-  //                 ),
-  //                 filled: true,
-  //                 fillColor: Colors.white,
-  //               ),
-  //             ),
-  //             const SizedBox(height: 10),
-  //             TextField(
-  //               controller: priceController,
-  //               style: const TextStyle(color: Colors.black),
-  //               keyboardType: TextInputType.number,
-  //               inputFormatters: [
-  //                 FilteringTextInputFormatter.digitsOnly,
-  //               ],
-  //               decoration: InputDecoration(
-  //                 hintText: 'Enter Valid Price',
-  //                 hintStyle: TextStyle(color: Colors.black54),
-  //                 border: OutlineInputBorder(
-  //                   borderRadius: BorderRadius.circular(12),
-  //                 ),
-  //                 filled: true,
-  //                 fillColor: Colors.white,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text('Cancel'),
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //           ElevatedButton(
-  //             child: const Text('Save'),
-  //             onPressed: () {
-  //               setState(() {
-  //                 if (item is Item) {
-  //                   // Update the Item object
-  //                   orderedItems[index] = Item(
-  //                     image: item.image,
-  //                     itemName: item.itemName,
-  //                     itemCode: item.itemCode,
-  //                     itemDesciption: item.itemDesciption,
-  //                     price: priceController.text,
-  //                     tax: item.tax,
-  //                     companyTax: item.companyTax,
-  //                     itemCount: int.parse(quantityController.text),
-  //                     itemtaxtype: item.itemtaxtype,
-  //                   );
-  //                 } else if (item is Map) {
-  //                   // Update the Map structure
-  //                   items[index]['qty'] = int.parse(quantityController.text);
-  //                   items[index]['rate'] = priceController.text;
-  //                   updateItemDetails(
-  //                       index, quantityController.text, priceController.text);
-  //                   updateTaxDetails();
-  //                   calculateNewTotal();
-  //                 }
-  //               });
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
   void _showEditDialog(BuildContext context, int index, List<dynamic> items) {
     log("inside showedit dialog");
     final item = items[index];
 
+    // Check if the item is of type `Item` or `Map`
+    bool isItemObject = item is Item;
+
     TextEditingController quantityController = TextEditingController(
-        text: item['qty']?.toString() ?? item.itemCount.toString());
-    TextEditingController priceController =
-        TextEditingController(text: item['rate']?.toString() ?? item.price);
+      text: isItemObject
+          ? item.itemCount
+              .abs()
+              .toString() // Access `itemCount` for `Item` objects
+          : (item['qty'] ?? 0)
+              .abs()
+              .toString(), // Access `qty` for `Map` objects
+    );
+
+    TextEditingController priceController = TextEditingController(
+      text: isItemObject
+          ? (double.tryParse(item.price)?.abs().toString() ??
+              '0') // Access `price` for `Item` objects
+          : (double.tryParse(item['rate']!.toString())?.abs().toString() ??
+              '0'), // Access `rate` for `Map` objects
+    );
 
     showDialog(
       context: context,
@@ -1572,7 +1506,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
                 decoration: InputDecoration(
                   hintText: 'Enter Valid Quantity',
-                  hintStyle: TextStyle(color: Colors.black54),
+                  hintStyle: const TextStyle(color: Colors.black54),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1590,7 +1524,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
                 decoration: InputDecoration(
                   hintText: 'Enter Valid Price',
-                  hintStyle: TextStyle(color: Colors.black54),
+                  hintStyle: const TextStyle(color: Colors.black54),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1883,13 +1817,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     discount = jsonDiscount > 0 ? jsonDiscount : manualDiscount;
     print("manual discont$manualDiscount");
 
-    // double subtotal = calculateSubtotal();
-    double subtotal = jsonSubtotal > 0.0 ? jsonSubtotal : calculateSubtotal();
-    // double tax = calculateTax(discount);
-    double tax = jsonTaxAmount > 0.0 ? jsonTaxAmount : calculateTax(discount);
-    // double total = calculateTotal();
-    double total = jsonGrandTotal > 0.0 ? jsonGrandTotal : calculateTotal();
-    // _setPaidAmountForCurrentPage(paidAmount);
+    // double subtotal = jsonSubtotal > 0.0 ? jsonSubtotal : calculateSubtotal();
+    // double tax = jsonTaxAmount > 0.0 ? jsonTaxAmount : calculateTax(discount);
+    // double total = jsonGrandTotal > 0.0 ? jsonGrandTotal : calculateTotal();
+
+    double subtotal =
+        (jsonSubtotal != 0.0 ? jsonSubtotal : calculateSubtotal()).abs();
+
+    double tax =
+        (jsonTaxAmount != 0.0 ? jsonTaxAmount : calculateTax(discount)).abs();
+    double total =
+        (jsonGrandTotal != 0.0 ? jsonGrandTotal : calculateTotal()).abs();
 
     return Container(
       padding: const EdgeInsets.all(15),
@@ -2173,7 +2111,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       .toList();
 
                   void setSoldItemsFromData() {
-                    print("Inside setSoldItemsFromData");
+                    print("Inside setSoldItemsFromData$soldItems");
 
                     try {
                       if (soldItemsMap.isEmpty &&
@@ -2181,11 +2119,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           widget.datas!['message'] != null) {
                         final Map<String, dynamic> message =
                             widget.datas!['message']!;
+                        print("message in setsolditemsfromdata$message");
 
-                        returnAgainst = _fetchInvocie() ?? '';
+                        returnAgainst = _fetchInvoice() ?? '';
                         isReturn = 1;
 
                         List<dynamic> items = message['items'] ?? [];
+                        print("message itesm$items");
 
                         soldItems = items.map((item) {
                           print("Processing item: $item"); // Debug raw data
@@ -2291,6 +2231,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       DatabaseHelper dbHelper,
                       double discount,
                       int isReturn,
+                      String userName,
                       String returnAgainst) async {
                     print("selectedModeasync$selectedMode");
                     print("paidamountinasync$paidAmount");
@@ -2308,6 +2249,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         paidAmount,
                         isReturn,
                         returnAgainst,
+                        userName,
                         context);
                   }
 
@@ -2320,7 +2262,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       dbHelper,
                       discount,
                       isReturn,
-                      returnAgainst!);
+                      returnAgainst!,
+                      userName);
 
                   print("Response body in home$responseBody");
 
@@ -2448,8 +2391,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     _clearSelectedCustomerForCurrentPage();
                     // Update previousCustomer after successful sale processing
                     previousCustomer = _selectedCustomer;
-                    await dbHelper.insertSalesItems(soldItemsMap, salesInvoice,
-                        _selectedCustomer!, discountamount);
+                    // Filter out items with item_count == 0
+                    List<Map<String, dynamic>> validItems =
+                        soldItemsMap.where((item) {
+                      return item['item_count'] != 0;
+                    }).toList();
+                    if (validItems.isNotEmpty) {
+                      // Only call insertSalesItems if there are valid items (non-zero item_count)
+                      await dbHelper.insertSalesItems(validItems, salesInvoice,
+                          _selectedCustomer!, discountamount);
+                    } else {
+                      print("No items with item_count > 0, skipping insert.");
+                    }
+                    // await dbHelper.insertSalesItems(soldItemsMap, salesInvoice,
+                    //     _selectedCustomer!, discountamount);
                   } else {
                     print("Error: salesInvoice is null, cannot print bill.");
                   }
@@ -2530,7 +2485,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildOrderedItemsSection() {
     // Extract dataItems from widget.datas if available
-    final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
+    // final List<dynamic> dataItems = widget.datas?['message']?['items'] ?? [];
     print("dataiteminbuild$dataItems");
 
     return Container(
@@ -2547,8 +2502,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   image:
                       null, // Placeholder or null as no image data is provided
                   itemName: item['item_name'] ?? 'Unknown Item',
-                  price: item['rate']?.toString() ?? '0.0',
-                  itemCount: item['qty']?.toInt() ?? 1,
+
+                  price: double.tryParse(item['rate']?.toString() ?? '')
+                          ?.abs()
+                          .toString() ??
+                      '0.0',
+                  itemCount:
+                      (double.tryParse(item['qty']?.toString() ?? '')?.abs() ??
+                              1)
+                          .toInt(),
+
                   index: index,
                   items: dataItems,
                 );
@@ -2756,7 +2719,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // Widget _modeSelector() {
+  //     print('Modes of Payments: $modesOfPayments');
+  // print('Selected Mode: $selectedMode');
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: const EdgeInsets.symmetric(horizontal: 16),
+  //     decoration: BoxDecoration(
+  //       borderRadius: BorderRadius.circular(14),
+  //       color: const Color.fromARGB(155, 222, 229, 231),
+  //     ),
+  //     child: DropdownButton<String>(
+  //       isExpanded: true,
+  //       hint: const Text("Mode Of Payment"),
+  //       // value: _getSelectedModeForCurrentPage(),
+  //       value: selectedMode,
+  //       items: modesOfPayments.map((mode) {
+  //         return DropdownMenuItem<String>(
+  //           value: mode['mode_name'],
+  //           child: Text(mode['mode_name'] ?? ''),
+  //         );
+  //       }).toList(),
+  //       onChanged: (selected) {
+  //         _setSelectedModeForCurrentPage(selected);
+  //         print("Selected Mode for Page $currentPageIndex: $selected");
+  //       },
+  //     ),
+  //   );
+  // }
+
   Widget _modeSelector() {
+    print('Modes of Payments: $modesOfPayments');
+    print('Selected Mode: $selectedMode');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2767,8 +2762,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: DropdownButton<String>(
         isExpanded: true,
         hint: const Text("Mode Of Payment"),
-        // value: _getSelectedModeForCurrentPage(),
-        value: selectedMode,
+        value: modesOfPayments.any((mode) => mode['mode_name'] == selectedMode)
+            ? selectedMode
+            : null, // Reset if value is invalid
         items: modesOfPayments.map((mode) {
           return DropdownMenuItem<String>(
             value: mode['mode_name'],
